@@ -56,3 +56,41 @@ fun formatMoodDateTime(epochMillis: Long): String =
         Instant.fromEpochMilliseconds(epochMillis)
             .toLocalDateTime(TimeZone.currentSystemDefault())
     )
+
+/** The local hour, 0–23, for time-of-day greetings. */
+fun currentHour(): Int =
+    Instant.fromEpochMilliseconds(nowMillis()).toLocalDateTime(TimeZone.currentSystemDefault()).hour
+
+/** "Saturday, 21 November" — the Home header. English only, like the other formats here. */
+private val longDayFormat = LocalDateTime.Format {
+    dayOfWeek(kotlinx.datetime.format.DayOfWeekNames.ENGLISH_FULL)
+    chars(", ")
+    day(Padding.NONE)
+    char(' ')
+    monthName(MonthNames.ENGLISH_FULL)
+}
+
+fun formatLongDay(epochMillis: Long): String =
+    longDayFormat.format(
+        Instant.fromEpochMilliseconds(epochMillis)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+    )
+
+/** "Sat, Nov 21 · 21:48" — the note editor's date line. */
+private val noteDateTimeFormat = LocalDateTime.Format {
+    dayOfWeek(kotlinx.datetime.format.DayOfWeekNames.ENGLISH_ABBREVIATED)
+    chars(", ")
+    monthName(MonthNames.ENGLISH_ABBREVIATED)
+    char(' ')
+    day(Padding.NONE)
+    chars(" · ")
+    hour()
+    char(':')
+    minute()
+}
+
+fun formatNoteDateTime(epochMillis: Long): String =
+    noteDateTimeFormat.format(
+        Instant.fromEpochMilliseconds(epochMillis)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+    )

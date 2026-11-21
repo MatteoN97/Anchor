@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -72,7 +73,9 @@ fun App(
     reminderController: MoodReminderController = NoMoodReminderController,
     openMoodRequest: Int = 0
 ) {
-    AnchorTheme {
+    val themeMode by settingsManager.themeMode.collectAsState()
+    val dynamicColor by settingsManager.dynamicColor.collectAsState()
+    AnchorTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
         val vm: AnchorViewModel = viewModel { AnchorViewModel(database) }
         AnchorApp(
             vm = vm,

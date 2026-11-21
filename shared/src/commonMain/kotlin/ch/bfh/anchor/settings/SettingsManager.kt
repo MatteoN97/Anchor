@@ -2,6 +2,7 @@ package ch.bfh.anchor.settings
 
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.HelpContact
+import ch.bfh.anchor.ui.theme.ThemeMode
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,27 @@ class SettingsManager(private val settings: Settings) {
         val trimmed = value.trim()
         settings.putString(KEY_USER_NAME, trimmed)
         _userName.value = trimmed
+    }
+
+    // Appearance. Observable, because the whole app re-themes the moment either one changes.
+    private val _themeMode = MutableStateFlow(
+        ThemeMode.entries.firstOrNull { it.name == settings.getString(KEY_THEME_MODE, "") }
+            ?: ThemeMode.System
+    )
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
+    fun setThemeMode(value: ThemeMode) {
+        settings.putString(KEY_THEME_MODE, value.name)
+        _themeMode.value = value
+    }
+
+    /** Material You wallpaper colours (Android 12+). Off by default: Anchor's own palette. */
+    private val _dynamicColor = MutableStateFlow(settings.getBoolean(KEY_DYNAMIC_COLOR, false))
+    val dynamicColor: StateFlow<Boolean> = _dynamicColor.asStateFlow()
+
+    fun setDynamicColor(value: Boolean) {
+        settings.putBoolean(KEY_DYNAMIC_COLOR, value)
+        _dynamicColor.value = value
     }
 
     /** Pattern used by the breathing step of the crisis flow. */
@@ -93,6 +115,8 @@ class SettingsManager(private val settings: Settings) {
 
     private companion object {
         const val KEY_USER_NAME = "user_name"
+        const val KEY_THEME_MODE = "theme_mode"
+        const val KEY_DYNAMIC_COLOR = "dynamic_color"
         const val KEY_MOOD_ENABLED = "mood_reminders_enabled"
         const val KEY_OLD_HOUR = "mood_reminder_hour"
         const val KEY_OLD_MINUTE = "mood_reminder_minute"

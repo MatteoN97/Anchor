@@ -154,13 +154,18 @@ data class TabItem(val label: String, val icon: ImageVector)
 @Composable
 fun AdaptiveTabBar(tabs: List<TabItem>, selectedIndex: Int, onSelect: (Int) -> Unit) {
     if (!LocalIsIos.current) {
-        NavigationBar {
+        NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
             tabs.forEachIndexed { index, tab ->
                 NavigationBarItem(
                     selected = index == selectedIndex,
                     onClick = { onSelect(index) },
                     icon = { Icon(tab.icon, contentDescription = tab.label) },
-                    label = { Text(tab.label) }
+                    label = { Text(tab.label) },
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.primary
+                    )
                 )
             }
         }
