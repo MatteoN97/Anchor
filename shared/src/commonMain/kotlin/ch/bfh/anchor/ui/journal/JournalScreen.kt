@@ -52,7 +52,7 @@ fun JournalScreen(viewModel: AnchorViewModel) {
                 Tab(
                     selected = selectedTab == JournalTab.Notes,
                     onClick = { selectedTab = JournalTab.Notes },
-                    text = { Text("Notes") }
+                    text = { Text(stringResource(Res.string.journal_tab_notes)) }
                 )
                 Tab(
                     selected = selectedTab == JournalTab.Questions,
@@ -62,7 +62,7 @@ fun JournalScreen(viewModel: AnchorViewModel) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("Questions")
+                            Text(stringResource(Res.string.journal_tab_questions))
                             val pending = questions.count { !it.answered }
                             if (pending > 0) {
                                 Badge { Text("$pending") }
@@ -205,8 +205,8 @@ private fun QuestionsTab(
 ) {
     if (questions.isEmpty()) {
         EmptyState(
-            title = "No questions yet",
-            subtitle = "Add questions while writing a note — they'll appear here."
+            title = stringResource(Res.string.journal_questions_empty_title),
+            subtitle = stringResource(Res.string.journal_questions_empty_subtitle)
         )
     } else {
         val pending = questions.filter { !it.answered }
@@ -216,7 +216,7 @@ private fun QuestionsTab(
             if (pending.isNotEmpty()) {
                 item {
                     Text(
-                        text = "To discuss",
+                        text = stringResource(Res.string.journal_questions_to_discuss),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -231,7 +231,7 @@ private fun QuestionsTab(
             if (answered.isNotEmpty()) {
                 item {
                     Text(
-                        text = "Discussed",
+                        text = stringResource(Res.string.journal_questions_discussed),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

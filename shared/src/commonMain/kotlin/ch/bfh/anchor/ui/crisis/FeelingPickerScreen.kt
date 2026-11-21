@@ -9,6 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.Feeling
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.crisis_feeling_subtitle
+import ch.bfh.anchor.resources.crisis_feeling_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FeelingPickerScreen(onSelected: (Feeling) -> Unit) {
@@ -25,12 +29,12 @@ fun FeelingPickerScreen(onSelected: (Feeling) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "What's going on right now?",
+                text = stringResource(Res.string.crisis_feeling_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "I'll suggest what might help.",
+                text = stringResource(Res.string.crisis_feeling_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -53,7 +57,7 @@ fun FeelingPickerScreen(onSelected: (Feeling) -> Unit) {
                     ) {
                         Text(text = feeling.emoji, style = MaterialTheme.typography.titleLarge)
                         Text(
-                            text = feeling.label,
+                            text = stringResource(feeling.labelRes),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.weight(1f)
                         )

@@ -120,12 +120,12 @@ fun NoteSheet(
 
             // Questions for next session
             Text(
-                text = "Questions for next session",
+                text = stringResource(Res.string.journal_questions_title),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "Added here go to your shared question list.",
+                text = stringResource(Res.string.journal_questions_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -154,7 +154,7 @@ fun NoteSheet(
                                 ) {
                                     Icon(
                                         imageVector = AnchorIcons.Close,
-                                        contentDescription = "Remove question",
+                                        contentDescription = stringResource(Res.string.journal_question_remove),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -173,7 +173,7 @@ fun NoteSheet(
                 OutlinedTextField(
                     value = questionDraft,
                     onValueChange = { questionDraft = it },
-                    placeholder = { Text("e.g. Why do I feel anxious on Sundays?") },
+                    placeholder = { Text(stringResource(Res.string.journal_question_placeholder)) },
                     modifier = Modifier
                         .weight(1f)
                         .focusRequester(questionFocusRequester),
@@ -189,7 +189,10 @@ fun NoteSheet(
                     },
                     enabled = questionDraft.isNotBlank()
                 ) {
-                    Icon(imageVector = AnchorIcons.Add, contentDescription = "Add question")
+                    Icon(
+                        imageVector = AnchorIcons.Add,
+                        contentDescription = stringResource(Res.string.journal_question_add)
+                    )
                 }
             }
 

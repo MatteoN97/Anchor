@@ -13,7 +13,14 @@ import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.BuiltInTools
 import ch.bfh.anchor.model.CopingTool
 import ch.bfh.anchor.model.Feeling
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.common_continue
+import ch.bfh.anchor.resources.crisis_suggestions_add
+import ch.bfh.anchor.resources.crisis_suggestions_badge
+import ch.bfh.anchor.resources.crisis_suggestions_subtitle_feeling
+import ch.bfh.anchor.resources.crisis_suggestions_title
 import ch.bfh.anchor.viewmodel.AnchorViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SuggestedToolsScreen(
@@ -39,12 +46,15 @@ fun SuggestedToolsScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "You've got this.",
+                text = stringResource(Res.string.crisis_suggestions_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "Here are some things that might help with feeling ${feeling.label.lowercase()}.",
+                text = stringResource(
+                    Res.string.crisis_suggestions_subtitle_feeling,
+                    stringResource(feeling.phraseRes)
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -80,7 +90,7 @@ fun SuggestedToolsScreen(
                                     shape = MaterialTheme.shapes.extraLarge
                                 ) {
                                     Text(
-                                        text = "Suggested",
+                                        text = stringResource(Res.string.crisis_suggestions_badge),
                                         style = MaterialTheme.typography.labelSmall,
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                         color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -101,7 +111,7 @@ fun SuggestedToolsScreen(
                                 contentPadding = PaddingValues(0.dp)
                             ) {
                                 Text(
-                                    text = "+ Add to my toolkit",
+                                    text = stringResource(Res.string.crisis_suggestions_add),
                                     style = MaterialTheme.typography.labelMedium
                                 )
                             }
@@ -121,7 +131,7 @@ fun SuggestedToolsScreen(
             shape = MaterialTheme.shapes.large
         ) {
             Text(
-                text = "Continue",
+                text = stringResource(Res.string.common_continue),
                 style = MaterialTheme.typography.titleMedium
             )
         }

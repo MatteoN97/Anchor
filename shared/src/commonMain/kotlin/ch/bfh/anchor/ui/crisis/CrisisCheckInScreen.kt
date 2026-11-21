@@ -9,13 +9,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.platform.rememberPhoneDialer
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.common_done
+import ch.bfh.anchor.resources.crisis_checkin_better
+import ch.bfh.anchor.resources.crisis_checkin_great
+import ch.bfh.anchor.resources.crisis_checkin_not_great
+import ch.bfh.anchor.resources.crisis_checkin_okay
+import ch.bfh.anchor.resources.crisis_checkin_rough
+import ch.bfh.anchor.resources.crisis_checkin_subtitle
+import ch.bfh.anchor.resources.crisis_checkin_title
+import ch.bfh.anchor.resources.crisis_help_again_subtitle
+import ch.bfh.anchor.resources.crisis_help_again_title
+import ch.bfh.anchor.resources.crisis_help_call_subtitle
+import ch.bfh.anchor.resources.crisis_help_call_title
+import ch.bfh.anchor.resources.crisis_help_done
+import ch.bfh.anchor.resources.crisis_help_subtitle
+import ch.bfh.anchor.resources.crisis_help_title
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
-private val checkInOptions = listOf(
-    Triple(1, "😊", "Great"),
-    Triple(2, "🙂", "Better"),
-    Triple(3, "😐", "Okay"),
-    Triple(4, "😔", "Still rough"),
-    Triple(5, "😢", "Not great")
+private val checkInOptions: List<Triple<Int, String, StringResource>> = listOf(
+    Triple(1, "😊", Res.string.crisis_checkin_great),
+    Triple(2, "🙂", Res.string.crisis_checkin_better),
+    Triple(3, "😐", Res.string.crisis_checkin_okay),
+    Triple(4, "😔", Res.string.crisis_checkin_rough),
+    Triple(5, "😢", Res.string.crisis_checkin_not_great)
 )
 
 @Composable
@@ -70,13 +88,13 @@ private fun CheckInContent(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "How are you feeling now?",
+                text = stringResource(Res.string.crisis_checkin_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Be honest — this is just for you.",
+                text = stringResource(Res.string.crisis_checkin_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -87,7 +105,7 @@ private fun CheckInContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            checkInOptions.forEach { (rating, emoji, label) ->
+            checkInOptions.forEach { (rating, emoji, labelRes) ->
                 val selected = selectedRating == rating
                 Surface(
                     onClick = { onRatingSelected(rating) },
@@ -103,7 +121,7 @@ private fun CheckInContent(
                     ) {
                         Text(text = emoji, style = MaterialTheme.typography.titleLarge)
                         Text(
-                            text = label,
+                            text = stringResource(labelRes),
                             style = MaterialTheme.typography.labelSmall,
                             color = if (selected) MaterialTheme.colorScheme.onPrimary
                             else MaterialTheme.colorScheme.onSurfaceVariant
@@ -121,7 +139,10 @@ private fun CheckInContent(
                 .height(56.dp),
             shape = MaterialTheme.shapes.large
         ) {
-            Text(text = "Done", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(Res.string.common_done),
+                style = MaterialTheme.typography.titleMedium
+            )
         }
     }
 }
@@ -142,12 +163,12 @@ private fun NeedMoreHelpContent(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "That's okay.",
+                text = stringResource(Res.string.crisis_help_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "You don't have to feel better right away. What would help most right now?",
+                text = stringResource(Res.string.crisis_help_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -169,11 +190,11 @@ private fun NeedMoreHelpContent(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Go through it again",
+                            text = stringResource(Res.string.crisis_help_again_title),
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = "Try a different set of tools",
+                            text = stringResource(Res.string.crisis_help_again_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -195,12 +216,12 @@ private fun NeedMoreHelpContent(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Call a crisis line",
+                            text = stringResource(Res.string.crisis_help_call_title),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onError
                         )
                         Text(
-                            text = "La Main Tendue — 143 (Switzerland)",
+                            text = stringResource(Res.string.crisis_help_call_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onError.copy(alpha = 0.8f)
                         )
@@ -213,7 +234,7 @@ private fun NeedMoreHelpContent(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 Text(
-                    text = "I'm done for now",
+                    text = stringResource(Res.string.crisis_help_done),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

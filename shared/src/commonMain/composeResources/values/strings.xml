@@ -63,8 +63,69 @@
     <string name="common_cancel">Cancel</string>
     <string name="common_save">Save</string>
 
+    <!-- Home -->
+    <string name="home_stat_tools">Tools</string>
+    <string name="home_stat_sessions">Sessions</string>
+    <string name="home_stat_notes">Notes</string>
+    <string name="home_last_crisis_today">Last crisis session: today</string>
+    <string name="home_last_crisis_yesterday">Last crisis session: yesterday</string>
+
+    <!-- Crisis flow -->
+    <string name="crisis_feeling_title">What's going on right now?</string>
+    <string name="crisis_feeling_subtitle">I'll suggest what might help.</string>
+    <string name="crisis_suggestions_subtitle_feeling">Here are some things that might help with feeling %1$s.</string>
+    <string name="crisis_suggestions_badge">Suggested</string>
+    <string name="crisis_suggestions_add">+ Add to my toolkit</string>
+    <string name="crisis_checkin_title">How are you feeling now?</string>
+    <string name="crisis_checkin_subtitle">Be honest — this is just for you.</string>
+    <string name="crisis_checkin_great">Great</string>
+    <string name="crisis_checkin_better">Better</string>
+    <string name="crisis_checkin_okay">Okay</string>
+    <string name="crisis_checkin_rough">Still rough</string>
+    <string name="crisis_checkin_not_great">Not great</string>
+    <string name="crisis_help_title">That's okay.</string>
+    <string name="crisis_help_subtitle">You don't have to feel better right away. What would help most right now?</string>
+    <string name="crisis_help_again_title">Go through it again</string>
+    <string name="crisis_help_again_subtitle">Try a different set of tools</string>
+    <string name="crisis_help_call_title">Call a crisis line</string>
+    <string name="crisis_help_call_subtitle">La Main Tendue — 143 (Switzerland)</string>
+    <string name="crisis_help_done">I'm done for now</string>
+
+    <!-- Feelings -->
+    <string name="feeling_anxious">Anxious or overwhelmed</string>
+    <string name="feeling_sad">Sad or hopeless</string>
+    <string name="feeling_angry">Angry or frustrated</string>
+    <string name="feeling_numb">Numb or disconnected</string>
+    <string name="feeling_exhausted">Exhausted</string>
+    <string name="feeling_anxious_phrase">anxious or overwhelmed</string>
+    <string name="feeling_sad_phrase">sad or hopeless</string>
+    <string name="feeling_angry_phrase">angry or frustrated</string>
+    <string name="feeling_numb_phrase">numb or disconnected</string>
+    <string name="feeling_exhausted_phrase">exhausted</string>
+
+    <!-- Journal -->
+    <string name="journal_tab_notes">Notes</string>
+    <string name="journal_tab_questions">Questions</string>
+    <string name="journal_questions_empty_title">No questions yet</string>
+    <string name="journal_questions_empty_subtitle">Add questions while writing a note — they'll appear here.</string>
+    <string name="journal_questions_to_discuss">To discuss</string>
+    <string name="journal_questions_discussed">Discussed</string>
+    <string name="journal_questions_title">Questions for next session</string>
+    <string name="journal_questions_subtitle">Added here go to your shared question list.</string>
+    <string name="journal_question_placeholder">e.g. Why do I feel anxious on Sundays?</string>
+    <string name="journal_question_add">Add question</string>
+    <string name="journal_question_remove">Remove question</string>
+
+    <string name="common_continue">Continue</string>
+    <string name="common_done">Done</string>
+
     <plurals name="crisis_breaths_remaining">
         <item quantity="one">%1$d breath remaining</item>
         <item quantity="other">%1$d breaths remaining</item>
+    </plurals>
+
+    <plurals name="home_last_crisis_days">
+        <item quantity="one">Last crisis session: %1$d day ago</item>
+        <item quantity="other">Last crisis session: %1$d days ago</item>
     </plurals>
 </resources>

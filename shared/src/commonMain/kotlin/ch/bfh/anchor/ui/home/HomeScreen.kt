@@ -11,6 +11,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import ch.bfh.anchor.platform.daysSince
 import ch.bfh.anchor.settings.SettingsManager
@@ -29,14 +30,18 @@ fun HomeScreen(
     val notes by vm.notes.collectAsState()
     val crisisCheckIns by vm.crisisCheckIns.collectAsState()
 
-    val lastCrisisText: String? = remember(crisisCheckIns) {
-        val last = crisisCheckIns.maxByOrNull { it.date } ?: return@remember null
-        val days = daysSince(last.date)
-        when (days) {
-            0 -> "Last crisis session: today"
-            1 -> "Last crisis session: yesterday"
-            else -> "Last crisis session: $days days ago"
-        }
+    val lastCrisisDays: Int? = remember(crisisCheckIns) {
+        crisisCheckIns.maxByOrNull { it.date }?.let { daysSince(it.date) }
+    }
+    val lastCrisisText: String? = when (lastCrisisDays) {
+        null -> null
+        0 -> stringResource(Res.string.home_last_crisis_today)
+        1 -> stringResource(Res.string.home_last_crisis_yesterday)
+        else -> pluralStringResource(
+            Res.plurals.home_last_crisis_days,
+            lastCrisisDays,
+            lastCrisisDays
+        )
     }
 
     HomeScreenContent(
@@ -95,9 +100,21 @@ private fun HomeScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                StatCard(label = "Tools", value = toolsCount, modifier = Modifier.weight(1f))
-                StatCard(label = "Sessions", value = crisisCount, modifier = Modifier.weight(1f))
-                StatCard(label = "Notes", value = notesCount, modifier = Modifier.weight(1f))
+                StatCard(
+                    label = stringResource(Res.string.home_stat_tools),
+                    value = toolsCount,
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    label = stringResource(Res.string.home_stat_sessions),
+                    value = crisisCount,
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    label = stringResource(Res.string.home_stat_notes),
+                    value = notesCount,
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             if (lastCrisisText != null) {
