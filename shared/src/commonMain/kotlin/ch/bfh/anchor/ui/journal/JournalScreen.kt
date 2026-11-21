@@ -175,6 +175,7 @@ private fun LazyListScope.notesTab(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NoteRow(
     note: TherapyNote,
@@ -202,7 +203,11 @@ private fun NoteRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (note.tags.isNotEmpty()) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(if (isIos) 6.dp else 4.dp)) {
+                        // Wraps: three of the five tags already overflow a phone-width row.
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(if (isIos) 6.dp else 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             note.tags.forEach { tag -> AdaptiveTag(tag) }
                         }
                     }

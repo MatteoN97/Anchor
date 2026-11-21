@@ -8,8 +8,6 @@ import ch.bfh.anchor.ui.icons.AnchorIcons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.resources.Res
@@ -41,7 +39,6 @@ fun NoteSheet(
     // Questions added in this sheet (to be saved to the global list on Save)
     val newQuestions = remember { mutableStateListOf<String>() }
     var questionDraft by remember { mutableStateOf("") }
-    val questionFocusRequester = remember { FocusRequester() }
 
     val availableTags = listOf(
         stringResource(Res.string.journal_tag_insight),
@@ -143,9 +140,7 @@ fun NoteSheet(
                     label = stringResource(Res.string.journal_question_placeholder),
                     showLabel = false,
                     singleLine = true,
-                    modifier = Modifier
-                        .weight(1f)
-                        .focusRequester(questionFocusRequester)
+                    modifier = Modifier.weight(1f)
                 )
                 FilledIconButton(
                     onClick = {
