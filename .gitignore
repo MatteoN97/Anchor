@@ -14,3 +14,7 @@ local.properties
 /shared/schemas/.gitkeep
 xcuserdata/
 *.xcworkspace/xcuserdata/
+
+# Local ChatGPT source-context exports (never commit these)
+/anchor-project-context.md
+/anchor-context-export/

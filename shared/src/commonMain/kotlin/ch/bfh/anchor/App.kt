@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,6 +32,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import ch.bfh.anchor.data.AnchorDatabase
 import ch.bfh.anchor.model.effectiveCrisisLine
+import ch.bfh.anchor.notifications.MoodReminderController
+import ch.bfh.anchor.notifications.NoMoodReminderController
 import ch.bfh.anchor.platform.rememberDeviceRegion
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.tab_home
@@ -45,6 +48,7 @@ import ch.bfh.anchor.ui.crisis.CrisisScreen
 import ch.bfh.anchor.ui.home.HomeScreen
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.ui.journal.JournalScreen
+import ch.bfh.anchor.ui.mood.MoodTrackerScreen
 import ch.bfh.anchor.ui.settings.SettingsScreen
 import ch.bfh.anchor.ui.theme.AnchorTheme
 import ch.bfh.anchor.ui.theme.LocalIsIos
@@ -55,21 +59,48 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val ROUTE_CRISIS = "crisis"
 private const val ROUTE_BREATHING = "breathing"
+private const val ROUTE_MOOD = "mood"
 
+/**
+ * [reminderController] schedules mood reminders natively (Android only so far; iOS passes the
+ * no-op default). [openMoodRequest] is bumped each time a reminder notification is tapped.
+ */
 @Composable
-fun App(database: AnchorDatabase, settingsManager: SettingsManager) {
+fun App(
+    database: AnchorDatabase,
+    settingsManager: SettingsManager,
+    reminderController: MoodReminderController = NoMoodReminderController,
+    openMoodRequest: Int = 0
+) {
     AnchorTheme {
         val vm: AnchorViewModel = viewModel { AnchorViewModel(database) }
-        AnchorApp(vm = vm, settingsManager = settingsManager)
+        AnchorApp(
+            vm = vm,
+            settingsManager = settingsManager,
+            reminderController = reminderController,
+            openMoodRequest = openMoodRequest
+        )
     }
 }
 
 @Composable
-fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
+fun AnchorApp(
+    vm: AnchorViewModel,
+    settingsManager: SettingsManager,
+    reminderController: MoodReminderController = NoMoodReminderController,
+    openMoodRequest: Int = 0
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val isIos = LocalIsIos.current
+
+    // A tapped mood reminder opens the tracker.
+    LaunchedEffect(openMoodRequest) {
+        if (openMoodRequest > 0 && navController.currentDestination?.route != ROUTE_MOOD) {
+            navController.navigate(ROUTE_MOOD) { launchSingleTop = true }
+        }
+    }
 
     // The crisis flow and the breathing practice are destinations of their own and own the whole
     // screen, so the bottom bar is gone while either is open: nothing to tap through, and the
@@ -104,7 +135,17 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
                     vm = vm,
                     settingsManager = settingsManager,
                     onSosClick = { navController.navigate(ROUTE_CRISIS) },
-                    onBreathingClick = { navController.navigate(ROUTE_BREATHING) }
+                    onBreathingClick = { navController.navigate(ROUTE_BREATHING) },
+                    onMoodClick = { navController.navigate(ROUTE_MOOD) }
+                )
+            }
+            // A page under Home, not a tab: the bar stays visible with Home selected.
+            composable(ROUTE_MOOD) {
+                MoodTrackerScreen(
+                    vm = vm,
+                    settingsManager = settingsManager,
+                    reminderController = reminderController,
+                    onBack = dropUnlessResumed { navController.popBackStack() }
                 )
             }
             modalComposable(ROUTE_CRISIS, isIos) {
@@ -166,11 +207,18 @@ private enum class AnchorTab(
 @Composable
 private fun AnchorBottomBar(currentRoute: String?, navController: NavHostController) {
     val tabs = AnchorTab.entries.map { TabItem(label = stringResource(it.labelRes), icon = it.icon) }
+    // The mood tracker lives under Home, so Home stays selected there.
+    val tabRoute = if (currentRoute == ROUTE_MOOD) AnchorTab.Home.route else currentRoute
     AdaptiveTabBar(
         tabs = tabs,
-        selectedIndex = AnchorTab.entries.indexOfFirst { it.route == currentRoute },
+        selectedIndex = AnchorTab.entries.indexOfFirst { it.route == tabRoute },
         onSelect = { index ->
-            navController.navigate(AnchorTab.entries[index].route) {
+            val tab = AnchorTab.entries[index]
+            // Home acts as Back from the tracker: drop it rather than saving it for later.
+            if (currentRoute == ROUTE_MOOD && tab == AnchorTab.Home &&
+                navController.popBackStack(AnchorTab.Home.route, inclusive = false)
+            ) return@AdaptiveTabBar
+            navController.navigate(tab.route) {
                 popUpTo(navController.graph.findStartDestination().id) {
                     saveState = true
                 }

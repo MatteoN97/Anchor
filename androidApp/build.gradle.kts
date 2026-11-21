@@ -99,6 +99,10 @@ dependencies {
     implementation(compose.ui)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
+    // The Android app accesses AnchorDatabase, whose public superclass is RoomDatabase.
+    // The :shared implementation dependency is not exposed to this module at compile time.
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.kotlinx.coroutines.core)
 
     debugImplementation(compose.uiTooling)
 }

@@ -10,22 +10,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.HelpContact
+import ch.bfh.anchor.model.MoodScale
+import ch.bfh.anchor.ui.mood.MoodChoices
 import ch.bfh.anchor.platform.rememberPhoneDialer
 import ch.bfh.anchor.ui.adaptive.AnchorButton
 import ch.bfh.anchor.ui.adaptive.AnchorCardButton
 import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-
-private val checkInOptions: List<Triple<Int, String, StringResource>> = listOf(
-    Triple(1, "😊", Res.string.crisis_checkin_great),
-    Triple(2, "🙂", Res.string.crisis_checkin_better),
-    Triple(3, "😐", Res.string.crisis_checkin_okay),
-    Triple(4, "😔", Res.string.crisis_checkin_rough),
-    Triple(5, "😢", Res.string.crisis_checkin_not_great)
-)
 
 @Composable
 fun CrisisCheckInScreen(
@@ -100,35 +93,12 @@ private fun CheckInContent(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            checkInOptions.forEach { (rating, emoji, labelRes) ->
-                val selected = selectedRating == rating
-                AnchorCardButton(
-                    onClick = { onRatingSelected(rating) },
-                    modifier = Modifier.weight(1f),
-                    color = if (selected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Column(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(text = emoji, style = MaterialTheme.typography.titleLarge)
-                        Text(
-                            text = stringResource(labelRes),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (selected) MaterialTheme.colorScheme.onPrimary
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
+        // The support flow stores 1 = Great through 5 = Not great.
+        // The shared MoodChoices uses 5 = Great through 1 = Not great.
+        MoodChoices(
+            selectedScore = selectedRating?.let(MoodScale::fromCrisisRating),
+            onScoreSelected = { score -> onRatingSelected(6 - score) }
+        )
 
         AnchorButton(
             onClick = onDone,

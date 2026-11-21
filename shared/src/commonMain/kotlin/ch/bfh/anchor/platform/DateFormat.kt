@@ -39,3 +39,20 @@ fun daysSince(epochMillis: Long): Int {
     val today = Instant.fromEpochMilliseconds(nowMillis()).toLocalDateTime(zone).date
     return then.daysUntil(today)
 }
+
+/** Compact local timestamp for the mood history; no sensitive details in notifications. */
+private val moodDateFormat = LocalDateTime.Format {
+    monthName(MonthNames.ENGLISH_ABBREVIATED)
+    char(' ')
+    day(Padding.NONE)
+    chars(", ")
+    hour()
+    char(':')
+    minute()
+}
+
+fun formatMoodDateTime(epochMillis: Long): String =
+    moodDateFormat.format(
+        Instant.fromEpochMilliseconds(epochMillis)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+    )

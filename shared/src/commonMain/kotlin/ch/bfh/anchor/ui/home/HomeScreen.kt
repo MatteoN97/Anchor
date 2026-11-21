@@ -28,7 +28,8 @@ fun HomeScreen(
     vm: AnchorViewModel,
     settingsManager: SettingsManager,
     onSosClick: () -> Unit,
-    onBreathingClick: () -> Unit
+    onBreathingClick: () -> Unit,
+    onMoodClick: () -> Unit
 ) {
     val userName by settingsManager.userName.collectAsState()
 
@@ -57,7 +58,8 @@ fun HomeScreen(
         crisisCount = crisisCheckIns.size,
         lastCrisisText = lastCrisisText,
         onSosClick = onSosClick,
-        onBreathingClick = onBreathingClick
+        onBreathingClick = onBreathingClick,
+        onMoodClick = onMoodClick
     )
 }
 
@@ -69,7 +71,8 @@ private fun HomeScreenContent(
     crisisCount: Int,
     lastCrisisText: String?,
     onSosClick: () -> Unit,
-    onBreathingClick: () -> Unit
+    onBreathingClick: () -> Unit,
+    onMoodClick: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))) {
         Column(
@@ -137,6 +140,8 @@ private fun HomeScreenContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             BreathingCard(onClick = onBreathingClick)
+            Spacer(modifier = Modifier.height(12.dp))
+            MoodCard(onClick = onMoodClick)
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -212,6 +217,34 @@ private fun BreathingCard(onClick: () -> Unit) {
     }
 }
 
+/** Neutral entry: deliberately do not show the last mood on the Home screen. */
+@Composable
+private fun MoodCard(onClick: () -> Unit) {
+    AnchorCardButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.large
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Mood tracker", style = MaterialTheme.typography.titleMedium)
+                Text("Check in whenever you like", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (LocalIsIos.current) {
+                Chevron()
+            } else {
+                Icon(AnchorIcons.KeyboardArrowRight, contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
 @Composable
 private fun StatCard(label: String, value: Int, modifier: Modifier = Modifier) {
     Card(
@@ -256,7 +289,8 @@ private fun HomeScreenPreview() {
             crisisCount = 2,
             lastCrisisText = "Last crisis session: 3 days ago",
             onSosClick = {},
-            onBreathingClick = {}
+            onBreathingClick = {},
+            onMoodClick = {}
         )
     }
 }

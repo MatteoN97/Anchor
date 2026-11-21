@@ -6,6 +6,8 @@ import ch.bfh.anchor.data.AnchorDatabase
 import ch.bfh.anchor.model.CopingTool
 import ch.bfh.anchor.model.CrisisCheckIn
 import ch.bfh.anchor.model.Feeling
+import ch.bfh.anchor.model.MoodEntry
+import ch.bfh.anchor.model.MoodScale
 import ch.bfh.anchor.model.SessionQuestion
 import ch.bfh.anchor.model.TherapyNote
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +19,7 @@ class AnchorViewModel(db: AnchorDatabase) : ViewModel() {
     private val noteDao = db.therapyNoteDao()
     private val checkInDao = db.crisisCheckInDao()
     private val questionDao = db.sessionQuestionDao()
+    private val moodDao = db.moodEntryDao()
 
     // Tools
     val tools = toolDao.getAll().stateIn(
@@ -75,7 +78,28 @@ class AnchorViewModel(db: AnchorDatabase) : ViewModel() {
 
     fun addCrisisCheckIn(feeling: Feeling, feelingAfter: Int) {
         viewModelScope.launch {
+            // Keep original post-support record and its 1=Great rating convention intact.
             checkInDao.insert(CrisisCheckIn(feeling = feeling.name, feelingAfter = feelingAfter))
+            // Also add a timeline point using the shared 5=Great convention.
+            moodDao.insert(MoodEntry(
+                score = MoodScale.fromCrisisRating(feelingAfter),
+                source = MoodEntry.SOURCE_CRISIS
+            ))
+        }
+    }
+
+    // Manual, notification and post-support mood entries share this timeline.
+    val moods = moodDao.getAll().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    fun addMood(score: Int, onSaved: () -> Unit = {}) {
+        require(score in 1..5)
+        viewModelScope.launch {
+            moodDao.insert(MoodEntry(score = score))
+            onSaved()
         }
     }
 
