@@ -5,7 +5,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -106,7 +105,7 @@ private fun CheckInContent(
                         Text(
                             text = label,
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (selected) Color.White
+                            color = if (selected) MaterialTheme.colorScheme.onPrimary
                             else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -198,12 +197,12 @@ private fun NeedMoreHelpContent(
                         Text(
                             text = "Call a crisis line",
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onError
                         )
                         Text(
                             text = "La Main Tendue — 143 (Switzerland)",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = MaterialTheme.colorScheme.onError.copy(alpha = 0.8f)
                         )
                     }
                 }
