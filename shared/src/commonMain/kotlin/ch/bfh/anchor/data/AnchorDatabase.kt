@@ -8,14 +8,15 @@ import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import ch.bfh.anchor.model.CopingTool
 import ch.bfh.anchor.model.CrisisCheckIn
+import ch.bfh.anchor.model.MoodEntry
 import ch.bfh.anchor.model.SessionQuestion
 import ch.bfh.anchor.model.TherapyNote
 
 internal const val ANCHOR_DATABASE_NAME = "anchor_database"
 
 @Database(
-    entities = [CopingTool::class, TherapyNote::class, CrisisCheckIn::class, SessionQuestion::class],
-    version = 5
+    entities = [CopingTool::class, TherapyNote::class, CrisisCheckIn::class, SessionQuestion::class, MoodEntry::class],
+    version = 6
 )
 @TypeConverters(TagListConverter::class)
 @ConstructedBy(AnchorDatabaseConstructor::class)
@@ -24,6 +25,7 @@ abstract class AnchorDatabase : RoomDatabase() {
     abstract fun therapyNoteDao(): TherapyNoteDao
     abstract fun crisisCheckInDao(): CrisisCheckInDao
     abstract fun sessionQuestionDao(): SessionQuestionDao
+    abstract fun moodEntryDao(): MoodEntryDao
 }
 
 // Generated per platform by the Room compiler.
