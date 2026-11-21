@@ -9,7 +9,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import ch.bfh.anchor.model.HelpContact
 import ch.bfh.anchor.platform.rememberPhoneDialer
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 private val checkInOptions = listOf(
     Triple(1, "😊", "Great"),
@@ -21,6 +25,8 @@ private val checkInOptions = listOf(
 
 @Composable
 fun CrisisCheckInScreen(
+    crisisLine: HelpContact,
+    trustedContact: HelpContact?,
     onFinished: (Int) -> Unit,
     onNeedMoreHelp: () -> Unit
 ) {
@@ -37,6 +43,8 @@ fun CrisisCheckInScreen(
 
         if (showNeedHelp) {
             NeedMoreHelpContent(
+                crisisLine = crisisLine,
+                trustedContact = trustedContact,
                 onGoAgain = onNeedMoreHelp,
                 onDone = { onFinished(selectedRating ?: 5) }
             )
@@ -129,6 +137,8 @@ private fun CheckInContent(
 
 @Composable
 private fun NeedMoreHelpContent(
+    crisisLine: HelpContact,
+    trustedContact: HelpContact?,
     onGoAgain: () -> Unit,
     onDone: () -> Unit
 ) {
@@ -182,32 +192,28 @@ private fun NeedMoreHelpContent(
                 }
             }
 
-            // Call crisis line
-            Surface(
-                onClick = { dialPhoneNumber("143") },
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.error,
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Call a crisis line",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "La Main Tendue — 143 (Switzerland)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                    }
-                }
+            trustedContact?.let { contact ->
+                CallCard(
+                    title = if (contact.name.isNotBlank()) {
+                        stringResource(Res.string.crisis_call_trusted_title, contact.name)
+                    } else {
+                        stringResource(Res.string.crisis_call_trusted_fallback)
+                    },
+                    subtitle = contact.number,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    onClick = { dialPhoneNumber(contact.number) }
+                )
             }
+
+            CallCard(
+                title = stringResource(Res.string.crisis_call_line_title),
+                subtitle = if (crisisLine.name.isNotBlank()) "${crisisLine.name} — ${crisisLine.number}"
+                else crisisLine.number,
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError,
+                onClick = { dialPhoneNumber(crisisLine.number) }
+            )
 
             TextButton(
                 onClick = onDone,
@@ -218,6 +224,32 @@ private fun NeedMoreHelpContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun CallCard(
+    title: String,
+    subtitle: String,
+    containerColor: Color,
+    contentColor: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        color = containerColor,
+        contentColor = contentColor,
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = title, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = 0.8f)
+            )
         }
     }
 }
