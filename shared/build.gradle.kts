@@ -41,6 +41,7 @@ kotlin {
             implementation(libs.jetbrains.lifecycle.viewmodel.compose)
             implementation(libs.jetbrains.lifecycle.runtime.compose)
             implementation(libs.jetbrains.navigation.compose)
+            implementation(libs.jetbrains.navigationevent.compose)
 
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)

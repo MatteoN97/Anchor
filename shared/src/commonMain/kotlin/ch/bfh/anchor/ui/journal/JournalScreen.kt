@@ -1,6 +1,13 @@
 package ch.bfh.anchor.ui.journal
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import ch.bfh.anchor.ui.adaptive.AnchorCardButton
+import ch.bfh.anchor.ui.components.calmCardColor
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -19,7 +26,6 @@ import ch.bfh.anchor.ui.adaptive.AdaptiveCheckbox
 import ch.bfh.anchor.ui.adaptive.AdaptiveListRow
 import ch.bfh.anchor.ui.adaptive.AdaptivePageScaffold
 import ch.bfh.anchor.ui.adaptive.AdaptiveSegmentedControl
-import ch.bfh.anchor.ui.adaptive.AdaptiveTag
 import ch.bfh.anchor.ui.adaptive.AnchorIconButton
 import ch.bfh.anchor.ui.adaptive.PageAction
 import ch.bfh.anchor.ui.adaptive.RowEditActions
@@ -35,12 +41,10 @@ import org.jetbrains.compose.resources.stringResource
 private enum class JournalTab { Notes, Questions }
 
 @Composable
-fun JournalScreen(viewModel: AnchorViewModel) {
+fun JournalScreen(viewModel: AnchorViewModel, onOpenNote: (noteId: String?) -> Unit) {
     val notes by viewModel.notes.collectAsState()
     val questions by viewModel.sessionQuestions.collectAsState()
     var selectedTab by remember { mutableStateOf(JournalTab.Notes) }
-    var showAddSheet by remember { mutableStateOf(false) }
-    var noteToEdit by remember { mutableStateOf<TherapyNote?>(null) }
     val isIos = LocalIsIos.current
     // One scroll position per tab, so switching back does not jump.
     val notesListState = rememberLazyListState()
@@ -77,7 +81,7 @@ fun JournalScreen(viewModel: AnchorViewModel) {
             PageAction(
                 icon = AnchorIcons.Add,
                 label = stringResource(Res.string.journal_add_note),
-                onClick = { showAddSheet = true }
+                onClick = { onOpenNote(null) }
             )
         } else null
     ) { padding ->
@@ -108,7 +112,7 @@ fun JournalScreen(viewModel: AnchorViewModel) {
                         onToggleFlag = { note ->
                             viewModel.updateNote(note.copy(flaggedForNextSession = !note.flaggedForNextSession))
                         },
-                        onEdit = { noteToEdit = it },
+                        onEdit = { onOpenNote(it.id) },
                         onDelete = { viewModel.deleteNote(it) }
                     )
 
@@ -121,29 +125,6 @@ fun JournalScreen(viewModel: AnchorViewModel) {
                 }
             }
         }
-    }
-
-    if (showAddSheet) {
-        NoteSheet(
-            onDismiss = { showAddSheet = false },
-            onSave = { body, tags, flagged, newQuestions ->
-                viewModel.addNote(body, tags, flagged)
-                newQuestions.forEach { viewModel.addSessionQuestion(it) }
-                showAddSheet = false
-            }
-        )
-    }
-
-    noteToEdit?.let { note ->
-        NoteSheet(
-            existingNote = note,
-            onDismiss = { noteToEdit = null },
-            onSave = { body, tags, flagged, newQuestions ->
-                viewModel.updateNote(note.copy(body = body, tags = tags, flaggedForNextSession = flagged))
-                newQuestions.forEach { viewModel.addSessionQuestion(it) }
-                noteToEdit = null
-            }
-        )
     }
 }
 
@@ -170,74 +151,96 @@ private fun LazyListScope.notesTab(
         emptyState(strings.notesEmptyTitle, strings.notesEmptySubtitle)
         return
     }
-    adaptiveSection(items = notes, key = { it.id }, separatorInset = 60.dp) { note ->
-        NoteRow(note, onToggleFlag, onEdit, onDelete)
+    items(notes, key = { it.id }, contentType = { "note" }) { note ->
+        NoteCard(note, onToggleFlag, onEdit, onDelete)
     }
 }
 
+/**
+ * A note as a card: date, a four-line preview, tags. Tapping opens the full-screen editor on both
+ * platforms; iOS deletes by swipe, Android by the trash icon.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun NoteRow(
+private fun NoteCard(
     note: TherapyNote,
     onToggleFlag: (TherapyNote) -> Unit,
     onEdit: (TherapyNote) -> Unit,
     onDelete: (TherapyNote) -> Unit
 ) {
-    val isIos = LocalIsIos.current
+    val colors = MaterialTheme.colorScheme
     val deleteLabel = stringResource(Res.string.common_delete)
-    SwipeToDelete(onDelete = { onDelete(note) }, deleteLabel = deleteLabel) {
-        AdaptiveListRow(
-            headline = {
-                Text(
-                    text = note.body,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            },
-            supporting = {
-                Column(verticalArrangement = Arrangement.spacedBy(if (isIos) 6.dp else 4.dp)) {
+    Box(
+        Modifier
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(MaterialTheme.shapes.large)
+    ) {
+        SwipeToDelete(onDelete = { onDelete(note) }, deleteLabel = deleteLabel) {
+            AnchorCardButton(
+                onClick = { onEdit(note) },
+                modifier = Modifier.fillMaxWidth(),
+                color = calmCardColor(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Column(Modifier.padding(start = 18.dp, end = 6.dp, top = 6.dp, bottom = 16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = formatNoteDate(note.date).uppercase(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colors.primary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        RowEditActions(
+                            onEdit = null,
+                            onDelete = { onDelete(note) },
+                            editLabel = "",
+                            deleteLabel = deleteLabel
+                        )
+                        AnchorIconButton(onClick = { onToggleFlag(note) }) {
+                            Icon(
+                                imageVector = if (note.flaggedForNextSession) AnchorIcons.Bookmark
+                                else AnchorIcons.BookmarkBorder,
+                                contentDescription = if (note.flaggedForNextSession)
+                                    stringResource(Res.string.journal_flagged)
+                                else stringResource(Res.string.journal_not_flagged),
+                                tint = if (note.flaggedForNextSession) colors.primary else colors.outline
+                            )
+                        }
+                    }
                     Text(
-                        text = formatNoteDate(note.date),
-                        style = if (isIos) MaterialTheme.typography.bodySmall else MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = note.body,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = colors.onSurface,
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(end = 12.dp)
                     )
                     if (note.tags.isNotEmpty()) {
-                        // Wraps: three of the five tags already overflow a phone-width row.
+                        Spacer(Modifier.height(12.dp))
                         FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(if (isIos) 6.dp else 4.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            note.tags.forEach { tag -> AdaptiveTag(tag) }
+                            note.tags.forEach { tag -> NoteTag(tag) }
                         }
                     }
                 }
-            },
-            leading = {
-                AnchorIconButton(onClick = { onToggleFlag(note) }) {
-                    Icon(
-                        imageVector = if (note.flaggedForNextSession) AnchorIcons.Bookmark
-                        else AnchorIcons.BookmarkBorder,
-                        contentDescription = if (note.flaggedForNextSession)
-                            stringResource(Res.string.journal_flagged)
-                        else stringResource(Res.string.journal_not_flagged),
-                        tint = if (note.flaggedForNextSession) MaterialTheme.colorScheme.primary
-                        else if (isIos) MaterialTheme.colorScheme.outline
-                        else MaterialTheme.colorScheme.outlineVariant
-                    )
-                }
-            },
-            trailing = {
-                RowEditActions(
-                    onEdit = { onEdit(note) },
-                    onDelete = { onDelete(note) },
-                    editLabel = stringResource(Res.string.common_edit),
-                    deleteLabel = deleteLabel
-                )
-            },
-            onClick = if (isIos) ({ onEdit(note) }) else null
-        )
+            }
+        }
     }
+}
+
+@Composable
+private fun NoteTag(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    )
 }
 
 // ── Questions tab ─────────────────────────────────────────────────────────────

@@ -260,7 +260,7 @@ fun RowEditActions(
             }
         }
         AnchorIconButton(onClick = onDelete) {
-            Icon(AnchorIcons.Delete, contentDescription = deleteLabel, tint = MaterialTheme.colorScheme.error)
+            Icon(AnchorIcons.Delete, contentDescription = deleteLabel, tint = MaterialTheme.colorScheme.outline)
         }
     }
 }

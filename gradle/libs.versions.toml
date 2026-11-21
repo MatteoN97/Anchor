@@ -23,6 +23,9 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 # two libraries publish no iOS targets.
 jetbrains-lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "jetbrainsLifecycle" }
 jetbrains-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "jetbrainsLifecycle" }
+# Already resolved transitively (via navigation 2.9.2 / CMP 1.12.2) at this version; declared so
+# common code can use NavigationBackHandler. Keep it in step with what navigation pulls in.
+jetbrains-navigationevent-compose = { group = "org.jetbrains.androidx.navigationevent", name = "navigationevent-compose", version = "1.1.0" }
 jetbrains-navigation-compose = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "jetbrainsNavigation" }
 
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }

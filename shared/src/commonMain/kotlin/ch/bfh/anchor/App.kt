@@ -22,7 +22,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.IntOffset
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import ch.bfh.anchor.ui.journal.NoteEditorScreen
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -61,6 +66,8 @@ import org.jetbrains.compose.resources.stringResource
 private const val ROUTE_CRISIS = "crisis"
 private const val ROUTE_BREATHING = "breathing"
 private const val ROUTE_MOOD = "mood"
+private const val ROUTE_NOTE = "note?id={id}"
+private fun noteRoute(id: String?) = if (id == null) "note" else "note?id=$id"
 
 /**
  * [reminderController] schedules mood reminders natively (Android only so far; iOS passes the
@@ -108,7 +115,7 @@ fun AnchorApp(
     // The crisis flow and the breathing practice are destinations of their own and own the whole
     // screen, so the bottom bar is gone while either is open: nothing to tap through, and the
     // system back button leaves them.
-    val showBottomBar = currentRoute !in setOf(ROUTE_CRISIS, ROUTE_BREATHING)
+    val showBottomBar = currentRoute !in setOf(ROUTE_CRISIS, ROUTE_BREATHING, ROUTE_NOTE)
 
     Scaffold(
         bottomBar = {
@@ -166,7 +173,21 @@ fun AnchorApp(
                 BreathingPracticeScreen(onDismiss = dropUnlessResumed { navController.popBackStack() })
             }
             composable(AnchorTab.Toolkit.route) { ToolkitScreen(viewModel = vm) }
-            composable(AnchorTab.Journal.route) { JournalScreen(viewModel = vm) }
+            composable(AnchorTab.Journal.route) {
+                JournalScreen(viewModel = vm, onOpenNote = { id -> navController.navigate(noteRoute(id)) })
+            }
+            // Full-screen writing: no tab bar, slides up like a modal on iOS.
+            modalComposable(
+                ROUTE_NOTE,
+                isIos,
+                arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true })
+            ) { entry ->
+                NoteEditorScreen(
+                    vm = vm,
+                    noteId = entry.savedStateHandle.get<String>("id"),
+                    onClose = dropUnlessResumed { navController.popBackStack() }
+                )
+            }
             composable(AnchorTab.Settings.route) { SettingsScreen(settingsManager = settingsManager) }
         }
     }
@@ -179,18 +200,20 @@ fun AnchorApp(
 private fun NavGraphBuilder.modalComposable(
     route: String,
     isIos: Boolean,
-    content: @Composable () -> Unit
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable (NavBackStackEntry) -> Unit
 ) {
     if (!isIos) {
-        composable(route) { content() }
+        composable(route, arguments = arguments) { content(it) }
         return
     }
     val slide = tween<IntOffset>(durationMillis = 400, easing = FastOutSlowInEasing)
     composable(
         route,
+        arguments = arguments,
         enterTransition = { slideInVertically(slide) { it } },
         popExitTransition = { slideOutVertically(slide) { it } }
-    ) { content() }
+    ) { content(it) }
 }
 
 /**
