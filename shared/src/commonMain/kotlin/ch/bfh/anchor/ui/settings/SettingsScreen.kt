@@ -1,353 +1,306 @@
 package ch.bfh.anchor.ui.settings
+
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import ch.bfh.anchor.ui.icons.AnchorIcons
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import ch.bfh.anchor.resources.Res
-import ch.bfh.anchor.resources.*
-import org.jetbrains.compose.resources.stringResource
-import ch.bfh.anchor.settings.SettingsManager
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.CrisisLines
 import ch.bfh.anchor.model.HelpContact
 import ch.bfh.anchor.platform.rememberDeviceRegion
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.semantics.Role
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.*
+import ch.bfh.anchor.settings.SettingsManager
+import ch.bfh.anchor.ui.adaptive.AdaptiveActionRow
+import ch.bfh.anchor.ui.adaptive.AdaptiveListRow
+import ch.bfh.anchor.ui.adaptive.AdaptivePageScaffold
+import ch.bfh.anchor.ui.adaptive.AdaptiveSheet
+import ch.bfh.anchor.ui.adaptive.AdaptiveTextField
+import ch.bfh.anchor.ui.adaptive.Checkmark
+import ch.bfh.anchor.ui.adaptive.adaptiveSection
+import ch.bfh.anchor.ui.adaptive.largeTitle
+import ch.bfh.anchor.ui.icons.AnchorIcons
+import ch.bfh.anchor.ui.theme.LocalIsIos
+import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Which edit sheet is open. */
+private enum class EditTarget { Name, CrisisLine, TrustedContact }
+
 @Composable
 fun SettingsScreen(settingsManager: SettingsManager) {
     val userName by settingsManager.userName.collectAsState()
-    var isEditing by remember { mutableStateOf(false) }
-    var tempName by remember { mutableStateOf(userName) }
     var crisisPattern by remember { mutableStateOf(settingsManager.crisisBreathingPattern) }
+    var customLine by remember { mutableStateOf(settingsManager.customCrisisLine) }
+    var trusted by remember { mutableStateOf(settingsManager.trustedContact) }
+    var editing by remember { mutableStateOf<EditTarget?>(null) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(stringResource(Res.string.settings_title)) })
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    val isIos = LocalIsIos.current
+    val listState = rememberLazyListState()
+    val region = rememberDeviceRegion()
+    val regionalLine = CrisisLines.forRegion(region)
+    val effectiveLine = customLine ?: (regionalLine ?: CrisisLines.fallback).contact
+
+    // Resolved here: the LazyColumn builder below is not a composable scope.
+    val title = stringResource(Res.string.settings_title)
+    val profileTitle = stringResource(Res.string.settings_profile_title)
+    val nameHelper = stringResource(Res.string.settings_name_helper_updated)
+    val nameLabel = stringResource(Res.string.settings_name_field_label)
+    val notSet = stringResource(Res.string.settings_name_not_set)
+    val breathingTitle = stringResource(Res.string.settings_crisis_breathing_label)
+    val breathingHelper = stringResource(Res.string.settings_crisis_breathing_helper)
+    val contactsTitle = stringResource(Res.string.settings_contacts_title)
+    val contactsHelper = stringResource(Res.string.settings_contacts_helper)
+    val crisisLineLabel = stringResource(Res.string.settings_crisis_line_label)
+    val trustedLabel = stringResource(Res.string.settings_trusted_label)
+    val trustedNotSet = stringResource(Res.string.settings_trusted_not_set)
+    val useAutomatic = stringResource(Res.string.settings_crisis_line_reset)
+    val remove = stringResource(Res.string.settings_contact_remove)
+    val lineSource = when {
+        customLine != null -> stringResource(Res.string.settings_crisis_line_custom)
+        regionalLine != null -> stringResource(Res.string.settings_crisis_line_auto, regionalLine.countryName)
+        else -> stringResource(Res.string.settings_crisis_line_auto_fallback, CrisisLines.fallback.countryName)
+    }
+    val patternNames = BreathingPattern.entries.associateWith { stringResource(it.nameRes) }
+    val patternDescriptions = BreathingPattern.entries.associateWith { stringResource(it.descriptionRes) }
+
+    AdaptivePageScaffold(title = title, listState = listState) { padding ->
+        LazyColumn(
+            state = listState,
+            contentPadding = padding,
+            modifier = Modifier.fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            largeTitle(title)
 
-            Text(
-                text = stringResource(Res.string.settings_profile_title),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary
+            adaptiveSection(
+                header = profileTitle,
+                footer = nameHelper,
+                rows = listOf<@Composable () -> Unit>({
+                    ValueRow(
+                        label = nameLabel,
+                        value = userName.ifBlank { notSet },
+                        editLabel = stringResource(Res.string.settings_edit_name),
+                        onClick = { editing = EditTarget.Name }
+                    )
+                })
             )
 
-            if (isEditing) {
-                OutlinedTextField(
-                    value = tempName,
-                    onValueChange = { tempName = it },
-                    label = { Text(stringResource(Res.string.settings_name_label)) },
-                    placeholder = { Text(stringResource(Res.string.settings_name_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+            adaptiveSection(
+                items = BreathingPattern.entries,
+                header = breathingTitle,
+                footer = breathingHelper
+            ) { pattern ->
+                PatternRow(
+                    name = patternNames.getValue(pattern),
+                    description = patternDescriptions.getValue(pattern),
+                    selected = pattern == crisisPattern,
+                    onSelect = {
+                        settingsManager.crisisBreathingPattern = pattern
+                        crisisPattern = pattern
+                    }
                 )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            tempName = userName
-                            isEditing = false
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(Res.string.common_cancel))
-                    }
-                    Button(
-                        onClick = {
-                            settingsManager.setUserName(tempName)
-                            isEditing = false
-                        },
-                        enabled = tempName.isNotBlank(),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(Res.string.common_save))
-                    }
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = stringResource(Res.string.settings_name_field_label),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = if (userName.isNotBlank()) userName else stringResource(Res.string.settings_name_not_set),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                    IconButton(onClick = {
-                        tempName = userName
-                        isEditing = true
-                    }) {
-                        Icon(
-                            AnchorIcons.Edit,
-                            contentDescription = stringResource(Res.string.settings_edit_name),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
             }
 
-            Text(
-                text = stringResource(Res.string.settings_name_helper_updated),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = stringResource(Res.string.settings_crisis_title),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Column(modifier = Modifier.selectableGroup()) {
-                Text(
-                    text = stringResource(Res.string.settings_crisis_breathing_label),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                BreathingPattern.entries.forEach { pattern ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = pattern == crisisPattern,
-                                onClick = {
-                                    settingsManager.crisisBreathingPattern = pattern
-                                    crisisPattern = pattern
-                                },
-                                role = Role.RadioButton
-                            )
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(selected = pattern == crisisPattern, onClick = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = stringResource(pattern.nameRes),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                text = stringResource(pattern.descriptionRes),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+            adaptiveSection(
+                header = contactsTitle,
+                footer = contactsHelper,
+                rows = buildList<@Composable () -> Unit> {
+                    add {
+                        ContactRow(
+                            label = crisisLineLabel,
+                            contact = effectiveLine,
+                            emptyText = "",
+                            caption = lineSource,
+                            onClick = { editing = EditTarget.CrisisLine }
+                        )
+                    }
+                    if (customLine != null) {
+                        add {
+                            AdaptiveActionRow(useAutomatic, onClick = {
+                                settingsManager.customCrisisLine = null
+                                customLine = null
+                            })
+                        }
+                    }
+                    add {
+                        ContactRow(
+                            label = trustedLabel,
+                            contact = trusted,
+                            emptyText = trustedNotSet,
+                            caption = null,
+                            onClick = { editing = EditTarget.TrustedContact }
+                        )
+                    }
+                    if (trusted != null) {
+                        add {
+                            AdaptiveActionRow(remove, color = MaterialTheme.colorScheme.error, onClick = {
+                                settingsManager.trustedContact = null
+                                trusted = null
+                            })
                         }
                     }
                 }
-            }
-
-            Text(
-                text = stringResource(Res.string.settings_crisis_breathing_helper),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            HelpContactsSection(settingsManager)
-
-            Spacer(modifier = Modifier.height(16.dp))
+            item { Spacer(Modifier.height(if (isIos) 8.dp else 16.dp)) }
         }
+    }
+
+    when (editing) {
+        EditTarget.Name -> NameSheet(
+            initial = userName,
+            onDismiss = { editing = null },
+            onSave = {
+                settingsManager.setUserName(it)
+                editing = null
+            }
+        )
+        EditTarget.CrisisLine -> ContactSheet(
+            title = crisisLineLabel,
+            initial = customLine ?: effectiveLine,
+            namePlaceholder = stringResource(Res.string.settings_crisis_line_name_placeholder),
+            onDismiss = { editing = null },
+            onSave = {
+                settingsManager.customCrisisLine = it
+                customLine = settingsManager.customCrisisLine
+                editing = null
+            }
+        )
+        EditTarget.TrustedContact -> ContactSheet(
+            title = trustedLabel,
+            initial = trusted,
+            namePlaceholder = stringResource(Res.string.settings_trusted_name_placeholder),
+            onDismiss = { editing = null },
+            onSave = {
+                settingsManager.trustedContact = it
+                trusted = settingsManager.trustedContact
+                editing = null
+            }
+        )
+        null -> Unit
+    }
+}
+
+/** iOS: "Name ............ Matteo >". Android: label over value, with an edit button. */
+@Composable
+private fun ValueRow(label: String, value: String, editLabel: String, onClick: () -> Unit) {
+    val isIos = LocalIsIos.current
+    AdaptiveListRow(
+        headline = { Text(label) },
+        supporting = if (isIos) null else ({ Text(value) }),
+        trailing = {
+            if (isIos) {
+                Text(value, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                Icon(AnchorIcons.Edit, contentDescription = editLabel, tint = MaterialTheme.colorScheme.primary)
+            }
+        },
+        onClick = onClick,
+        showChevron = true
+    )
+}
+
+/** iOS: a checkmark on the chosen row. Android: a leading radio button. */
+@Composable
+private fun PatternRow(name: String, description: String, selected: Boolean, onSelect: () -> Unit) {
+    val isIos = LocalIsIos.current
+    AdaptiveListRow(
+        headline = { Text(name) },
+        supporting = { Text(description) },
+        leading = if (isIos) null else ({ RadioButton(selected = selected, onClick = null) }),
+        trailing = if (isIos) ({
+            Box(Modifier.width(20.dp)) {
+                if (selected) Checkmark(MaterialTheme.colorScheme.primary, size = 16.dp, strokeWidth = 2.2.dp)
+            }
+        }) else null,
+        modifier = Modifier.selectable(selected = selected, onClick = onSelect, role = Role.RadioButton)
+    )
+}
+
+@Composable
+private fun ContactRow(
+    label: String,
+    contact: HelpContact?,
+    emptyText: String,
+    caption: String?,
+    onClick: () -> Unit
+) {
+    AdaptiveListRow(
+        headline = { Text(label) },
+        supporting = {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                when {
+                    contact == null -> Text(emptyText)
+                    contact.name.isNotBlank() -> Text("${contact.name} — ${contact.number}")
+                    else -> Text(contact.number)
+                }
+                if (caption != null) Text(caption, style = MaterialTheme.typography.bodySmall)
+            }
+        },
+        onClick = onClick,
+        showChevron = true
+    )
+}
+
+@Composable
+private fun NameSheet(initial: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var name by remember { mutableStateOf(initial) }
+    AdaptiveSheet(
+        title = stringResource(Res.string.settings_name_label),
+        cancelLabel = stringResource(Res.string.common_cancel),
+        confirmLabel = stringResource(Res.string.common_save),
+        confirmEnabled = name.isNotBlank(),
+        onDismiss = onDismiss,
+        onConfirm = { onSave(name) }
+    ) {
+        AdaptiveTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = stringResource(Res.string.settings_name_label),
+            placeholder = stringResource(Res.string.settings_name_placeholder),
+            singleLine = true,
+            showLabel = false
+        )
     }
 }
 
 @Composable
-private fun HelpContactsSection(settingsManager: SettingsManager) {
-    val region = rememberDeviceRegion()
-    val regionalLine = CrisisLines.forRegion(region)
-    var customLine by remember { mutableStateOf(settingsManager.customCrisisLine) }
-    var trusted by remember { mutableStateOf(settingsManager.trustedContact) }
-
-    Text(
-        text = stringResource(Res.string.settings_contacts_title),
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary
-    )
-
-    val custom = customLine
-    ContactSetting(
-        label = stringResource(Res.string.settings_crisis_line_label),
-        current = custom ?: (regionalLine ?: CrisisLines.fallback).contact,
-        caption = when {
-            custom != null -> stringResource(Res.string.settings_crisis_line_custom)
-            regionalLine != null ->
-                stringResource(Res.string.settings_crisis_line_auto, regionalLine.countryName)
-            else -> stringResource(
-                Res.string.settings_crisis_line_auto_fallback,
-                CrisisLines.fallback.countryName
-            )
-        },
-        emptyText = "",
-        namePlaceholder = stringResource(Res.string.settings_crisis_line_name_placeholder),
-        clearLabel = if (custom != null) stringResource(Res.string.settings_crisis_line_reset) else null,
-        onSave = {
-            settingsManager.customCrisisLine = it
-            customLine = settingsManager.customCrisisLine
-        },
-        onClear = {
-            settingsManager.customCrisisLine = null
-            customLine = null
-        }
-    )
-
-    ContactSetting(
-        label = stringResource(Res.string.settings_trusted_label),
-        current = trusted,
-        caption = null,
-        emptyText = stringResource(Res.string.settings_trusted_not_set),
-        namePlaceholder = stringResource(Res.string.settings_trusted_name_placeholder),
-        clearLabel = if (trusted != null) stringResource(Res.string.settings_contact_remove) else null,
-        onSave = {
-            settingsManager.trustedContact = it
-            trusted = settingsManager.trustedContact
-        },
-        onClear = {
-            settingsManager.trustedContact = null
-            trusted = null
-        }
-    )
-
-    Text(
-        text = stringResource(Res.string.settings_contacts_helper),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-}
-
-/** Shows one contact with an edit button; editing swaps in name and number fields. */
-@Composable
-private fun ContactSetting(
-    label: String,
-    current: HelpContact?,
-    caption: String?,
-    emptyText: String,
+private fun ContactSheet(
+    title: String,
+    initial: HelpContact?,
     namePlaceholder: String,
-    clearLabel: String?,
-    onSave: (HelpContact) -> Unit,
-    onClear: () -> Unit
+    onDismiss: () -> Unit,
+    onSave: (HelpContact) -> Unit
 ) {
-    var isEditing by remember { mutableStateOf(false) }
-    var name by remember { mutableStateOf("") }
-    var number by remember { mutableStateOf("") }
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+    var name by remember { mutableStateOf(initial?.name.orEmpty()) }
+    var number by remember { mutableStateOf(initial?.number.orEmpty()) }
+    AdaptiveSheet(
+        title = title,
+        cancelLabel = stringResource(Res.string.common_cancel),
+        confirmLabel = stringResource(Res.string.common_save),
+        confirmEnabled = number.any { it.isDigit() },
+        onDismiss = onDismiss,
+        onConfirm = { onSave(HelpContact(name = name.trim(), number = number.trim())) }
+    ) {
+        AdaptiveTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = stringResource(Res.string.settings_contact_name),
+            placeholder = namePlaceholder,
+            singleLine = true
         )
-
-        if (isEditing) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text(stringResource(Res.string.settings_contact_name)) },
-                placeholder = { Text(namePlaceholder) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            OutlinedTextField(
-                value = number,
-                onValueChange = { number = it },
-                label = { Text(stringResource(Res.string.settings_contact_number)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(onClick = { isEditing = false }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(Res.string.common_cancel))
-                }
-                Button(
-                    onClick = {
-                        onSave(HelpContact(name = name.trim(), number = number.trim()))
-                        isEditing = false
-                    },
-                    enabled = number.any { it.isDigit() },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(Res.string.common_save))
-                }
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    if (current != null) {
-                        if (current.name.isNotBlank()) {
-                            Text(text = current.name, style = MaterialTheme.typography.bodyLarge)
-                        }
-                        Text(
-                            text = current.number,
-                            style = if (current.name.isNotBlank()) MaterialTheme.typography.bodyMedium
-                            else MaterialTheme.typography.bodyLarge
-                        )
-                    } else {
-                        Text(
-                            text = emptyText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    if (caption != null) {
-                        Text(
-                            text = caption,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                IconButton(onClick = {
-                    name = current?.name.orEmpty()
-                    number = current?.number.orEmpty()
-                    isEditing = true
-                }) {
-                    Icon(
-                        AnchorIcons.Edit,
-                        contentDescription = stringResource(Res.string.settings_contact_edit, label),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-            if (clearLabel != null) {
-                TextButton(onClick = onClear) { Text(clearLabel) }
-            }
-        }
+        AdaptiveTextField(
+            value = number,
+            onValueChange = { number = it },
+            label = stringResource(Res.string.settings_contact_number),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+        )
     }
 }

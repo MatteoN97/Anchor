@@ -2,26 +2,38 @@ package ch.bfh.anchor.ui.journal
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
-import ch.bfh.anchor.ui.icons.AnchorIcons
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import ch.bfh.anchor.resources.Res
-import ch.bfh.anchor.resources.*
-import org.jetbrains.compose.resources.stringResource
-import ch.bfh.anchor.platform.formatNoteDate
 import ch.bfh.anchor.model.SessionQuestion
 import ch.bfh.anchor.model.TherapyNote
+import ch.bfh.anchor.platform.formatNoteDate
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.*
+import ch.bfh.anchor.ui.adaptive.AdaptiveCheckbox
+import ch.bfh.anchor.ui.adaptive.AdaptiveListRow
+import ch.bfh.anchor.ui.adaptive.AdaptivePageScaffold
+import ch.bfh.anchor.ui.adaptive.AdaptiveSegmentedControl
+import ch.bfh.anchor.ui.adaptive.AdaptiveTag
+import ch.bfh.anchor.ui.adaptive.AnchorIconButton
+import ch.bfh.anchor.ui.adaptive.PageAction
+import ch.bfh.anchor.ui.adaptive.RowEditActions
+import ch.bfh.anchor.ui.adaptive.SwipeToDelete
+import ch.bfh.anchor.ui.adaptive.adaptiveSection
+import ch.bfh.anchor.ui.adaptive.emptyState
+import ch.bfh.anchor.ui.adaptive.largeTitle
+import ch.bfh.anchor.ui.icons.AnchorIcons
+import ch.bfh.anchor.ui.theme.LocalIsIos
 import ch.bfh.anchor.viewmodel.AnchorViewModel
+import org.jetbrains.compose.resources.stringResource
 
 private enum class JournalTab { Notes, Questions }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JournalScreen(viewModel: AnchorViewModel) {
     val notes by viewModel.notes.collectAsState()
@@ -29,69 +41,88 @@ fun JournalScreen(viewModel: AnchorViewModel) {
     var selectedTab by remember { mutableStateOf(JournalTab.Notes) }
     var showAddSheet by remember { mutableStateOf(false) }
     var noteToEdit by remember { mutableStateOf<TherapyNote?>(null) }
+    val isIos = LocalIsIos.current
+    // One scroll position per tab, so switching back does not jump.
+    val notesListState = rememberLazyListState()
+    val questionsListState = rememberLazyListState()
+    val listState = if (selectedTab == JournalTab.Notes) notesListState else questionsListState
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(stringResource(Res.string.journal_title)) })
-        },
-        floatingActionButton = {
-            if (selectedTab == JournalTab.Notes) {
-                FloatingActionButton(onClick = { showAddSheet = true }) {
-                    Icon(AnchorIcons.Add, contentDescription = stringResource(Res.string.journal_add_note))
-                }
-            }
-        }
+    val title = stringResource(Res.string.journal_title)
+    val strings = JournalStrings(
+        notesEmptyTitle = stringResource(Res.string.journal_empty_title),
+        notesEmptySubtitle = stringResource(Res.string.journal_empty_subtitle),
+        questionsEmptyTitle = stringResource(Res.string.journal_questions_empty_title),
+        questionsEmptySubtitle = stringResource(Res.string.journal_questions_empty_subtitle),
+        toDiscuss = stringResource(Res.string.journal_questions_to_discuss),
+        discussed = stringResource(Res.string.journal_questions_discussed)
+    )
+    val pendingCount = questions.count { !it.answered }
+    val segments: @Composable (Modifier) -> Unit = { modifier ->
+        AdaptiveSegmentedControl(
+            options = listOf(
+                stringResource(Res.string.journal_tab_notes),
+                stringResource(Res.string.journal_tab_questions)
+            ),
+            selectedIndex = selectedTab.ordinal,
+            onSelect = { selectedTab = JournalTab.entries[it] },
+            counts = listOf(null, pendingCount),
+            modifier = modifier
+        )
+    }
+
+    AdaptivePageScaffold(
+        title = title,
+        listState = listState,
+        action = if (selectedTab == JournalTab.Notes) {
+            PageAction(
+                icon = AnchorIcons.Add,
+                label = stringResource(Res.string.journal_add_note),
+                onClick = { showAddSheet = true }
+            )
+        } else null
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(top = padding.calculateTopPadding())
         ) {
-            // Tab bar
-            TabRow(selectedTabIndex = selectedTab.ordinal) {
-                Tab(
-                    selected = selectedTab == JournalTab.Notes,
-                    onClick = { selectedTab = JournalTab.Notes },
-                    text = { Text(stringResource(Res.string.journal_tab_notes)) }
-                )
-                Tab(
-                    selected = selectedTab == JournalTab.Questions,
-                    onClick = { selectedTab = JournalTab.Questions },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(stringResource(Res.string.journal_tab_questions))
-                            val pending = questions.count { !it.answered }
-                            if (pending > 0) {
-                                Badge { Text("$pending") }
-                            }
-                        }
+            // Android pins the tabs under the app bar; iOS scrolls the segmented control with the title.
+            if (!isIos) segments(Modifier)
+
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + 88.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                largeTitle(title)
+                if (isIos) {
+                    item(key = "segments") {
+                        segments(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 20.dp))
                     }
-                )
-            }
+                }
 
-            when (selectedTab) {
-                JournalTab.Notes -> NotesTab(
-                    notes = notes,
-                    onToggleFlag = { note ->
-                        viewModel.updateNote(note.copy(flaggedForNextSession = !note.flaggedForNextSession))
-                    },
-                    onEdit = { noteToEdit = it },
-                    onDelete = { viewModel.deleteNote(it) }
-                )
+                when (selectedTab) {
+                    JournalTab.Notes -> notesTab(
+                        notes = notes,
+                        strings = strings,
+                        onToggleFlag = { note ->
+                            viewModel.updateNote(note.copy(flaggedForNextSession = !note.flaggedForNextSession))
+                        },
+                        onEdit = { noteToEdit = it },
+                        onDelete = { viewModel.deleteNote(it) }
+                    )
 
-                JournalTab.Questions -> QuestionsTab(
-                    questions = questions,
-                    onToggle = { viewModel.toggleSessionQuestion(it) },
-                    onDelete = { viewModel.deleteSessionQuestion(it) }
-                )
+                    JournalTab.Questions -> questionsTab(
+                        questions = questions,
+                        strings = strings,
+                        onToggle = { viewModel.toggleSessionQuestion(it) },
+                        onDelete = { viewModel.deleteSessionQuestion(it) }
+                    )
+                }
             }
         }
     }
 
-    // Add note sheet
     if (showAddSheet) {
         NoteSheet(
             onDismiss = { showAddSheet = false },
@@ -103,7 +134,6 @@ fun JournalScreen(viewModel: AnchorViewModel) {
         )
     }
 
-    // Edit note sheet
     noteToEdit?.let { note ->
         NoteSheet(
             existingNote = note,
@@ -117,131 +147,117 @@ fun JournalScreen(viewModel: AnchorViewModel) {
     }
 }
 
+/** Text the list builders need; resolved in composition because LazyListScope is not composable. */
+private class JournalStrings(
+    val notesEmptyTitle: String,
+    val notesEmptySubtitle: String,
+    val questionsEmptyTitle: String,
+    val questionsEmptySubtitle: String,
+    val toDiscuss: String,
+    val discussed: String
+)
+
 // ── Notes tab ────────────────────────────────────────────────────────────────
 
-@Composable
-private fun NotesTab(
+private fun LazyListScope.notesTab(
     notes: List<TherapyNote>,
+    strings: JournalStrings,
     onToggleFlag: (TherapyNote) -> Unit,
     onEdit: (TherapyNote) -> Unit,
     onDelete: (TherapyNote) -> Unit
 ) {
     if (notes.isEmpty()) {
-        EmptyState(
-            title = stringResource(Res.string.journal_empty_title),
-            subtitle = stringResource(Res.string.journal_empty_subtitle)
-        )
-    } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(notes, key = { it.id }) { note ->
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = note.body,
-                            style = MaterialTheme.typography.bodyLarge,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    supportingContent = {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = formatNoteDate(note.date),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            if (note.tags.isNotEmpty()) {
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    note.tags.forEach { tag ->
-                                        SuggestionChip(
-                                            onClick = {},
-                                            label = { Text(tag, style = MaterialTheme.typography.labelSmall) }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    leadingContent = {
-                        IconButton(onClick = { onToggleFlag(note) }) {
-                            Icon(
-                                imageVector = if (note.flaggedForNextSession) AnchorIcons.Bookmark
-                                else AnchorIcons.BookmarkBorder,
-                                contentDescription = if (note.flaggedForNextSession)
-                                    stringResource(Res.string.journal_flagged)
-                                else stringResource(Res.string.journal_not_flagged),
-                                tint = if (note.flaggedForNextSession)
-                                    MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.outlineVariant
-                            )
-                        }
-                    },
-                    trailingContent = {
-                        Row {
-                            IconButton(onClick = { onEdit(note) }) {
-                                Icon(AnchorIcons.Edit, contentDescription = stringResource(Res.string.common_edit),
-                                    tint = MaterialTheme.colorScheme.primary)
-                            }
-                            IconButton(onClick = { onDelete(note) }) {
-                                Icon(AnchorIcons.Delete, contentDescription = stringResource(Res.string.common_delete),
-                                    tint = MaterialTheme.colorScheme.error)
-                            }
+        emptyState(strings.notesEmptyTitle, strings.notesEmptySubtitle)
+        return
+    }
+    adaptiveSection(items = notes, key = { it.id }, separatorInset = 60.dp) { note ->
+        NoteRow(note, onToggleFlag, onEdit, onDelete)
+    }
+}
+
+@Composable
+private fun NoteRow(
+    note: TherapyNote,
+    onToggleFlag: (TherapyNote) -> Unit,
+    onEdit: (TherapyNote) -> Unit,
+    onDelete: (TherapyNote) -> Unit
+) {
+    val isIos = LocalIsIos.current
+    val deleteLabel = stringResource(Res.string.common_delete)
+    SwipeToDelete(onDelete = { onDelete(note) }, deleteLabel = deleteLabel) {
+        AdaptiveListRow(
+            headline = {
+                Text(
+                    text = note.body,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            supporting = {
+                Column(verticalArrangement = Arrangement.spacedBy(if (isIos) 6.dp else 4.dp)) {
+                    Text(
+                        text = formatNoteDate(note.date),
+                        style = if (isIos) MaterialTheme.typography.bodySmall else MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (note.tags.isNotEmpty()) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(if (isIos) 6.dp else 4.dp)) {
+                            note.tags.forEach { tag -> AdaptiveTag(tag) }
                         }
                     }
+                }
+            },
+            leading = {
+                AnchorIconButton(onClick = { onToggleFlag(note) }) {
+                    Icon(
+                        imageVector = if (note.flaggedForNextSession) AnchorIcons.Bookmark
+                        else AnchorIcons.BookmarkBorder,
+                        contentDescription = if (note.flaggedForNextSession)
+                            stringResource(Res.string.journal_flagged)
+                        else stringResource(Res.string.journal_not_flagged),
+                        tint = if (note.flaggedForNextSession) MaterialTheme.colorScheme.primary
+                        else if (isIos) MaterialTheme.colorScheme.outline
+                        else MaterialTheme.colorScheme.outlineVariant
+                    )
+                }
+            },
+            trailing = {
+                RowEditActions(
+                    onEdit = { onEdit(note) },
+                    onDelete = { onDelete(note) },
+                    editLabel = stringResource(Res.string.common_edit),
+                    deleteLabel = deleteLabel
                 )
-                HorizontalDivider()
-            }
-        }
+            },
+            onClick = if (isIos) ({ onEdit(note) }) else null
+        )
     }
 }
 
 // ── Questions tab ─────────────────────────────────────────────────────────────
 
-@Composable
-private fun QuestionsTab(
+private fun LazyListScope.questionsTab(
     questions: List<SessionQuestion>,
+    strings: JournalStrings,
     onToggle: (SessionQuestion) -> Unit,
     onDelete: (SessionQuestion) -> Unit
 ) {
     if (questions.isEmpty()) {
-        EmptyState(
-            title = stringResource(Res.string.journal_questions_empty_title),
-            subtitle = stringResource(Res.string.journal_questions_empty_subtitle)
-        )
-    } else {
-        val pending = questions.filter { !it.answered }
-        val answered = questions.filter { it.answered }
+        emptyState(strings.questionsEmptyTitle, strings.questionsEmptySubtitle)
+        return
+    }
+    val pending = questions.filter { !it.answered }
+    val answered = questions.filter { it.answered }
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            if (pending.isNotEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(Res.string.journal_questions_to_discuss),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-                }
-                items(pending, key = { it.id }) { question ->
-                    QuestionRow(question = question, onToggle = onToggle, onDelete = onDelete)
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
-                }
-            }
-
-            if (answered.isNotEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(Res.string.journal_questions_discussed),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-                }
-                items(answered, key = { it.id }) { question ->
-                    QuestionRow(question = question, onToggle = onToggle, onDelete = onDelete)
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
-                }
-            }
+    if (pending.isNotEmpty()) {
+        adaptiveSection(items = pending, key = { it.id }, header = strings.toDiscuss, separatorInset = 60.dp) { question ->
+            QuestionRow(question = question, onToggle = onToggle, onDelete = onDelete)
+        }
+    }
+    if (answered.isNotEmpty()) {
+        adaptiveSection(items = answered, key = { it.id }, header = strings.discussed, separatorInset = 60.dp) { question ->
+            QuestionRow(question = question, onToggle = onToggle, onDelete = onDelete)
         }
     }
 }
@@ -252,51 +268,30 @@ private fun QuestionRow(
     onToggle: (SessionQuestion) -> Unit,
     onDelete: (SessionQuestion) -> Unit
 ) {
-    ListItem(
-        headlineContent = {
-            Text(
-                text = question.text,
-                style = if (question.answered)
-                    MaterialTheme.typography.bodyLarge.copy(textDecoration = TextDecoration.LineThrough)
-                else MaterialTheme.typography.bodyLarge,
-                color = if (question.answered) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface
-            )
-        },
-        leadingContent = {
-            Checkbox(
-                checked = question.answered,
-                onCheckedChange = { onToggle(question) }
-            )
-        },
-        trailingContent = {
-            IconButton(onClick = { onDelete(question) }) {
-                Icon(
-                    AnchorIcons.Delete,
-                    contentDescription = stringResource(Res.string.common_delete),
-                    tint = MaterialTheme.colorScheme.error
+    val deleteLabel = stringResource(Res.string.common_delete)
+    SwipeToDelete(onDelete = { onDelete(question) }, deleteLabel = deleteLabel) {
+        AdaptiveListRow(
+            headline = {
+                Text(
+                    text = question.text,
+                    style = if (question.answered)
+                        MaterialTheme.typography.bodyLarge.copy(textDecoration = TextDecoration.LineThrough)
+                    else MaterialTheme.typography.bodyLarge,
+                    color = if (question.answered) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurface
+                )
+            },
+            leading = {
+                AdaptiveCheckbox(checked = question.answered, onCheckedChange = { onToggle(question) })
+            },
+            trailing = {
+                RowEditActions(
+                    onEdit = null,
+                    onDelete = { onDelete(question) },
+                    editLabel = "",
+                    deleteLabel = deleteLabel
                 )
             }
-        }
-    )
-}
-
-// ── Shared ────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun EmptyState(title: String, subtitle: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(text = title, style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(text = subtitle, style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        )
     }
 }

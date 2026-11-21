@@ -15,7 +15,11 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import ch.bfh.anchor.platform.daysSince
 import ch.bfh.anchor.settings.SettingsManager
+import ch.bfh.anchor.ui.adaptive.AnchorButton
+import ch.bfh.anchor.ui.adaptive.AnchorCardButton
+import ch.bfh.anchor.ui.adaptive.Chevron
 import ch.bfh.anchor.ui.icons.AnchorIcons
+import ch.bfh.anchor.ui.theme.LocalIsIos
 import ch.bfh.anchor.ui.theme.AnchorTheme
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 
@@ -67,7 +71,7 @@ private fun HomeScreenContent(
     onSosClick: () -> Unit,
     onBreathingClick: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -146,15 +150,13 @@ private fun HomeScreenContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
-                Button(
+                AnchorButton(
                     onClick = onSosClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    ),
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
                     shape = MaterialTheme.shapes.large
                 ) {
                     Text(
@@ -171,10 +173,11 @@ private fun HomeScreenContent(
 
 @Composable
 private fun BreathingCard(onClick: () -> Unit) {
-    Surface(
+    AnchorCardButton(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+        color = if (LocalIsIos.current) MaterialTheme.colorScheme.surfaceVariant
+        else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
         shape = MaterialTheme.shapes.large
     ) {
         Row(
@@ -196,11 +199,15 @@ private fun BreathingCard(onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(
-                imageVector = AnchorIcons.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
+            if (LocalIsIos.current) {
+                Chevron()
+            } else {
+                Icon(
+                    imageVector = AnchorIcons.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
@@ -209,7 +216,12 @@ private fun BreathingCard(onClick: () -> Unit) {
 private fun StatCard(label: String, value: Int, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            // On iOS surfaceVariant is a white cell whose text is the primary label colour.
+            contentColor = if (LocalIsIos.current) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurfaceVariant
+        )
     ) {
         Column(
             modifier = Modifier

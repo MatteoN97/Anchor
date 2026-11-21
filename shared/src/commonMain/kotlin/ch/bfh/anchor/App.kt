@@ -1,15 +1,26 @@
 package ch.bfh.anchor
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.IntOffset
+import androidx.navigation.NavGraphBuilder
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -26,6 +37,8 @@ import ch.bfh.anchor.resources.tab_journal
 import ch.bfh.anchor.resources.tab_settings
 import ch.bfh.anchor.resources.tab_toolkit
 import ch.bfh.anchor.settings.SettingsManager
+import ch.bfh.anchor.ui.adaptive.AdaptiveTabBar
+import ch.bfh.anchor.ui.adaptive.TabItem
 import ch.bfh.anchor.ui.breathing.BreathingPracticeScreen
 import ch.bfh.anchor.ui.crisis.CrisisScreen
 import ch.bfh.anchor.ui.home.HomeScreen
@@ -33,6 +46,7 @@ import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.ui.journal.JournalScreen
 import ch.bfh.anchor.ui.settings.SettingsScreen
 import ch.bfh.anchor.ui.theme.AnchorTheme
+import ch.bfh.anchor.ui.theme.LocalIsIos
 import ch.bfh.anchor.ui.toolkit.ToolkitScreen
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 import org.jetbrains.compose.resources.StringResource
@@ -54,6 +68,7 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val isIos = LocalIsIos.current
 
     // The crisis flow and the breathing practice are destinations of their own and own the whole
     // screen, so the bottom bar is gone while either is open: nothing to tap through, and the
@@ -65,12 +80,23 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
             if (showBottomBar) {
                 AnchorBottomBar(currentRoute = currentRoute, navController = navController)
             }
-        }
+        },
+        // Each screen draws its own top bar or status-bar padding, so its background can run up
+        // behind the status bar. The bottom and sides are handled here.
+        contentWindowInsets = WindowInsets.safeDrawing.only(
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+        )
     ) { padding ->
         NavHost(
             navController = navController,
             startDestination = AnchorTab.Home.route,
-            modifier = Modifier.padding(padding)
+            modifier = Modifier
+                .padding(padding)
+                // Without this, screens with their own Scaffold added the insets a second time.
+                .consumeWindowInsets(padding),
+            // iOS switches tabs instantly; Android keeps navigation-compose's default cross-fade.
+            enterTransition = { if (isIos) EnterTransition.None else fadeIn(tween(700)) },
+            exitTransition = { if (isIos) ExitTransition.None else fadeOut(tween(700)) }
         ) {
             composable(AnchorTab.Home.route) {
                 HomeScreen(
@@ -80,7 +106,7 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
                     onBreathingClick = { navController.navigate(ROUTE_BREATHING) }
                 )
             }
-            composable(ROUTE_CRISIS) {
+            modalComposable(ROUTE_CRISIS, isIos) {
                 val region = rememberDeviceRegion()
                 CrisisScreen(
                     onDismiss = { navController.popBackStack() },
@@ -90,7 +116,7 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
                     trustedContact = settingsManager.trustedContact
                 )
             }
-            composable(ROUTE_BREATHING) {
+            modalComposable(ROUTE_BREATHING, isIos) {
                 BreathingPracticeScreen(onDismiss = { navController.popBackStack() })
             }
             composable(AnchorTab.Toolkit.route) { ToolkitScreen(viewModel = vm) }
@@ -98,6 +124,27 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
             composable(AnchorTab.Settings.route) { SettingsScreen(settingsManager = settingsManager) }
         }
     }
+}
+
+/**
+ * A full-screen destination. On iOS it slides up over the tab and back down when closed, like a
+ * full-screen modal; on Android it uses the NavHost defaults.
+ */
+private fun NavGraphBuilder.modalComposable(
+    route: String,
+    isIos: Boolean,
+    content: @Composable () -> Unit
+) {
+    if (!isIos) {
+        composable(route) { content() }
+        return
+    }
+    val slide = tween<IntOffset>(durationMillis = 400, easing = FastOutSlowInEasing)
+    composable(
+        route,
+        enterTransition = { slideInVertically(slide) { it } },
+        popExitTransition = { slideOutVertically(slide) { it } }
+    ) { content() }
 }
 
 /**
@@ -116,23 +163,18 @@ private enum class AnchorTab(
 
 @Composable
 private fun AnchorBottomBar(currentRoute: String?, navController: NavHostController) {
-    NavigationBar {
-        AnchorTab.entries.forEach { tab ->
-            val label = stringResource(tab.labelRes)
-            NavigationBarItem(
-                selected = currentRoute == tab.route,
-                onClick = {
-                    navController.navigate(tab.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                icon = { Icon(tab.icon, contentDescription = label) },
-                label = { Text(label) }
-            )
+    val tabs = AnchorTab.entries.map { TabItem(label = stringResource(it.labelRes), icon = it.icon) }
+    AdaptiveTabBar(
+        tabs = tabs,
+        selectedIndex = AnchorTab.entries.indexOfFirst { it.route == currentRoute },
+        onSelect = { index ->
+            navController.navigate(AnchorTab.entries[index].route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
         }
-    }
+    )
 }

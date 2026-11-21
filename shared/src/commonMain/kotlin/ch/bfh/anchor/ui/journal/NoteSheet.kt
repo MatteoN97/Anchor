@@ -1,8 +1,8 @@
 package ch.bfh.anchor.ui.journal
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import androidx.compose.runtime.*
@@ -16,8 +16,14 @@ import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
 import org.jetbrains.compose.resources.stringResource
 import ch.bfh.anchor.model.TherapyNote
+import ch.bfh.anchor.ui.adaptive.AdaptiveFilterChip
+import ch.bfh.anchor.ui.adaptive.AdaptiveSheet
+import ch.bfh.anchor.ui.adaptive.AdaptiveSwitch
+import ch.bfh.anchor.ui.adaptive.AdaptiveTextField
+import ch.bfh.anchor.ui.adaptive.AnchorIconButton
+import ch.bfh.anchor.ui.theme.LocalIsIos
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NoteSheet(
     onDismiss: () -> Unit,
@@ -45,139 +51,101 @@ fun NoteSheet(
         stringResource(Res.string.journal_tag_progress)
     )
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+    val isIos = LocalIsIos.current
+
+    AdaptiveSheet(
+        title = if (existingNote != null) stringResource(Res.string.journal_edit_note)
+        else stringResource(Res.string.journal_new_note),
+        cancelLabel = stringResource(Res.string.common_cancel),
+        confirmLabel = stringResource(Res.string.common_save),
+        confirmEnabled = body.isNotBlank(),
+        onDismiss = onDismiss,
+        onConfirm = { onSave(body.trim(), selectedTags.toList(), flagged, newQuestions.toList()) }
+    ) {
+        AdaptiveTextField(
+            value = body,
+            onValueChange = { body = it },
+            label = stringResource(Res.string.journal_note_body_label),
+            minLines = 4,
+            maxLines = 10,
+            // iOS shows the field's purpose as its placeholder, the sheet title already names it.
+            showLabel = !isIos
+        )
+
+        // Tags
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SheetSectionTitle(stringResource(Res.string.journal_tags_title))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(Res.string.common_cancel))
-                }
-                Text(
-                    text = if (existingNote != null) stringResource(Res.string.journal_edit_note)
-                    else stringResource(Res.string.journal_new_note),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                TextButton(
-                    onClick = { onSave(body.trim(), selectedTags.toList(), flagged, newQuestions.toList()) },
-                    enabled = body.isNotBlank()
-                ) {
-                    Text(
-                        text = stringResource(Res.string.common_save),
-                        color = if (body.isNotBlank()) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                availableTags.forEach { tag ->
+                    AdaptiveFilterChip(
+                        selected = tag in selectedTags,
+                        onClick = {
+                            if (tag in selectedTags) selectedTags.remove(tag)
+                            else selectedTags.add(tag)
+                        },
+                        label = tag
                     )
                 }
             }
+        }
 
-            // Note body
-            OutlinedTextField(
-                value = body,
-                onValueChange = { body = it },
-                label = { Text(stringResource(Res.string.journal_note_body_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 4,
-                maxLines = 10
-            )
+        if (!isIos) HorizontalDivider()
 
-            // Tags
+        // Questions for next session
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SheetSectionTitle(stringResource(Res.string.journal_questions_title))
             Text(
-                text = stringResource(Res.string.journal_tags_title),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = stringResource(Res.string.journal_questions_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = if (isIos) Modifier.padding(horizontal = 16.dp) else Modifier
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                availableTags.chunked(3).forEach { rowTags ->
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        rowTags.forEach { tag ->
-                            FilterChip(
-                                selected = tag in selectedTags,
-                                onClick = {
-                                    if (tag in selectedTags) selectedTags.remove(tag)
-                                    else selectedTags.add(tag)
-                                },
-                                label = { Text(tag, style = MaterialTheme.typography.labelMedium) }
+
+            newQuestions.forEachIndexed { index, question ->
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = question,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        AnchorIconButton(onClick = { newQuestions.removeAt(index) }) {
+                            Icon(
+                                imageVector = AnchorIcons.Close,
+                                contentDescription = stringResource(Res.string.journal_question_remove),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                 }
             }
 
-            HorizontalDivider()
-
-            // Questions for next session
-            Text(
-                text = stringResource(Res.string.journal_questions_title),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(Res.string.journal_questions_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // Already-queued questions for this note
-            if (newQuestions.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    newQuestions.forEachIndexed { index, question ->
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = MaterialTheme.shapes.small,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = question,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                IconButton(
-                                    onClick = { newQuestions.removeAt(index) },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = AnchorIcons.Close,
-                                        contentDescription = stringResource(Res.string.journal_question_remove),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Input row to add a new question
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                OutlinedTextField(
+                AdaptiveTextField(
                     value = questionDraft,
                     onValueChange = { questionDraft = it },
-                    placeholder = { Text(stringResource(Res.string.journal_question_placeholder)) },
+                    label = stringResource(Res.string.journal_question_placeholder),
+                    showLabel = false,
+                    singleLine = true,
                     modifier = Modifier
                         .weight(1f)
-                        .focusRequester(questionFocusRequester),
-                    singleLine = true
+                        .focusRequester(questionFocusRequester)
                 )
                 FilledIconButton(
                     onClick = {
@@ -195,29 +163,55 @@ fun NoteSheet(
                     )
                 }
             }
-
-            HorizontalDivider()
-
-            // Flag for next session
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(Res.string.journal_next_session_title),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    Text(
-                        text = stringResource(Res.string.journal_next_session_subtitle),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Switch(checked = flagged, onCheckedChange = { flagged = it })
-            }
         }
+
+        if (!isIos) HorizontalDivider()
+
+        // Flag for next session: a switch row, on iOS in its own white cell like a Form toggle.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (isIos) Modifier
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                    else Modifier
+                )
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(Res.string.journal_next_session_title),
+                    style = if (isIos) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = stringResource(Res.string.journal_next_session_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            AdaptiveSwitch(checked = flagged, onCheckedChange = { flagged = it })
+        }
+    }
+}
+
+@Composable
+private fun SheetSectionTitle(text: String) {
+    if (LocalIsIos.current) {
+        Text(
+            text = text.uppercase(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+    } else {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

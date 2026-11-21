@@ -11,6 +11,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.HelpContact
 import ch.bfh.anchor.platform.rememberPhoneDialer
+import ch.bfh.anchor.ui.adaptive.AnchorButton
+import ch.bfh.anchor.ui.adaptive.AnchorCardButton
+import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
 import org.jetbrains.compose.resources.StringResource
@@ -99,7 +102,7 @@ private fun CheckInContent(
         ) {
             checkInOptions.forEach { (rating, emoji, labelRes) ->
                 val selected = selectedRating == rating
-                Surface(
+                AnchorCardButton(
                     onClick = { onRatingSelected(rating) },
                     modifier = Modifier.weight(1f),
                     color = if (selected) MaterialTheme.colorScheme.primary
@@ -123,7 +126,7 @@ private fun CheckInContent(
             }
         }
 
-        Button(
+        AnchorButton(
             onClick = onDone,
             enabled = selectedRating != null,
             modifier = Modifier
@@ -171,7 +174,7 @@ private fun NeedMoreHelpContent(
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // Go again
-            Surface(
+            AnchorCardButton(
                 onClick = onGoAgain,
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surfaceVariant,
@@ -219,7 +222,7 @@ private fun NeedMoreHelpContent(
                 onClick = { dialPhoneNumber(crisisLine.number) }
             )
 
-            TextButton(
+            AnchorTextButton(
                 onClick = onDone,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
@@ -240,7 +243,7 @@ private fun CallCard(
     contentColor: Color,
     onClick: () -> Unit
 ) {
-    Surface(
+    AnchorCardButton(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         color = containerColor,

@@ -20,6 +20,8 @@ import ch.bfh.anchor.resources.crisis_suggestions_added
 import ch.bfh.anchor.resources.crisis_suggestions_badge
 import ch.bfh.anchor.resources.crisis_suggestions_subtitle_feeling
 import ch.bfh.anchor.resources.crisis_suggestions_title
+import ch.bfh.anchor.ui.adaptive.AnchorButton
+import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 import org.jetbrains.compose.resources.stringResource
 
@@ -97,7 +99,7 @@ fun SuggestedToolsScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Button(
+        AnchorButton(
             onClick = onFinished,
             modifier = Modifier
                 .fillMaxWidth()
@@ -168,7 +170,7 @@ private fun SuggestedToolCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    TextButton(onClick = onAdd, contentPadding = PaddingValues(0.dp)) {
+                    AnchorTextButton(onClick = onAdd, contentPadding = PaddingValues(0.dp)) {
                         Text(
                             text = stringResource(Res.string.crisis_suggestions_add),
                             style = MaterialTheme.typography.labelMedium
