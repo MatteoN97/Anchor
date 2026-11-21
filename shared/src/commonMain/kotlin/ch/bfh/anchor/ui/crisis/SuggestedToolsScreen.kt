@@ -20,7 +20,9 @@ import ch.bfh.anchor.resources.crisis_suggestions_added
 import ch.bfh.anchor.resources.crisis_suggestions_badge
 import ch.bfh.anchor.resources.crisis_suggestions_subtitle_feeling
 import ch.bfh.anchor.resources.crisis_suggestions_title
+import androidx.compose.foundation.shape.CircleShape
 import ch.bfh.anchor.ui.adaptive.AnchorButton
+import ch.bfh.anchor.ui.components.calmCardColor
 import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -61,7 +63,7 @@ fun SuggestedToolsScreen(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(60.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -69,8 +71,7 @@ fun SuggestedToolsScreen(
         ) {
             Text(
                 text = stringResource(Res.string.crisis_suggestions_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.headlineMedium
             )
             Text(
                 text = stringResource(
@@ -104,7 +105,7 @@ fun SuggestedToolsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = MaterialTheme.shapes.large
+            shape = CircleShape
         ) {
             Text(
                 text = stringResource(Res.string.common_continue),
@@ -125,11 +126,11 @@ private fun SuggestedToolCard(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = MaterialTheme.shapes.medium
+        color = calmCardColor(),
+        shape = MaterialTheme.shapes.large
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(

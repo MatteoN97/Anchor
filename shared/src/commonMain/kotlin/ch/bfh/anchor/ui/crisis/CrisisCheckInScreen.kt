@@ -13,7 +13,9 @@ import ch.bfh.anchor.model.HelpContact
 import ch.bfh.anchor.model.MoodScale
 import ch.bfh.anchor.ui.mood.MoodChoices
 import ch.bfh.anchor.platform.rememberPhoneDialer
+import androidx.compose.foundation.shape.CircleShape
 import ch.bfh.anchor.ui.adaptive.AnchorButton
+import ch.bfh.anchor.ui.components.calmCardColor
 import ch.bfh.anchor.ui.adaptive.AnchorCardButton
 import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.resources.Res
@@ -81,8 +83,7 @@ private fun CheckInContent(
         ) {
             Text(
                 text = stringResource(Res.string.crisis_checkin_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center
             )
             Text(
@@ -106,7 +107,7 @@ private fun CheckInContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = MaterialTheme.shapes.large
+            shape = CircleShape
         ) {
             Text(
                 text = stringResource(Res.string.common_done),
@@ -135,8 +136,8 @@ private fun NeedMoreHelpContent(
         ) {
             Text(
                 text = stringResource(Res.string.crisis_help_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center
             )
             Text(
                 text = stringResource(Res.string.crisis_help_subtitle),
@@ -151,11 +152,11 @@ private fun NeedMoreHelpContent(
             AnchorCardButton(
                 onClick = onGoAgain,
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = MaterialTheme.shapes.medium
+                color = calmCardColor(),
+                shape = MaterialTheme.shapes.large
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {

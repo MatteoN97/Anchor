@@ -17,9 +17,11 @@ import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
 import ch.bfh.anchor.ui.adaptive.AnchorButton
 import ch.bfh.anchor.ui.adaptive.AnchorCardButton
-import ch.bfh.anchor.ui.adaptive.AnchorIconButton
+import androidx.compose.foundation.shape.CircleShape
+import ch.bfh.anchor.ui.components.CloseButton
+import ch.bfh.anchor.ui.components.calmBackdrop
+import ch.bfh.anchor.ui.components.calmCardColor
 import ch.bfh.anchor.ui.adaptive.AnchorTextButton
-import ch.bfh.anchor.ui.icons.AnchorIcons
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -33,10 +35,7 @@ fun BreathingPracticeScreen(onDismiss: () -> Unit) {
     // Bumped by "A few more" so the exercise restarts from scratch.
     var round by rememberSaveable { mutableIntStateOf(0) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    Box(modifier = Modifier.fillMaxSize().calmBackdrop(strength = 0.8f, reach = 0.6f)) {
         Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))) {
             when (step) {
                 PracticeStep.Choose -> PatternChooser(
@@ -63,24 +62,12 @@ fun BreathingPracticeScreen(onDismiss: () -> Unit) {
                 )
             }
 
-            AnchorIconButton(
+            CloseButton(
                 onClick = onDismiss,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(16.dp)
-            ) {
-                Surface(
-                    shape = MaterialTheme.shapes.extraLarge,
-                    color = MaterialTheme.colorScheme.surfaceVariant
-                ) {
-                    Icon(
-                        imageVector = AnchorIcons.Close,
-                        contentDescription = stringResource(Res.string.common_dismiss),
-                        modifier = Modifier.padding(8.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+                    .padding(8.dp)
+            )
         }
     }
 }
@@ -104,8 +91,7 @@ private fun PatternChooser(
         ) {
             Text(
                 text = stringResource(Res.string.breathing_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.headlineMedium
             )
             Text(
                 text = stringResource(Res.string.breathing_choose_subtitle),
@@ -124,8 +110,8 @@ private fun PatternChooser(
                     selected = isSelected,
                     onClick = { onSelect(pattern) },
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.medium,
+                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else calmCardColor(),
+                    shape = MaterialTheme.shapes.large,
                     border = if (isSelected) {
                         BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                     } else null
@@ -167,7 +153,7 @@ private fun PatternChooser(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = MaterialTheme.shapes.large
+            shape = CircleShape
         ) {
             Text(
                 text = stringResource(Res.string.breathing_start),
@@ -188,8 +174,7 @@ private fun FinishedContent(onDone: () -> Unit, onMore: () -> Unit) {
     ) {
         Text(
             text = stringResource(Res.string.breathing_finished_title),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -205,7 +190,7 @@ private fun FinishedContent(onDone: () -> Unit, onMore: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = MaterialTheme.shapes.large
+            shape = CircleShape
         ) {
             Text(stringResource(Res.string.common_done), style = MaterialTheme.typography.titleMedium)
         }
