@@ -76,6 +76,7 @@
     <string name="crisis_suggestions_subtitle_feeling">Here are some things that might help with feeling %1$s.</string>
     <string name="crisis_suggestions_badge">Suggested</string>
     <string name="crisis_suggestions_add">+ Add to my toolkit</string>
+    <string name="crisis_suggestions_added">In your toolkit</string>
     <string name="crisis_checkin_title">How are you feeling now?</string>
     <string name="crisis_checkin_subtitle">Be honest — this is just for you.</string>
     <string name="crisis_checkin_great">Great</string>
