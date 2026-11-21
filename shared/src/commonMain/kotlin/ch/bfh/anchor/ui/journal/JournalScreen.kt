@@ -1,6 +1,7 @@
 package ch.bfh.anchor.ui.journal
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -185,7 +186,7 @@ private fun NoteCard(
                 Column(Modifier.padding(start = 18.dp, end = 6.dp, top = 6.dp, bottom = 16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = formatNoteDate(note.date).uppercase(),
+                            text = formatNoteDate(note.date, Locale.current.language).uppercase(),
                             style = MaterialTheme.typography.labelMedium,
                             color = colors.primary,
                             modifier = Modifier.weight(1f)

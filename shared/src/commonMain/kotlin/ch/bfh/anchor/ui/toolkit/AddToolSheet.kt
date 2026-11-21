@@ -2,6 +2,7 @@ package ch.bfh.anchor.ui.toolkit
 
 import androidx.compose.runtime.*
 import ch.bfh.anchor.model.CopingTool
+import ch.bfh.anchor.model.ToolCategory
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
 import androidx.compose.foundation.layout.Arrangement
@@ -25,19 +26,12 @@ fun AddToolSheet(
     onSave: (name: String, category: String, description: String) -> Unit,
     existingTool: CopingTool? = null
 ) {
-    val defaultCategory = stringResource(Res.string.tool_category_breathing)
     var name by remember { mutableStateOf(existingTool?.name ?: "") }
-    var category by remember { mutableStateOf(existingTool?.category ?: defaultCategory) }
+    // Holds the category key; only the picker shows the translated label.
+    var category by remember { mutableStateOf(existingTool?.category ?: ToolCategory.Breathing.key) }
     var description by remember { mutableStateOf(existingTool?.description ?: "") }
 
-    val categories = listOf(
-        stringResource(Res.string.tool_category_breathing),
-        stringResource(Res.string.tool_category_physical),
-        stringResource(Res.string.tool_category_social),
-        stringResource(Res.string.tool_category_grounding),
-        stringResource(Res.string.tool_category_creative),
-        stringResource(Res.string.tool_category_other)
-    )
+    val labels = ToolCategory.entries.associate { it.key to stringResource(it.labelRes) }
 
     AdaptiveSheet(
         title = if (existingTool != null) stringResource(Res.string.toolkit_edit_tool)
@@ -68,11 +62,12 @@ fun AddToolSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                categories.forEach { option ->
+                // Selects and stores the stable key; only the label is translated.
+                ToolCategory.entries.forEach { option ->
                     AdaptiveFilterChip(
-                        selected = option == category,
-                        onClick = { category = option },
-                        label = option
+                        selected = option.key == category,
+                        onClick = { category = option.key },
+                        label = labels.getValue(option.key)
                     )
                 }
             }
@@ -88,3 +83,8 @@ fun AddToolSheet(
         )
     }
 }
+
+/** A tool's category in the user's language; categories the app does not know are shown as stored. */
+@Composable
+fun categoryLabel(key: String): String =
+    ToolCategory.fromKey(key)?.let { stringResource(it.labelRes) } ?: key

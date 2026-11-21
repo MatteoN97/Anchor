@@ -41,13 +41,21 @@ fun SuggestedToolsScreen(
     // tapped "add to my toolkit": the new tool changed what suggestionsFor returns, so the row
     // being tapped could move or disappear. The only recompute allowed is the first list to
     // arrive from the database, in case this screen opened before that happened.
+    // Built-in techniques in the current language; resolved here because the picking below
+    // happens outside composition.
+    val builtInNames = BuiltInTools.all.associate { it.id to stringResource(it.nameRes) }
+    val builtInDescriptions = BuiltInTools.all.associate { it.id to stringResource(it.descriptionRes) }
+    val resolve: (BuiltInTools.Definition) -> CopingTool = { definition ->
+        definition.toTool(builtInNames.getValue(definition.id), builtInDescriptions.getValue(definition.id))
+    }
+
     var suggestions by remember(feeling) {
-        mutableStateOf(BuiltInTools.suggestionsFor(feeling, tools))
+        mutableStateOf(BuiltInTools.suggestionsFor(feeling, tools, resolve))
     }
     var pickedFromStoredTools by remember(feeling) { mutableStateOf(tools.isNotEmpty()) }
     LaunchedEffect(feeling, tools) {
         if (!pickedFromStoredTools && tools.isNotEmpty()) {
-            suggestions = BuiltInTools.suggestionsFor(feeling, tools)
+            suggestions = BuiltInTools.suggestionsFor(feeling, tools, resolve)
             pickedFromStoredTools = true
         }
     }

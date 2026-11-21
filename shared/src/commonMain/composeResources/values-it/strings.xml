@@ -1,0 +1,299 @@
+<resources>
+    <string name="app_name">Anchor</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_toolkit">Strumenti</string>
+    <string name="tab_journal">Diario</string>
+    <string name="tab_settings">Impostazioni</string>
+    <string name="home_tagline">Non sei solo/a.</string>
+    <string name="home_sos_button">Ho bisogno di aiuto ora</string>
+    <string name="home_overwhelmed">Ti senti sopraffatto/a?</string>
+    <string name="toolkit_title">I miei strumenti</string>
+    <string name="toolkit_add_tool">Aggiungi strumento</string>
+    <string name="toolkit_new_tool">Nuovo strumento</string>
+    <string name="toolkit_edit_tool">Modifica strumento</string>
+    <string name="toolkit_name_label">Nome</string>
+    <string name="toolkit_name_placeholder">es. Respirazione quadrata</string>
+    <string name="toolkit_category_label">Categoria</string>
+    <string name="toolkit_description_label">Descrizione</string>
+    <string name="toolkit_description_placeholder">Nota o istruzioni (facoltativo)</string>
+    <string name="toolkit_empty_title">La tua cassetta degli attrezzi è vuota</string>
+    <string name="toolkit_empty_subtitle">Tocca + per aggiungere qualcosa che ti aiuta. Nel frattempo, la modalità crisi ti suggerisce qualche idea per iniziare.</string>
+    <string name="tool_category_breathing">Respirazione</string>
+    <string name="tool_category_physical">Fisico</string>
+    <string name="tool_category_social">Sociale</string>
+    <string name="tool_category_grounding">Radicamento</string>
+    <string name="tool_category_creative">Creativo</string>
+    <string name="tool_category_other">Altro</string>
+    <string name="journal_title">Diario di terapia</string>
+    <string name="journal_add_note">Aggiungi nota</string>
+    <string name="journal_new_note">Nuova nota</string>
+    <string name="journal_edit_note">Modifica nota</string>
+    <string name="journal_note_body_label">Cosa hai imparato o capito?</string>
+    <string name="journal_tags_title">Etichette</string>
+    <string name="journal_next_session_title">Da affrontare nella prossima seduta</string>
+    <string name="journal_next_session_subtitle">Segnala questa nota per rileggerla prima del tuo prossimo appuntamento</string>
+    <string name="journal_tag_insight">Intuizione</string>
+    <string name="journal_tag_homework">Compito</string>
+    <string name="journal_tag_coping_skill">Strategia di coping</string>
+    <string name="journal_tag_discuss_next_time">Da discutere la prossima volta</string>
+    <string name="journal_tag_progress">Progressi</string>
+    <string name="journal_empty_title">Ancora nessuna nota</string>
+    <string name="journal_empty_subtitle">Tocca + per scrivere la tua prima nota</string>
+    <string name="journal_flagged">Segnalata</string>
+    <string name="journal_not_flagged">Non segnalata</string>
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_profile_title">Profilo</string>
+    <string name="settings_name_label">Il tuo nome</string>
+    <string name="settings_name_placeholder">es. Matteo</string>
+    <string name="settings_name_field_label">Nome</string>
+    <string name="settings_name_not_set">Non impostato</string>
+    <string name="settings_edit_name">Modifica nome</string>
+    <string name="settings_name_helper_updated">Il tuo nome serve a personalizzare il saluto nella schermata iniziale.</string>
+    <string name="settings_crisis_breathing_label">Tipo di respirazione</string>
+    <string name="settings_crisis_breathing_helper">Usato per la fase di respirazione quando tocchi «Ho bisogno di aiuto ora». Scegli quello che hai praticato di più.</string>
+    <string name="settings_contacts_title">Chi chiamare</string>
+    <string name="settings_contacts_helper">Proposto alla fine della modalità crisi se stai ancora male. Anchor apre il tastierino del telefono; non chiama mai da solo.</string>
+    <string name="settings_crisis_line_label">Linea di ascolto</string>
+    <string name="settings_crisis_line_auto">Automatica per: %1$s</string>
+    <string name="settings_crisis_line_auto_fallback">Predefinita (%1$s). Anchor non conosce ancora una linea per la tua regione, valuta di aggiungere la tua.</string>
+    <string name="settings_crisis_line_custom">Scelta tua</string>
+    <string name="settings_crisis_line_reset">Usa automatica</string>
+    <string name="settings_crisis_line_name_placeholder">es. servizio di crisi locale</string>
+    <string name="settings_trusted_label">Persona di fiducia</string>
+    <string name="settings_trusted_not_set">Non impostata. Aggiungi un amico o un'amica, un familiare o il tuo o la tua terapeuta.</string>
+    <string name="settings_trusted_name_placeholder">es. Anna</string>
+    <string name="settings_contact_name">Nome</string>
+    <string name="settings_contact_number">Numero di telefono</string>
+    <string name="settings_contact_remove">Rimuovi</string>
+    <string name="crisis_breathe_title">Prima respiriamo</string>
+    <string name="breath_phase_inhale">Inspira</string>
+    <string name="breath_phase_hold">Trattieni</string>
+    <string name="breath_phase_exhale">Espira</string>
+    <string name="breathing_title">Fai un respiro</string>
+    <string name="breathing_choose_subtitle">Scegli un ritmo. Esercitarti quando sei calmo/a ti aiuta a ricordartene quando le cose si fanno difficili.</string>
+    <string name="breathing_start">Inizia</string>
+    <string name="breathing_pattern_calm_name">Respirazione calmante</string>
+    <string name="breathing_pattern_calm_description">Inspira per 4, espira per 6. Un'espirazione più lunga aiuta il corpo a calmarsi.</string>
+    <string name="breathing_pattern_box_name">Respirazione quadrata</string>
+    <string name="breathing_pattern_box_description">Inspira 4, trattieni 4, espira 4, trattieni 4. Regolare e stabilizzante.</string>
+    <string name="breathing_pattern_478_name">Respirazione 4-7-8</string>
+    <string name="breathing_pattern_478_description">Inspira 4, trattieni 7, espira 8. Molto rilassante. Saltala se trattenere a lungo il respiro ti mette a disagio.</string>
+    <string name="breathing_finished_title">Ben fatto.</string>
+    <string name="breathing_finished_subtitle">Prenditi un momento per notare come ti senti adesso.</string>
+    <string name="breathing_more">Ancora qualcuno</string>
+    <string name="home_breathing_title">Fai un respiro</string>
+    <string name="home_breathing_subtitle">Un minuto di respirazione guidata</string>
+    <string name="crisis_suggestions_title">Ce la puoi fare.</string>
+    <string name="common_edit">Modifica</string>
+    <string name="common_delete">Elimina</string>
+    <string name="common_dismiss">Chiudi</string>
+    <string name="common_skip">Salta</string>
+    <string name="common_cancel">Annulla</string>
+    <string name="common_save">Salva</string>
+
+    <!-- Home -->
+    <string name="home_stat_tools">Strumenti</string>
+    <string name="home_stat_sessions">Crisi</string>
+    <string name="home_stat_notes">Note</string>
+    <string name="home_last_crisis_today">Ultima crisi: oggi</string>
+    <string name="home_last_crisis_yesterday">Ultima crisi: ieri</string>
+
+    <!-- Crisis flow -->
+    <string name="crisis_feeling_title">Cosa sta succedendo in questo momento?</string>
+    <string name="crisis_feeling_subtitle">Ti suggerirò cosa potrebbe aiutarti.</string>
+    <string name="crisis_suggestions_subtitle_feeling">Ecco alcune cose che potrebbero aiutarti quando ti senti %1$s.</string>
+    <string name="crisis_suggestions_badge">Suggerito</string>
+    <string name="crisis_suggestions_add">+ Aggiungi ai miei strumenti</string>
+    <string name="crisis_suggestions_added">Nei tuoi strumenti</string>
+    <string name="crisis_checkin_title">Come ti senti adesso?</string>
+    <string name="crisis_checkin_subtitle">Sii sincero/a: è solo per te.</string>
+    <string name="crisis_checkin_great">Molto bene</string>
+    <string name="crisis_checkin_better">Meglio</string>
+    <string name="crisis_checkin_okay">Così così</string>
+    <string name="crisis_checkin_rough">Ancora difficile</string>
+    <string name="crisis_checkin_not_great">Non bene</string>
+    <string name="crisis_help_title">Va bene così.</string>
+    <string name="crisis_help_subtitle">Non devi stare meglio subito. Cosa ti aiuterebbe di più adesso?</string>
+    <string name="crisis_help_again_title">Rifallo da capo</string>
+    <string name="crisis_help_again_subtitle">Prova altri strumenti</string>
+    <string name="crisis_help_done">Per ora basta così</string>
+
+    <!-- Feelings -->
+    <string name="feeling_anxious">Ansioso/a o sopraffatto/a</string>
+    <string name="feeling_sad">Triste o senza speranza</string>
+    <string name="feeling_angry">Arrabbiato/a o frustrato/a</string>
+    <string name="feeling_numb">Intorpidito/a o distaccato/a</string>
+    <string name="feeling_exhausted">Esausto/a</string>
+    <string name="feeling_anxious_phrase">ansioso/a o sopraffatto/a</string>
+    <string name="feeling_sad_phrase">triste o senza speranza</string>
+    <string name="feeling_angry_phrase">arrabbiato/a o frustrato/a</string>
+    <string name="feeling_numb_phrase">intorpidito/a o distaccato/a</string>
+    <string name="feeling_exhausted_phrase">esausto/a</string>
+
+    <!-- Journal -->
+    <string name="journal_tab_notes">Note</string>
+    <string name="journal_tab_questions">Domande</string>
+    <string name="journal_questions_empty_title">Ancora nessuna domanda</string>
+    <string name="journal_questions_empty_subtitle">Aggiungi domande mentre scrivi una nota: compariranno qui.</string>
+    <string name="journal_questions_to_discuss">Da discutere</string>
+    <string name="journal_questions_discussed">Discusse</string>
+    <string name="journal_questions_title">Domande per la prossima seduta</string>
+    <string name="journal_questions_subtitle">Quelle aggiunte qui finiscono nella tua lista di domande.</string>
+    <string name="journal_question_placeholder">es. Perché la domenica mi sento in ansia?</string>
+    <string name="journal_question_add">Aggiungi domanda</string>
+    <string name="journal_question_remove">Rimuovi domanda</string>
+
+    <string name="common_continue">Continua</string>
+    <string name="common_done">Fatto</string>
+
+    <plurals name="breaths_remaining">
+        <item quantity="one">Ancora %1$d respiro</item>
+        <item quantity="other">Ancora %1$d respiri</item>
+    </plurals>
+    <plurals name="breathing_breaths_count">
+        <item quantity="one">%1$d respiro</item>
+        <item quantity="other">%1$d respiri</item>
+    </plurals>
+    <string name="crisis_call_line_title">Chiama una linea di ascolto</string>
+    <string name="crisis_call_trusted_title">Chiama %1$s</string>
+    <string name="crisis_call_trusted_fallback">Chiama una persona di fiducia</string>
+    <string name="crisis_call_button">Chiama aiuto</string>
+    <string name="crisis_call_sheet_title">Chi vuoi chiamare?</string>
+
+    <plurals name="home_last_crisis_days">
+        <item quantity="one">Ultima crisi: %1$d giorno fa</item>
+        <item quantity="other">Ultima crisi: %1$d giorni fa</item>
+    </plurals>
+
+    <!-- Language -->
+    <string name="settings_language_title">Lingua</string>
+    <string name="settings_language_system">Come il telefono</string>
+    <string name="settings_language_helper">Con «Come il telefono», Anchor segue la lingua del tuo telefono e usa l'inglese se Anchor non è disponibile in quella lingua.</string>
+
+    <string name="common_back">Indietro</string>
+    <string name="common_close">Chiudi</string>
+
+    <!-- Countries, for the automatic crisis line -->
+    <string name="country_ch">Svizzera</string>
+    <string name="country_de">Germania</string>
+    <string name="country_at">Austria</string>
+    <string name="country_fr">Francia</string>
+    <string name="country_es">Spagna</string>
+    <string name="country_nl">Paesi Bassi</string>
+    <string name="country_gb">Regno Unito</string>
+    <string name="country_ie">Irlanda</string>
+    <string name="country_us">Stati Uniti</string>
+    <string name="country_ca">Canada</string>
+    <string name="country_au">Australia</string>
+    <string name="country_nz">Nuova Zelanda</string>
+
+    <!-- Built-in coping techniques -->
+    <string name="builtin_478_name">Respirazione 4-7-8</string>
+    <string name="builtin_478_description">Inspira 4 s, trattieni 7 s, espira 8 s. Attiva il sistema nervoso parasimpatico.</string>
+    <string name="builtin_54321_name">Radicamento 5-4-3-2-1</string>
+    <string name="builtin_54321_description">Nomina 5 cose che vedi, 4 che senti, 3 che puoi toccare, 2 di cui senti l'odore e 1 di cui senti il sapore.</string>
+    <string name="builtin_reach_out_name">Cerca qualcuno</string>
+    <string name="builtin_reach_out_description">Scrivi o chiama una persona di cui ti fidi, anche solo per salutarla.</string>
+    <string name="builtin_comfort_object_name">Oggetto di conforto</string>
+    <string name="builtin_comfort_object_description">Tieni in mano qualcosa di morbido o familiare. Lasciati sentire com'è.</string>
+    <string name="builtin_cold_water_name">Acqua fredda</string>
+    <string name="builtin_cold_water_description">Spruzzati acqua fredda sul viso o tieni in mano del ghiaccio. Attiva il riflesso di immersione e rallenta il battito.</string>
+    <string name="builtin_move_name">Muovi il corpo</string>
+    <string name="builtin_move_description">Anche 60 secondi di saltelli o di camminata possono sciogliere la tensione.</string>
+    <string name="builtin_temperature_name">Cambio di temperatura</string>
+    <string name="builtin_temperature_description">Tieni in mano qualcosa di freddo o di caldo. Concentrati completamente sulla sensazione.</string>
+    <string name="builtin_one_thing_name">Una cosa sola</string>
+    <string name="builtin_one_thing_description">Scegli una piccola cosa da fare. Una sola. Nient'altro conta adesso.</string>
+    <string name="builtin_rest_name">Riposare senza sensi di colpa</string>
+    <string name="builtin_rest_description">Sdraiati. Adesso non devi essere produttivo/a.</string>
+
+    <!-- Mood tracker -->
+    <string name="home_mood_title">Diario dell'umore</string>
+    <string name="home_mood_subtitle">Registra come stai quando vuoi</string>
+    <string name="mood_great">Molto bene</string>
+    <string name="mood_good">Bene</string>
+    <string name="mood_okay">Così così</string>
+    <string name="mood_low">Giù</string>
+    <string name="mood_not_great">Non bene</string>
+    <string name="mood_question">Come ti senti?</string>
+    <string name="mood_saved">Salvato. Non devi fare altro.</string>
+    <string name="mood_close_panel">Chiudi pannello</string>
+    <string name="mood_tab_history">Umore nel tempo</string>
+    <string name="mood_tab_notifications">Notifiche</string>
+    <string name="mood_hide_entries">Nascondi registrazioni</string>
+    <string name="mood_history_empty">La tua cronologia comparirà dopo la prima registrazione.</string>
+    <string name="mood_period_empty">Nessuna registrazione in questo periodo.</string>
+    <string name="mood_allow_notifications">Consenti notifiche</string>
+    <string name="mood_why_notifications">Perché consentire le notifiche?</string>
+    <string name="mood_notifications_info">I promemoria sono del tutto facoltativi. Possono ricordarti con delicatezza di registrare il tuo umore nelle ore che scegli. Puoi lasciarli disattivati e aprire semplicemente questa pagina quando vuoi annotare come ti senti.</string>
+    <string name="mood_reminders_on">Promemoria attivi</string>
+    <string name="mood_reminders_off">Disattivati: registra qui quando vuoi</string>
+    <string name="mood_send_test">Invia notifica di prova</string>
+    <string name="mood_test_sent">Prova inviata. Tocca un umore nella notifica, poi apri Umore nel tempo.</string>
+    <string name="mood_notifications_blocked">Le notifiche sono bloccate. Consenti le notifiche di Anchor nelle impostazioni di Android.</string>
+    <string name="mood_start">Inizio  %1$s</string>
+    <string name="mood_end">Fine  %1$s</string>
+    <string name="mood_repeat">Ripeti</string>
+    <string name="mood_local_time_hint">Usa l'ora locale del telefono. Android potrebbe ritardare i promemoria.</string>
+    <string name="mood_choose_times_hint">Scegli qui gli orari che preferisci; attiva le notifiche quando sei pronto/a.</string>
+    <string name="mood_notifications_unavailable">Le notifiche programmate non sono ancora disponibili su questo dispositivo.</string>
+    <string name="mood_source_test">Prova</string>
+    <string name="mood_source_reminder">Promemoria</string>
+    <string name="mood_source_crisis">Dopo il supporto</string>
+    <string name="mood_source_app">Nell'app</string>
+    <string name="mood_chart_hint">Ogni punto è una registrazione. Tocca un punto per vedere quando è stata fatta.</string>
+    <string name="mood_chart_24h_ago">24 ore fa</string>
+    <string name="mood_chart_now">Ora</string>
+    <string name="mood_chart_empty_24h">Nessuna registrazione nelle ultime 24 ore.</string>
+    <string name="mood_chart_count">%1$d in questa vista · %2$d in totale</string>
+    <plurals name="mood_view_entries">
+        <item quantity="one">Mostra registrazioni · %1$d giorno</item>
+        <item quantity="other">Mostra registrazioni · %1$d giorni</item>
+    </plurals>
+    <plurals name="mood_every_hours">
+        <item quantity="one">Ogni ora</item>
+        <item quantity="other">Ogni %1$d ore</item>
+    </plurals>
+    <plurals name="mood_period_days">
+        <item quantity="one">%1$d giorno</item>
+        <item quantity="other">%1$d giorni</item>
+    </plurals>
+    <plurals name="mood_chart_days_ago">
+        <item quantity="one">%1$d giorno fa</item>
+        <item quantity="other">%1$d giorni fa</item>
+    </plurals>
+    <plurals name="mood_chart_empty_days">
+        <item quantity="one">Nessuna registrazione nell'ultimo giorno.</item>
+        <item quantity="other">Nessuna registrazione negli ultimi %1$d giorni.</item>
+    </plurals>
+
+    <!-- Redesign -->
+    <string name="home_greeting_morning">Buongiorno</string>
+    <string name="home_greeting_afternoon">Buon pomeriggio</string>
+    <string name="home_greeting_evening">Buonasera</string>
+    <string name="home_greeting_morning_name">Buongiorno, %1$s</string>
+    <string name="home_greeting_afternoon_name">Buon pomeriggio, %1$s</string>
+    <string name="home_greeting_evening_name">Buonasera, %1$s</string>
+    <string name="home_section_now">Per adesso</string>
+    <string name="home_section_space">Il tuo spazio</string>
+    <string name="home_sos_subtitle">Anchor ti guida, un piccolo passo alla volta.</string>
+    <string name="journal_editor_details">Dettagli</string>
+    <plurals name="journal_editor_words">
+        <item quantity="one">%1$d parola</item>
+        <item quantity="other">%1$d parole</item>
+    </plurals>
+    <string name="journal_discard_new_title">Eliminare questa nota?</string>
+    <string name="journal_discard_edit_title">Eliminare le modifiche?</string>
+    <string name="journal_discard_message">Quello che hai scritto qui non è ancora stato salvato.</string>
+    <string name="journal_discard_confirm">Elimina</string>
+    <string name="journal_keep_writing">Continua a scrivere</string>
+    <string name="journal_flag_short">Prossima seduta</string>
+    <string name="settings_appearance_title">Aspetto</string>
+    <string name="settings_theme_label">Tema</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_light">Chiaro</string>
+    <string name="settings_theme_dark">Scuro</string>
+    <string name="settings_dynamic_color">Colori dello sfondo</string>
+    <string name="settings_dynamic_color_subtitle">Usa i colori Material You del telefono al posto della palette calma di Anchor.</string>
+    <string name="crisis_step_progress">Passo %1$d di %2$d</string>
+</resources>

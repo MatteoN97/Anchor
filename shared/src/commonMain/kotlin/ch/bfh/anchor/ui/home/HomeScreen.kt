@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.graphics.luminance
 import ch.bfh.anchor.ui.theme.AnchorPalette
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -65,7 +66,7 @@ fun HomeScreen(
 
     HomeScreenContent(
         greeting = greeting(userName),
-        dateLine = remember { formatLongDay(nowMillis()) },
+        dateLine = formatLongDay(nowMillis(), Locale.current.language),
         toolsCount = tools.size,
         notesCount = notes.size,
         crisisCount = crisisCheckIns.size,

@@ -16,9 +16,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.IntOffset
@@ -37,7 +42,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import ch.bfh.anchor.data.AnchorDatabase
+import ch.bfh.anchor.model.AppLanguage
 import ch.bfh.anchor.model.effectiveCrisisLine
+import ch.bfh.anchor.platform.LocalAppLocale
 import ch.bfh.anchor.notifications.MoodReminderController
 import ch.bfh.anchor.notifications.NoMoodReminderController
 import ch.bfh.anchor.platform.rememberDeviceRegion
@@ -80,16 +87,32 @@ fun App(
     reminderController: MoodReminderController = NoMoodReminderController,
     openMoodRequest: Int = 0
 ) {
+    val language by settingsManager.appLanguage.collectAsState()
     val themeMode by settingsManager.themeMode.collectAsState()
     val dynamicColor by settingsManager.dynamicColor.collectAsState()
-    AnchorTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
-        val vm: AnchorViewModel = viewModel { AnchorViewModel(database) }
-        AnchorApp(
-            vm = vm,
-            settingsManager = settingsManager,
-            reminderController = reminderController,
-            openMoodRequest = openMoodRequest
-        )
+    // Set when the language is changed from Settings, so the rebuilt app reopens there.
+    var reopenSettings by remember { mutableStateOf(false) }
+
+    CompositionLocalProvider(LocalAppLocale provides language.code) {
+        // Strings are looked up once per screen; rebuilding everything under a new key makes
+        // every one of them load again in the new language. The theme is not part of the key:
+        // changing it recolours in place, without rebuilding.
+        key(language) {
+            AnchorTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
+                val vm: AnchorViewModel = viewModel { AnchorViewModel(database) }
+                AnchorApp(
+                    vm = vm,
+                    settingsManager = settingsManager,
+                    reminderController = reminderController,
+                    openMoodRequest = openMoodRequest,
+                    startInSettings = reopenSettings,
+                    onLanguageChange = { newLanguage ->
+                        reopenSettings = true
+                        settingsManager.setAppLanguage(newLanguage)
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -98,12 +121,18 @@ fun AnchorApp(
     vm: AnchorViewModel,
     settingsManager: SettingsManager,
     reminderController: MoodReminderController = NoMoodReminderController,
-    openMoodRequest: Int = 0
+    openMoodRequest: Int = 0,
+    startInSettings: Boolean = false,
+    onLanguageChange: (AppLanguage) -> Unit = settingsManager::setAppLanguage
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val isIos = LocalIsIos.current
+
+    LaunchedEffect(Unit) {
+        if (startInSettings) navController.navigateToTab(AnchorTab.Settings)
+    }
 
     // A tapped mood reminder opens the tracker.
     LaunchedEffect(openMoodRequest) {
@@ -188,7 +217,9 @@ fun AnchorApp(
                     onClose = dropUnlessResumed { navController.popBackStack() }
                 )
             }
-            composable(AnchorTab.Settings.route) { SettingsScreen(settingsManager = settingsManager) }
+            composable(AnchorTab.Settings.route) {
+                SettingsScreen(settingsManager = settingsManager, onLanguageChange = onLanguageChange)
+            }
         }
     }
 }
@@ -244,13 +275,17 @@ private fun AnchorBottomBar(currentRoute: String?, navController: NavHostControl
             if (currentRoute == ROUTE_MOOD && tab == AnchorTab.Home &&
                 navController.popBackStack(AnchorTab.Home.route, inclusive = false)
             ) return@AdaptiveTabBar
-            navController.navigate(tab.route) {
-                popUpTo(navController.graph.findStartDestination().id) {
-                    saveState = true
-                }
-                launchSingleTop = true
-                restoreState = true
-            }
+            navController.navigateToTab(tab)
         }
     )
+}
+
+private fun NavHostController.navigateToTab(tab: AnchorTab) {
+    navigate(tab.route) {
+        popUpTo(graph.findStartDestination().id) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
+    }
 }

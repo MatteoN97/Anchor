@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -180,7 +181,7 @@ fun NoteEditorScreen(
         ) {
             Spacer(Modifier.height(8.dp))
             Text(
-                text = formatNoteDateTime(createdAt).uppercase(),
+                text = formatNoteDateTime(createdAt, Locale.current.language).uppercase(),
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.primary
             )
