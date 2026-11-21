@@ -10,7 +10,9 @@ import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
 import org.jetbrains.compose.resources.stringResource
+import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.Feeling
+import ch.bfh.anchor.ui.breathing.BreathingExercise
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 
 enum class CrisisStep { FeelingPicker, Breathing, Suggestions, CheckIn }
@@ -18,7 +20,8 @@ enum class CrisisStep { FeelingPicker, Breathing, Suggestions, CheckIn }
 @Composable
 fun CrisisScreen(
     onDismiss: () -> Unit,
-    vm: AnchorViewModel
+    vm: AnchorViewModel,
+    breathingPattern: BreathingPattern
 ) {
     var step by remember { mutableStateOf(CrisisStep.FeelingPicker) }
     var selectedFeeling by remember { mutableStateOf<Feeling?>(null) }
@@ -37,8 +40,19 @@ fun CrisisScreen(
                     }
                 )
 
-                CrisisStep.Breathing -> BreathingScreen(
-                    onFinished = { step = CrisisStep.Suggestions }
+                CrisisStep.Breathing -> BreathingExercise(
+                    pattern = breathingPattern,
+                    cycles = 3,
+                    title = stringResource(Res.string.crisis_breathe_title),
+                    onComplete = { step = CrisisStep.Suggestions },
+                    bottomAction = {
+                        TextButton(onClick = { step = CrisisStep.Suggestions }) {
+                            Text(
+                                stringResource(Res.string.common_skip),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 )
 
                 CrisisStep.Suggestions -> SuggestedToolsScreen(
