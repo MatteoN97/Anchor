@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -21,6 +22,7 @@ import ch.bfh.anchor.resources.tab_home
 import ch.bfh.anchor.resources.tab_journal
 import ch.bfh.anchor.resources.tab_toolkit
 import ch.bfh.anchor.settings.SettingsManager
+import ch.bfh.anchor.ui.crisis.CrisisScreen
 import ch.bfh.anchor.ui.home.HomeScreen
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.ui.journal.JournalScreen
@@ -29,6 +31,8 @@ import ch.bfh.anchor.ui.theme.AnchorTheme
 import ch.bfh.anchor.ui.toolkit.ToolkitScreen
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 import org.jetbrains.compose.resources.stringResource
+
+private const val ROUTE_CRISIS = "crisis"
 
 @Composable
 fun App(database: AnchorDatabase, settingsManager: SettingsManager) {
@@ -44,80 +48,14 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // The crisis flow is a destination of its own and owns the whole screen, so the bottom bar
+    // is gone while it is open: nothing to tap through, and the system back button leaves it.
+    val showBottomBar = currentRoute != ROUTE_CRISIS
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = currentRoute == "home",
-                    onClick = {
-                        navController.navigate("home") {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            AnchorIcons.Home,
-                            contentDescription = stringResource(Res.string.tab_home)
-                        )
-                    },
-                    label = { Text(stringResource(Res.string.tab_home)) }
-                )
-                NavigationBarItem(
-                    selected = currentRoute == "toolkit",
-                    onClick = {
-                        navController.navigate("toolkit") {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            AnchorIcons.Favorite,
-                            contentDescription = stringResource(Res.string.tab_toolkit)
-                        )
-                    },
-                    label = { Text(stringResource(Res.string.tab_toolkit)) }
-                )
-                NavigationBarItem(
-                    selected = currentRoute == "journal",
-                    onClick = {
-                        navController.navigate("journal") {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            AnchorIcons.MenuBook,
-                            contentDescription = stringResource(Res.string.tab_journal)
-                        )
-                    },
-                    label = { Text(stringResource(Res.string.tab_journal)) }
-                )
-                NavigationBarItem(
-                    selected = currentRoute == "settings",
-                    onClick = {
-                        navController.navigate("settings") {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    icon = { Icon(AnchorIcons.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") }
-                )
+            if (showBottomBar) {
+                AnchorBottomBar(currentRoute = currentRoute, navController = navController)
             }
         }
     ) { padding ->
@@ -126,10 +64,96 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
             startDestination = "home",
             modifier = Modifier.padding(padding)
         ) {
-            composable("home") { HomeScreen(vm = vm, settingsManager = settingsManager) }
+            composable("home") {
+                HomeScreen(
+                    vm = vm,
+                    settingsManager = settingsManager,
+                    onSosClick = { navController.navigate(ROUTE_CRISIS) }
+                )
+            }
+            composable(ROUTE_CRISIS) {
+                CrisisScreen(onDismiss = { navController.popBackStack() }, vm = vm)
+            }
             composable("toolkit") { ToolkitScreen(viewModel = vm) }
             composable("journal") { JournalScreen(viewModel = vm) }
             composable("settings") { SettingsScreen(settingsManager = settingsManager) }
         }
+    }
+}
+
+@Composable
+private fun AnchorBottomBar(currentRoute: String?, navController: NavHostController) {
+    NavigationBar {
+        NavigationBarItem(
+            selected = currentRoute == "home",
+            onClick = {
+                navController.navigate("home") {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+            icon = {
+                Icon(
+                    AnchorIcons.Home,
+                    contentDescription = stringResource(Res.string.tab_home)
+                )
+            },
+            label = { Text(stringResource(Res.string.tab_home)) }
+        )
+        NavigationBarItem(
+            selected = currentRoute == "toolkit",
+            onClick = {
+                navController.navigate("toolkit") {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+            icon = {
+                Icon(
+                    AnchorIcons.Favorite,
+                    contentDescription = stringResource(Res.string.tab_toolkit)
+                )
+            },
+            label = { Text(stringResource(Res.string.tab_toolkit)) }
+        )
+        NavigationBarItem(
+            selected = currentRoute == "journal",
+            onClick = {
+                navController.navigate("journal") {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+            icon = {
+                Icon(
+                    AnchorIcons.MenuBook,
+                    contentDescription = stringResource(Res.string.tab_journal)
+                )
+            },
+            label = { Text(stringResource(Res.string.tab_journal)) }
+        )
+        NavigationBarItem(
+            selected = currentRoute == "settings",
+            onClick = {
+                navController.navigate("settings") {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+            icon = { Icon(AnchorIcons.Settings, contentDescription = "Settings") },
+            label = { Text("Settings") }
+        )
     }
 }

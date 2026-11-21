@@ -15,14 +15,16 @@ import ch.bfh.anchor.resources.*
 import org.jetbrains.compose.resources.stringResource
 import ch.bfh.anchor.platform.daysSince
 import ch.bfh.anchor.settings.SettingsManager
-import ch.bfh.anchor.ui.crisis.CrisisScreen
 import ch.bfh.anchor.ui.theme.AnchorTheme
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 
 @Composable
-fun HomeScreen(vm: AnchorViewModel, settingsManager: SettingsManager) {
+fun HomeScreen(
+    vm: AnchorViewModel,
+    settingsManager: SettingsManager,
+    onSosClick: () -> Unit
+) {
     val userName = settingsManager.userName
-    var showCrisis by remember { mutableStateOf(false) }
 
     val tools by vm.tools.collectAsState()
     val notes by vm.notes.collectAsState()
@@ -44,12 +46,8 @@ fun HomeScreen(vm: AnchorViewModel, settingsManager: SettingsManager) {
         notesCount = notes.size,
         crisisCount = crisisCheckIns.size,
         lastCrisisText = lastCrisisText,
-        onSosClick = { showCrisis = true }
+        onSosClick = onSosClick
     )
-
-    if (showCrisis) {
-        CrisisScreen(onDismiss = { showCrisis = false }, vm = vm)
-    }
 }
 
 @Composable
