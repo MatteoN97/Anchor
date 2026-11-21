@@ -23,7 +23,7 @@ import ch.bfh.anchor.ui.theme.LocalIsIos
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * "Call for help", pinned to the top of every step of the crisis flow, so reaching a person
+ * "Call for help", pinned to the bottom of every step of the crisis flow, so reaching a person
  * never depends on getting through the steps first.
  *
  * With only the crisis line known it dials straight away: one tap, no choice to make. The
@@ -43,7 +43,7 @@ fun CallForHelpButton(
         onClick = {
             if (trustedContact == null) dial(crisisLine.number) else choosing = true
         },
-        modifier = modifier.height(40.dp),
+        modifier = modifier.height(48.dp),
         containerColor = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
         shape = CircleShape
