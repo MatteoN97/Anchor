@@ -207,11 +207,11 @@ private enum class AnchorTab(
 @Composable
 private fun AnchorBottomBar(currentRoute: String?, navController: NavHostController) {
     val tabs = AnchorTab.entries.map { TabItem(label = stringResource(it.labelRes), icon = it.icon) }
-    // The mood tracker lives under Home, so Home stays selected there.
-    val tabRoute = if (currentRoute == ROUTE_MOOD) AnchorTab.Home.route else currentRoute
     AdaptiveTabBar(
         tabs = tabs,
-        selectedIndex = AnchorTab.entries.indexOfFirst { it.route == tabRoute },
+        // The mood tracker is opened from Home, so Home stays highlighted while it is open.
+        selectedIndex = if (currentRoute == ROUTE_MOOD) AnchorTab.Home.ordinal
+        else AnchorTab.entries.indexOfFirst { it.route == currentRoute },
         onSelect = { index ->
             val tab = AnchorTab.entries[index]
             // Home acts as Back from the tracker: drop it rather than saving it for later.
