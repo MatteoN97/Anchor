@@ -15,6 +15,7 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import ch.bfh.anchor.platform.daysSince
 import ch.bfh.anchor.settings.SettingsManager
+import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.ui.theme.AnchorTheme
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 
@@ -22,7 +23,8 @@ import ch.bfh.anchor.viewmodel.AnchorViewModel
 fun HomeScreen(
     vm: AnchorViewModel,
     settingsManager: SettingsManager,
-    onSosClick: () -> Unit
+    onSosClick: () -> Unit,
+    onBreathingClick: () -> Unit
 ) {
     val userName by settingsManager.userName.collectAsState()
 
@@ -50,7 +52,8 @@ fun HomeScreen(
         notesCount = notes.size,
         crisisCount = crisisCheckIns.size,
         lastCrisisText = lastCrisisText,
-        onSosClick = onSosClick
+        onSosClick = onSosClick,
+        onBreathingClick = onBreathingClick
     )
 }
 
@@ -61,7 +64,8 @@ private fun HomeScreenContent(
     notesCount: Int,
     crisisCount: Int,
     lastCrisisText: String?,
-    onSosClick: () -> Unit
+    onSosClick: () -> Unit,
+    onBreathingClick: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -126,6 +130,10 @@ private fun HomeScreenContent(
                 )
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            BreathingCard(onClick = onBreathingClick)
+
             Spacer(modifier = Modifier.weight(1f))
 
             Column(
@@ -157,6 +165,42 @@ private fun HomeScreenContent(
             }
 
             Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun BreathingCard(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.home_breathing_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = stringResource(Res.string.home_breathing_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = AnchorIcons.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
@@ -199,7 +243,8 @@ private fun HomeScreenPreview() {
             notesCount = 12,
             crisisCount = 2,
             lastCrisisText = "Last crisis session: 3 days ago",
-            onSosClick = {}
+            onSosClick = {},
+            onBreathingClick = {}
         )
     }
 }

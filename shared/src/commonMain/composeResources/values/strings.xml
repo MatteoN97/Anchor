@@ -92,7 +92,6 @@
     <string name="common_delete">Delete</string>
     <string name="common_dismiss">Dismiss</string>
     <string name="common_skip">Skip</string>
-    <string name="common_done">Done</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_save">Save</string>
 
@@ -121,8 +120,6 @@
     <string name="crisis_help_subtitle">You don't have to feel better right away. What would help most right now?</string>
     <string name="crisis_help_again_title">Go through it again</string>
     <string name="crisis_help_again_subtitle">Try a different set of tools</string>
-    <string name="crisis_help_call_title">Call a crisis line</string>
-    <string name="crisis_help_call_subtitle">La Main Tendue — 143 (Switzerland)</string>
     <string name="crisis_help_done">I'm done for now</string>
 
     <!-- Feelings -->
@@ -153,7 +150,6 @@
     <string name="common_continue">Continue</string>
     <string name="common_done">Done</string>
 
-    <plurals name="crisis_breaths_remaining">
     <plurals name="breaths_remaining">
         <item quantity="one">%1$d breath remaining</item>
         <item quantity="other">%1$d breaths remaining</item>
