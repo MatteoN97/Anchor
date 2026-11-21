@@ -78,6 +78,15 @@ fun CrisisScreen(
                 )
             }
 
+            // Always within reach, whatever step the flow is on.
+            CallForHelpButton(
+                crisisLine = crisisLine,
+                trustedContact = trustedContact,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 16.dp, top = 20.dp)
+            )
+
             AnchorIconButton(
                 onClick = onDismiss,
                 modifier = Modifier

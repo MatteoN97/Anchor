@@ -200,27 +200,10 @@ private fun NeedMoreHelpContent(
             }
 
             trustedContact?.let { contact ->
-                CallCard(
-                    title = if (contact.name.isNotBlank()) {
-                        stringResource(Res.string.crisis_call_trusted_title, contact.name)
-                    } else {
-                        stringResource(Res.string.crisis_call_trusted_fallback)
-                    },
-                    subtitle = contact.number,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    onClick = { dialPhoneNumber(contact.number) }
-                )
+                TrustedContactCallCard(contact, onClick = { dialPhoneNumber(contact.number) })
             }
 
-            CallCard(
-                title = stringResource(Res.string.crisis_call_line_title),
-                subtitle = if (crisisLine.name.isNotBlank()) "${crisisLine.name} — ${crisisLine.number}"
-                else crisisLine.number,
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError,
-                onClick = { dialPhoneNumber(crisisLine.number) }
-            )
+            CrisisLineCallCard(crisisLine, onClick = { dialPhoneNumber(crisisLine.number) })
 
             AnchorTextButton(
                 onClick = onDone,
@@ -231,32 +214,6 @@ private fun NeedMoreHelpContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun CallCard(
-    title: String,
-    subtitle: String,
-    containerColor: Color,
-    contentColor: Color,
-    onClick: () -> Unit
-) {
-    AnchorCardButton(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        color = containerColor,
-        contentColor = contentColor,
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.8f)
-            )
         }
     }
 }
