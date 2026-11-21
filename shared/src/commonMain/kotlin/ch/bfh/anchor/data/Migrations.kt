@@ -32,10 +32,21 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
+/**
+ * No schema change: tags move from comma-joined to unit-separator-joined, so a tag containing a
+ * comma stops splitting in two. `char(31)` is the separator in [ch.bfh.anchor.model.Tags].
+ */
+private val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("UPDATE therapy_notes SET tags = replace(tags, ',', char(31))")
+    }
+}
+
 internal val ANCHOR_MIGRATIONS: Array<Migration> = arrayOf(
     MIGRATION_1_2,
     MIGRATION_2_3,
-    MIGRATION_3_4
+    MIGRATION_3_4,
+    MIGRATION_4_5
 )
 
 private const val CREATE_THERAPY_NOTES =

@@ -4,6 +4,7 @@ import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
+import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import ch.bfh.anchor.model.CopingTool
 import ch.bfh.anchor.model.CrisisCheckIn
@@ -14,8 +15,9 @@ internal const val ANCHOR_DATABASE_NAME = "anchor_database"
 
 @Database(
     entities = [CopingTool::class, TherapyNote::class, CrisisCheckIn::class, SessionQuestion::class],
-    version = 4
+    version = 5
 )
+@TypeConverters(TagListConverter::class)
 @ConstructedBy(AnchorDatabaseConstructor::class)
 abstract class AnchorDatabase : RoomDatabase() {
     abstract fun copingToolDao(): CopingToolDao

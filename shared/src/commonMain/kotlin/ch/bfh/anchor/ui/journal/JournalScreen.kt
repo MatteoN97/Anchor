@@ -109,7 +109,7 @@ fun JournalScreen(viewModel: AnchorViewModel) {
             existingNote = note,
             onDismiss = { noteToEdit = null },
             onSave = { body, tags, flagged, newQuestions ->
-                viewModel.updateNote(note.copy(body = body, tags = tags.joinToString(","), flaggedForNextSession = flagged))
+                viewModel.updateNote(note.copy(body = body, tags = tags, flaggedForNextSession = flagged))
                 newQuestions.forEach { viewModel.addSessionQuestion(it) }
                 noteToEdit = null
             }
@@ -152,7 +152,7 @@ private fun NotesTab(
                             )
                             if (note.tags.isNotEmpty()) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    note.tags.split(",").filter { it.isNotBlank() }.forEach { tag ->
+                                    note.tags.forEach { tag ->
                                         SuggestionChip(
                                             onClick = {},
                                             label = { Text(tag, style = MaterialTheme.typography.labelSmall) }

@@ -28,7 +28,7 @@ fun NoteSheet(
     var flagged by remember { mutableStateOf(existingNote?.flaggedForNextSession ?: false) }
     val selectedTags = remember {
         mutableStateListOf<String>().apply {
-            existingNote?.tags?.split(",")?.filter { it.isNotBlank() }?.let { addAll(it) }
+            existingNote?.tags?.let { addAll(it) }
         }
     }
 
