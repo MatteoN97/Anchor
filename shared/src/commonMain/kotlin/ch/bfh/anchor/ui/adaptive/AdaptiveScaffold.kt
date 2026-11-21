@@ -252,7 +252,7 @@ fun AdaptiveSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = if (isIos) colors.background else BottomSheetDefaults.ContainerColor,
+        containerColor = colors.background,
         shape = if (isIos) MaterialTheme.shapes.extraLarge.copy(
             bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
             bottomEnd = androidx.compose.foundation.shape.CornerSize(0.dp)
@@ -289,8 +289,17 @@ fun AdaptiveSheet(
                 modifier = Modifier.weight(1.4f)
             )
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                AnchorTextButton(onClick = onConfirm, enabled = confirmEnabled, emphasized = true) {
-                    Text(confirmLabel)
+                if (isIos) {
+                    AnchorTextButton(onClick = onConfirm, enabled = confirmEnabled, emphasized = true) {
+                        Text(confirmLabel)
+                    }
+                } else {
+                    AnchorButton(
+                        onClick = onConfirm,
+                        enabled = confirmEnabled,
+                        shape = CircleShape,
+                        modifier = Modifier.padding(end = 8.dp).height(40.dp)
+                    ) { Text(confirmLabel) }
                 }
             }
         }

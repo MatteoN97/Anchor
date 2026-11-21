@@ -261,7 +261,14 @@ fun AdaptiveTextField(
             singleLine = singleLine,
             minLines = minLines,
             maxLines = maxLines,
-            keyboardOptions = keyboardOptions
+            keyboardOptions = keyboardOptions,
+            // Soft filled field with a hairline that turns sage on focus.
+            shape = MaterialTheme.shapes.small,
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = ch.bfh.anchor.ui.components.calmCardColor(),
+                focusedContainerColor = ch.bfh.anchor.ui.components.calmCardColor(),
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            )
         )
         return
     }

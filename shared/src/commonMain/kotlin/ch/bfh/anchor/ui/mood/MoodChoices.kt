@@ -5,7 +5,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,8 +27,10 @@ fun MoodChoices(
                 onClick = { onScoreSelected(score) },
                 modifier = Modifier.weight(1f),
                 color = if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surfaceVariant,
-                shape = MaterialTheme.shapes.medium
+                        else ch.bfh.anchor.ui.components.calmCardColor(),
+                shape = MaterialTheme.shapes.medium,
+                border = if (selected) null
+                         else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 14.dp),
@@ -43,7 +44,7 @@ fun MoodChoices(
                         lineHeight = 12.sp,
                         maxLines = 2,
                         textAlign = TextAlign.Center,
-                        color = if (selected) Color.White
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary
                                 else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

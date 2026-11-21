@@ -3,7 +3,14 @@ package ch.bfh.anchor.ui.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.Alignment
+import ch.bfh.anchor.ui.adaptive.AdaptiveSwitch
+import ch.bfh.anchor.ui.adaptive.AnchorCardButton
+import ch.bfh.anchor.ui.theme.ThemeMode
+import ch.bfh.anchor.ui.theme.dynamicColorAvailable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,6 +44,8 @@ private enum class EditTarget { Name, CrisisLine, TrustedContact }
 @Composable
 fun SettingsScreen(settingsManager: SettingsManager) {
     val userName by settingsManager.userName.collectAsState()
+    val themeMode by settingsManager.themeMode.collectAsState()
+    val dynamicColor by settingsManager.dynamicColor.collectAsState()
     var crisisPattern by remember { mutableStateOf(settingsManager.crisisBreathingPattern) }
     var customLine by remember { mutableStateOf(settingsManager.customCrisisLine) }
     var trusted by remember { mutableStateOf(settingsManager.trustedContact) }
@@ -54,6 +63,14 @@ fun SettingsScreen(settingsManager: SettingsManager) {
     val nameHelper = stringResource(Res.string.settings_name_helper_updated)
     val nameLabel = stringResource(Res.string.settings_name_field_label)
     val notSet = stringResource(Res.string.settings_name_not_set)
+    val appearanceTitle = stringResource(Res.string.settings_appearance_title)
+    val themeLabels = mapOf(
+        ThemeMode.System to stringResource(Res.string.settings_theme_system),
+        ThemeMode.Light to stringResource(Res.string.settings_theme_light),
+        ThemeMode.Dark to stringResource(Res.string.settings_theme_dark)
+    )
+    val dynamicTitle = stringResource(Res.string.settings_dynamic_color)
+    val dynamicSubtitle = stringResource(Res.string.settings_dynamic_color_subtitle)
     val breathingTitle = stringResource(Res.string.settings_crisis_breathing_label)
     val breathingHelper = stringResource(Res.string.settings_crisis_breathing_helper)
     val contactsTitle = stringResource(Res.string.settings_contacts_title)
@@ -90,6 +107,39 @@ fun SettingsScreen(settingsManager: SettingsManager) {
                         onClick = { editing = EditTarget.Name }
                     )
                 })
+            )
+
+            adaptiveSection(
+                header = appearanceTitle,
+                rows = buildList<@Composable () -> Unit> {
+                    add {
+                        ThemePicker(
+                            selected = themeMode,
+                            labels = themeLabels,
+                            onSelect = settingsManager::setThemeMode
+                        )
+                    }
+                    // Material You exists on Android 12+ only, and the iOS look ignores it.
+                    if (dynamicColorAvailable && !isIos) {
+                        add {
+                            AdaptiveListRow(
+                                headline = { Text(dynamicTitle) },
+                                supporting = { Text(dynamicSubtitle) },
+                                trailing = {
+                                    AdaptiveSwitch(
+                                        checked = dynamicColor,
+                                        onCheckedChange = settingsManager::setDynamicColor
+                                    )
+                                },
+                                modifier = Modifier.toggleable(
+                                    value = dynamicColor,
+                                    role = Role.Switch,
+                                    onValueChange = settingsManager::setDynamicColor
+                                )
+                            )
+                        }
+                    }
+                }
             )
 
             adaptiveSection(
@@ -303,5 +353,45 @@ private fun ContactSheet(
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
         )
+    }
+}
+
+/** System / Light / Dark as three tiles, each with its icon; the chosen one fills with sage. */
+@Composable
+private fun ThemePicker(selected: ThemeMode, labels: Map<ThemeMode, String>, onSelect: (ThemeMode) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        ThemeMode.entries.forEach { mode ->
+            val isSelected = mode == selected
+            AnchorCardButton(
+                onClick = { onSelect(mode) },
+                selected = isSelected,
+                modifier = Modifier.weight(1f),
+                color = if (isSelected) colors.primaryContainer else colors.onSurface.copy(alpha = 0.05f),
+                contentColor = if (isSelected) colors.onPrimaryContainer else colors.onSurface,
+                shape = MaterialTheme.shapes.small,
+                border = if (isSelected) BorderStroke(1.5.dp, colors.primary) else null
+            ) {
+                Column(
+                    modifier = Modifier.padding(vertical = 14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = when (mode) {
+                            ThemeMode.System -> AnchorIcons.Palette
+                            ThemeMode.Light -> AnchorIcons.LightMode
+                            ThemeMode.Dark -> AnchorIcons.DarkMode
+                        },
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Text(labels.getValue(mode), style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
     }
 }

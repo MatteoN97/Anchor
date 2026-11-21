@@ -75,7 +75,7 @@ private fun SectionHeader(text: String) {
             text = text,
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 10.dp)
         )
     }
 }
@@ -89,14 +89,14 @@ private fun SectionFooter(text: String?) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(
-                start = if (isIos) 32.dp else 16.dp,
-                end = if (isIos) 32.dp else 16.dp,
-                top = 7.dp
+                start = 32.dp,
+                end = 32.dp,
+                top = if (isIos) 7.dp else 8.dp
             )
         )
     }
     // Space between sections; iOS separates them generously.
-    Spacer(Modifier.height(if (isIos) 28.dp else 8.dp))
+    Spacer(Modifier.height(if (isIos) 28.dp else 20.dp))
 }
 
 @Composable
@@ -106,14 +106,10 @@ private fun SectionRow(
     separatorInset: Dp,
     content: @Composable () -> Unit
 ) {
-    if (!LocalIsIos.current) {
-        Column {
-            content()
-            HorizontalDivider()
-        }
-        return
-    }
-    val r = IosMetrics.CardCorner
+    val isIos = LocalIsIos.current
+    // Both platforms group rows into rounded cards; Android with its own radius, card colour and
+    // a little more margin, iOS as an inset-grouped section.
+    val r = if (isIos) IosMetrics.CardCorner else 24.dp
     val shape = when {
         isFirst && isLast -> RoundedCornerShape(r)
         isFirst -> RoundedCornerShape(topStart = r, topEnd = r)
@@ -124,12 +120,12 @@ private fun SectionRow(
         modifier = Modifier
             .padding(horizontal = IosMetrics.RowHorizontalPadding)
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(ch.bfh.anchor.ui.components.calmCardColor())
     ) {
         content()
         if (!isLast) {
             HorizontalDivider(
-                modifier = Modifier.padding(start = separatorInset),
+                modifier = Modifier.padding(start = if (isIos) separatorInset else 16.dp, end = if (isIos) 0.dp else 16.dp),
                 thickness = IosMetrics.Hairline,
                 color = MaterialTheme.colorScheme.outlineVariant
             )
@@ -157,6 +153,8 @@ fun AdaptiveListRow(
             supportingContent = supporting,
             leadingContent = leading,
             trailingContent = trailing,
+            // The section card draws the background.
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier
         )
         return
