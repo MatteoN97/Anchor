@@ -49,10 +49,42 @@
     <string name="settings_name_not_set">Not set</string>
     <string name="settings_edit_name">Edit name</string>
     <string name="settings_name_helper_updated">Your name is used to personalise your home screen greeting.</string>
+    <string name="settings_crisis_title">Crisis mode</string>
+    <string name="settings_crisis_breathing_label">Breathing pattern</string>
+    <string name="settings_crisis_breathing_helper">Used for the breathing step when you tap "I need help now". Pick the one you've practised most.</string>
+    <string name="settings_contacts_title">Who to call</string>
+    <string name="settings_contacts_helper">Offered when you finish crisis mode and still feel rough. Anchor opens the dialer; it never calls on its own.</string>
+    <string name="settings_crisis_line_label">Crisis line</string>
+    <string name="settings_crisis_line_auto">Automatic for %1$s</string>
+    <string name="settings_crisis_line_auto_fallback">Default (%1$s). Anchor doesn't know a line for your region yet, so consider adding your own.</string>
+    <string name="settings_crisis_line_custom">Your own choice</string>
+    <string name="settings_crisis_line_reset">Use automatic</string>
+    <string name="settings_crisis_line_name_placeholder">e.g. local crisis service</string>
+    <string name="settings_trusted_label">Trusted person</string>
+    <string name="settings_trusted_not_set">Not set. Add a friend, relative or your therapist.</string>
+    <string name="settings_trusted_name_placeholder">e.g. Anna</string>
+    <string name="settings_contact_name">Name</string>
+    <string name="settings_contact_number">Phone number</string>
+    <string name="settings_contact_edit">Edit %1$s</string>
+    <string name="settings_contact_remove">Remove</string>
     <string name="crisis_breathe_title">Let's breathe first</string>
-    <string name="crisis_breath_phase_inhale">Breathe in</string>
-    <string name="crisis_breath_phase_hold">Hold</string>
-    <string name="crisis_breath_phase_exhale">Breathe out</string>
+    <string name="breath_phase_inhale">Breathe in</string>
+    <string name="breath_phase_hold">Hold</string>
+    <string name="breath_phase_exhale">Breathe out</string>
+    <string name="breathing_title">Take a breath</string>
+    <string name="breathing_choose_subtitle">Pick a rhythm. Practising while you're calm makes it easier to reach for when things get hard.</string>
+    <string name="breathing_start">Start</string>
+    <string name="breathing_pattern_calm_name">Calm breathing</string>
+    <string name="breathing_pattern_calm_description">In for 4, out for 6. A longer exhale helps your body settle.</string>
+    <string name="breathing_pattern_box_name">Box breathing</string>
+    <string name="breathing_pattern_box_description">In 4, hold 4, out 4, hold 4. Steady and grounding.</string>
+    <string name="breathing_pattern_478_name">4-7-8 breathing</string>
+    <string name="breathing_pattern_478_description">In 4, hold 7, out 8. Deeply relaxing. Skip it if long holds feel uncomfortable.</string>
+    <string name="breathing_finished_title">Nicely done.</string>
+    <string name="breathing_finished_subtitle">Take a moment to notice how you feel now.</string>
+    <string name="breathing_more">A few more</string>
+    <string name="home_breathing_title">Take a breath</string>
+    <string name="home_breathing_subtitle">A minute of guided breathing</string>
     <string name="crisis_suggestions_title">You've got this.</string>
     <string name="crisis_suggestions_subtitle">Here are some things that have helped you before.</string>
     <string name="crisis_finished_button">I'm feeling better</string>
@@ -60,6 +92,7 @@
     <string name="common_delete">Delete</string>
     <string name="common_dismiss">Dismiss</string>
     <string name="common_skip">Skip</string>
+    <string name="common_done">Done</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_save">Save</string>
 
@@ -121,9 +154,17 @@
     <string name="common_done">Done</string>
 
     <plurals name="crisis_breaths_remaining">
+    <plurals name="breaths_remaining">
         <item quantity="one">%1$d breath remaining</item>
         <item quantity="other">%1$d breaths remaining</item>
     </plurals>
+    <plurals name="breathing_breaths_count">
+        <item quantity="one">%1$d breath</item>
+        <item quantity="other">%1$d breaths</item>
+    </plurals>
+    <string name="crisis_call_line_title">Call a crisis line</string>
+    <string name="crisis_call_trusted_title">Call %1$s</string>
+    <string name="crisis_call_trusted_fallback">Call someone you trust</string>
 
     <plurals name="home_last_crisis_days">
         <item quantity="one">Last crisis session: %1$d day ago</item>

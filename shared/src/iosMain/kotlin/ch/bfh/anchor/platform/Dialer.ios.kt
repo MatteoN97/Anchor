@@ -8,7 +8,7 @@ import platform.UIKit.UIApplication
 @Composable
 actual fun rememberPhoneDialer(): (number: String) -> Unit = remember {
     { number ->
-        NSURL.URLWithString("tel:$number")?.let { url ->
+        NSURL.URLWithString("tel:${dialable(number)}")?.let { url ->
             UIApplication.sharedApplication.openURL(url)
         }
     }
