@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -27,7 +28,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -162,7 +162,7 @@ fun AdaptiveSegmentedControl(
     counts: List<Int?> = emptyList()
 ) {
     if (!LocalIsIos.current) {
-        TabRow(selectedTabIndex = selectedIndex, modifier = modifier) {
+        PrimaryTabRow(selectedTabIndex = selectedIndex, modifier = modifier) {
             options.forEachIndexed { index, label ->
                 Tab(
                     selected = index == selectedIndex,
@@ -253,7 +253,10 @@ fun AdaptiveTextField(
             value = value,
             onValueChange = onValueChange,
             label = if (showLabel) ({ Text(label) }) else null,
-            placeholder = placeholder?.let { { Text(it) } },
+            // Without a label the field would be blank; fall back to it as the hint, as iOS does.
+            placeholder = (placeholder ?: label.takeIf { !showLabel })?.let {
+                { Text(it, maxLines = if (singleLine) 1 else Int.MAX_VALUE, overflow = TextOverflow.Ellipsis) }
+            },
             modifier = modifier.fillMaxWidth(),
             singleLine = singleLine,
             minLines = minLines,
@@ -339,11 +342,8 @@ fun AdaptiveFilterChip(selected: Boolean, onClick: () -> Unit, label: String, mo
         modifier = modifier
             .clip(CircleShape)
             .background(background)
-            .clickable(onClick = onClick)
-            .semantics {
-                role = Role.Checkbox
-                stateDescription = if (selected) "Selected" else "Not selected"
-            }
+            // toggleable reports the on/off state itself, in the system language.
+            .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() })
             .padding(horizontal = 14.dp, vertical = 7.dp)
     )
 }

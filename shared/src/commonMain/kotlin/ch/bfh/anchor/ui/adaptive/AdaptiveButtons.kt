@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.font.FontWeight
 import ch.bfh.anchor.ui.theme.LocalIsIos
 
@@ -167,6 +168,3 @@ fun AnchorCardButton(
         )
     }
 }
-
-private inline fun Color.takeOrElse(block: () -> Color): Color =
-    if (this == Color.Unspecified) block() else this
