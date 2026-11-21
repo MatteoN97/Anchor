@@ -24,7 +24,7 @@ fun HomeScreen(
     settingsManager: SettingsManager,
     onSosClick: () -> Unit
 ) {
-    val userName = settingsManager.userName
+    val userName by settingsManager.userName.collectAsState()
 
     val tools by vm.tools.collectAsState()
     val notes by vm.notes.collectAsState()

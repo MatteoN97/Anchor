@@ -14,9 +14,9 @@ import ch.bfh.anchor.settings.SettingsManager
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(settingsManager: SettingsManager) {
-    var userName by remember { mutableStateOf(settingsManager.userName) }
+    val userName by settingsManager.userName.collectAsState()
     var isEditing by remember { mutableStateOf(false) }
-    var tempName by remember { mutableStateOf(settingsManager.userName) }
+    var tempName by remember { mutableStateOf(userName) }
 
     Scaffold(
         topBar = {
@@ -63,8 +63,7 @@ fun SettingsScreen(settingsManager: SettingsManager) {
                     }
                     Button(
                         onClick = {
-                            settingsManager.userName = tempName.trim()
-                            userName = tempName.trim()
+                            settingsManager.setUserName(tempName)
                             isEditing = false
                         },
                         enabled = tempName.isNotBlank(),
