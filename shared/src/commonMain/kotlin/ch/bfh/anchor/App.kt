@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavGraphBuilder
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -109,7 +110,8 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
             modalComposable(ROUTE_CRISIS, isIos) {
                 val region = rememberDeviceRegion()
                 CrisisScreen(
-                    onDismiss = { navController.popBackStack() },
+                    // A second tap during the exit animation would pop Home too and leave a blank screen.
+                    onDismiss = dropUnlessResumed { navController.popBackStack() },
                     vm = vm,
                     breathingPattern = settingsManager.crisisBreathingPattern,
                     crisisLine = effectiveCrisisLine(settingsManager.customCrisisLine, region),
@@ -117,7 +119,7 @@ fun AnchorApp(vm: AnchorViewModel, settingsManager: SettingsManager) {
                 )
             }
             modalComposable(ROUTE_BREATHING, isIos) {
-                BreathingPracticeScreen(onDismiss = { navController.popBackStack() })
+                BreathingPracticeScreen(onDismiss = dropUnlessResumed { navController.popBackStack() })
             }
             composable(AnchorTab.Toolkit.route) { ToolkitScreen(viewModel = vm) }
             composable(AnchorTab.Journal.route) { JournalScreen(viewModel = vm) }

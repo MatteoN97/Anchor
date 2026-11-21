@@ -3,9 +3,9 @@ package ch.bfh.anchor.ui.crisis
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,11 +31,13 @@ private val checkInOptions: List<Triple<Int, String, StringResource>> = listOf(
 fun CrisisCheckInScreen(
     crisisLine: HelpContact,
     trustedContact: HelpContact?,
-    onFinished: (Int) -> Unit,
+    onRated: (Int) -> Unit,
+    onClose: () -> Unit,
     onNeedMoreHelp: () -> Unit
 ) {
-    var selectedRating by remember { mutableStateOf<Int?>(null) }
-    var showNeedHelp by remember { mutableStateOf(false) }
+    // Saveable: rotating the phone mid-check-in must not drop the answer or the help screen.
+    var selectedRating by rememberSaveable { mutableStateOf<Int?>(null) }
+    var showNeedHelp by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -50,16 +52,18 @@ fun CrisisCheckInScreen(
                 crisisLine = crisisLine,
                 trustedContact = trustedContact,
                 onGoAgain = onNeedMoreHelp,
-                onDone = { onFinished(selectedRating ?: 5) }
+                onDone = onClose
             )
         } else {
             CheckInContent(
                 selectedRating = selectedRating,
                 onRatingSelected = { selectedRating = it },
                 onDone = {
-                    val rating = selectedRating ?: 3
-                    if (rating >= 4) showNeedHelp = true
-                    else onFinished(rating)
+                    val rating = selectedRating ?: return@CheckInContent
+                    // Recorded now, not on leaving: the rough sessions are the ones that continue
+                    // to "go again" or end on a call, and they were the ones going unrecorded.
+                    onRated(rating)
+                    if (rating >= 4) showNeedHelp = true else onClose()
                 }
             )
         }
