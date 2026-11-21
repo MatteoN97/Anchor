@@ -36,45 +36,59 @@ fun CrisisScreen(
         color = MaterialTheme.colorScheme.background
     ) {
         Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))) {
-            when (step) {
-                CrisisStep.FeelingPicker -> FeelingPickerScreen(
-                    onSelected = { feeling ->
-                        selectedFeeling = feeling
-                        step = if (feeling.skipBreathing) CrisisStep.Suggestions
-                        else CrisisStep.Breathing
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    when (step) {
+                        CrisisStep.FeelingPicker -> FeelingPickerScreen(
+                            onSelected = { feeling ->
+                                selectedFeeling = feeling
+                                step = if (feeling.skipBreathing) CrisisStep.Suggestions
+                                else CrisisStep.Breathing
+                            }
+                        )
+
+                        CrisisStep.Breathing -> BreathingExercise(
+                            pattern = breathingPattern,
+                            cycles = 3,
+                            title = stringResource(Res.string.crisis_breathe_title),
+                            onComplete = { step = CrisisStep.Suggestions },
+                            bottomAction = {
+                                AnchorTextButton(onClick = { step = CrisisStep.Suggestions }) {
+                                    Text(
+                                        stringResource(Res.string.common_skip),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        )
+
+                        CrisisStep.Suggestions -> SuggestedToolsScreen(
+                            feeling = selectedFeeling ?: Feeling.ANXIOUS,
+                            viewModel = vm,
+                            onFinished = { step = CrisisStep.CheckIn },
+                            onToolAdded = { tool -> vm.addTool(tool.name, tool.category, tool.description) }
+                        )
+
+                        CrisisStep.CheckIn -> CrisisCheckInScreen(
+                            crisisLine = crisisLine,
+                            trustedContact = trustedContact,
+                            onFinished = { rating ->
+                                vm.addCrisisCheckIn(selectedFeeling ?: Feeling.ANXIOUS, rating)
+                                onDismiss()
+                            },
+                            onNeedMoreHelp = { step = CrisisStep.FeelingPicker }
+                        )
                     }
-                )
+                }
 
-                CrisisStep.Breathing -> BreathingExercise(
-                    pattern = breathingPattern,
-                    cycles = 3,
-                    title = stringResource(Res.string.crisis_breathe_title),
-                    onComplete = { step = CrisisStep.Suggestions },
-                    bottomAction = {
-                        AnchorTextButton(onClick = { step = CrisisStep.Suggestions }) {
-                            Text(
-                                stringResource(Res.string.common_skip),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                )
-
-                CrisisStep.Suggestions -> SuggestedToolsScreen(
-                    feeling = selectedFeeling ?: Feeling.ANXIOUS,
-                    viewModel = vm,
-                    onFinished = { step = CrisisStep.CheckIn },
-                    onToolAdded = { tool -> vm.addTool(tool.name, tool.category, tool.description) }
-                )
-
-                CrisisStep.CheckIn -> CrisisCheckInScreen(
+                // Always within reach, whatever step the flow is on. Its own strip rather than an
+                // overlay, so it never covers a step's Continue, Skip or Done button.
+                CallForHelpButton(
                     crisisLine = crisisLine,
                     trustedContact = trustedContact,
-                    onFinished = { rating ->
-                        vm.addCrisisCheckIn(selectedFeeling ?: Feeling.ANXIOUS, rating)
-                        onDismiss()
-                    },
-                    onNeedMoreHelp = { step = CrisisStep.FeelingPicker }
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 8.dp, bottom = 16.dp)
                 )
             }
 

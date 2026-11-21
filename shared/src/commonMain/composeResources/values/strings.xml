@@ -161,6 +161,8 @@
     <string name="crisis_call_line_title">Call a crisis line</string>
     <string name="crisis_call_trusted_title">Call %1$s</string>
     <string name="crisis_call_trusted_fallback">Call someone you trust</string>
+    <string name="crisis_call_button">Call for help</string>
+    <string name="crisis_call_sheet_title">Who would you like to call?</string>
 
     <plurals name="home_last_crisis_days">
         <item quantity="one">Last crisis session: %1$d day ago</item>
