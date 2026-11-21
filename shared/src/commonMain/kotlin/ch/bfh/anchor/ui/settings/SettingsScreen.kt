@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.CrisisLines
 import ch.bfh.anchor.model.HelpContact
+import ch.bfh.anchor.model.effectiveCrisisLine
 import ch.bfh.anchor.platform.rememberDeviceRegion
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
@@ -45,7 +46,7 @@ fun SettingsScreen(settingsManager: SettingsManager) {
     val listState = rememberLazyListState()
     val region = rememberDeviceRegion()
     val regionalLine = CrisisLines.forRegion(region)
-    val effectiveLine = customLine ?: (regionalLine ?: CrisisLines.fallback).contact
+    val effectiveLine = effectiveCrisisLine(customLine, region)
 
     // Resolved here: the LazyColumn builder below is not a composable scope.
     val title = stringResource(Res.string.settings_title)

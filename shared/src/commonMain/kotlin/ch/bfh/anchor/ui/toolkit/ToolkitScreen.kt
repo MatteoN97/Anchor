@@ -16,6 +16,7 @@ import ch.bfh.anchor.ui.adaptive.PageAction
 import ch.bfh.anchor.ui.adaptive.RowEditActions
 import ch.bfh.anchor.ui.adaptive.SwipeToDelete
 import ch.bfh.anchor.ui.adaptive.adaptiveSection
+import ch.bfh.anchor.ui.adaptive.emptyState
 import ch.bfh.anchor.ui.adaptive.largeTitle
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.ui.theme.LocalIsIos
@@ -33,6 +34,8 @@ fun ToolkitScreen(viewModel: AnchorViewModel) {
     val title = stringResource(Res.string.toolkit_title)
     val editLabel = stringResource(Res.string.common_edit)
     val deleteLabel = stringResource(Res.string.common_delete)
+    val emptyTitle = stringResource(Res.string.toolkit_empty_title)
+    val emptySubtitle = stringResource(Res.string.toolkit_empty_subtitle)
 
     AdaptivePageScaffold(
         title = title,
@@ -53,7 +56,8 @@ fun ToolkitScreen(viewModel: AnchorViewModel) {
             modifier = Modifier.fillMaxSize()
         ) {
             largeTitle(title)
-            adaptiveSection(items = tools, key = { it.id }) { tool ->
+            if (tools.isEmpty()) emptyState(emptyTitle, emptySubtitle)
+            else adaptiveSection(items = tools, key = { it.id }) { tool ->
                 SwipeToDelete(onDelete = { viewModel.deleteTool(tool) }, deleteLabel = deleteLabel) {
                     AdaptiveListRow(
                         headline = {

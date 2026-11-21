@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavGraphBuilder
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -60,6 +61,10 @@ private const val ROUTE_CRISIS = "crisis"
 private const val ROUTE_BREATHING = "breathing"
 private const val ROUTE_MOOD = "mood"
 
+/**
+ * [reminderController] schedules mood reminders natively (Android only so far; iOS passes the
+ * no-op default). [openMoodRequest] is bumped each time a reminder notification is tapped.
+ */
 @Composable
 fun App(
     database: AnchorDatabase,
@@ -90,7 +95,7 @@ fun AnchorApp(
     val currentRoute = navBackStackEntry?.destination?.route
     val isIos = LocalIsIos.current
 
-    // A tapped mood reminder bumps openMoodRequest, which opens the tracker.
+    // A tapped mood reminder opens the tracker.
     LaunchedEffect(openMoodRequest) {
         if (openMoodRequest > 0 && navController.currentDestination?.route != ROUTE_MOOD) {
             navController.navigate(ROUTE_MOOD) { launchSingleTop = true }
@@ -134,18 +139,20 @@ fun AnchorApp(
                     onMoodClick = { navController.navigate(ROUTE_MOOD) }
                 )
             }
+            // A page under Home, not a tab: the bar stays visible with Home selected.
             composable(ROUTE_MOOD) {
                 MoodTrackerScreen(
                     vm = vm,
                     settingsManager = settingsManager,
                     reminderController = reminderController,
-                    onBack = { navController.popBackStack() }
+                    onBack = dropUnlessResumed { navController.popBackStack() }
                 )
             }
             modalComposable(ROUTE_CRISIS, isIos) {
                 val region = rememberDeviceRegion()
                 CrisisScreen(
-                    onDismiss = { navController.popBackStack() },
+                    // A second tap during the exit animation would pop Home too and leave a blank screen.
+                    onDismiss = dropUnlessResumed { navController.popBackStack() },
                     vm = vm,
                     breathingPattern = settingsManager.crisisBreathingPattern,
                     crisisLine = effectiveCrisisLine(settingsManager.customCrisisLine, region),
@@ -153,7 +160,7 @@ fun AnchorApp(
                 )
             }
             modalComposable(ROUTE_BREATHING, isIos) {
-                BreathingPracticeScreen(onDismiss = { navController.popBackStack() })
+                BreathingPracticeScreen(onDismiss = dropUnlessResumed { navController.popBackStack() })
             }
             composable(AnchorTab.Toolkit.route) { ToolkitScreen(viewModel = vm) }
             composable(AnchorTab.Journal.route) { JournalScreen(viewModel = vm) }
@@ -207,7 +214,7 @@ private fun AnchorBottomBar(currentRoute: String?, navController: NavHostControl
         else AnchorTab.entries.indexOfFirst { it.route == currentRoute },
         onSelect = { index ->
             val tab = AnchorTab.entries[index]
-            // Home acts as Back from the tracker: drop it rather than restore it later.
+            // Home acts as Back from the tracker: drop it rather than saving it for later.
             if (currentRoute == ROUTE_MOOD && tab == AnchorTab.Home &&
                 navController.popBackStack(AnchorTab.Home.route, inclusive = false)
             ) return@AdaptiveTabBar

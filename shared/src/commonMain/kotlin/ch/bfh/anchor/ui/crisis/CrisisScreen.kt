@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -28,8 +29,9 @@ fun CrisisScreen(
     crisisLine: HelpContact,
     trustedContact: HelpContact?
 ) {
-    var step by remember { mutableStateOf(CrisisStep.FeelingPicker) }
-    var selectedFeeling by remember { mutableStateOf<Feeling?>(null) }
+    // Saveable, so rotating the phone mid-crisis does not send the user back to the first step.
+    var step by rememberSaveable { mutableStateOf(CrisisStep.FeelingPicker) }
+    var selectedFeeling by rememberSaveable { mutableStateOf<Feeling?>(null) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -72,10 +74,10 @@ fun CrisisScreen(
                         CrisisStep.CheckIn -> CrisisCheckInScreen(
                             crisisLine = crisisLine,
                             trustedContact = trustedContact,
-                            onFinished = { rating ->
+                            onRated = { rating ->
                                 vm.addCrisisCheckIn(selectedFeeling ?: Feeling.ANXIOUS, rating)
-                                onDismiss()
                             },
+                            onClose = onDismiss,
                             onNeedMoreHelp = { step = CrisisStep.FeelingPicker }
                         )
                     }
