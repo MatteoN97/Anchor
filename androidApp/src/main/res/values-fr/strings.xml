@@ -1,0 +1,13 @@
+<resources>
+    <string name="mood_notification_channel">Rappels pour noter ton humeur</string>
+    <string name="mood_notification_channel_desc">Rappels facultatifs pour noter ton humeur</string>
+    <string name="mood_notification_public">Rappel d\'Anchor</string>
+    <string name="mood_notification_title">Un petit point</string>
+    <string name="mood_notification_text">Comment te sens-tu ? Développe pour choisir une humeur.</string>
+    <string name="mood_notification_question">Comment te sens-tu ?</string>
+    <string name="mood_notification_great">Très bien</string>
+    <string name="mood_notification_good">Bien</string>
+    <string name="mood_notification_okay">Ça va</string>
+    <string name="mood_notification_low">Bas</string>
+    <string name="mood_notification_not_great">Pas bien</string>
+</resources>

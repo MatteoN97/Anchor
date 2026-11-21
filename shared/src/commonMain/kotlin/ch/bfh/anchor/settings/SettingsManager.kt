@@ -1,5 +1,6 @@
 package ch.bfh.anchor.settings
 
+import ch.bfh.anchor.model.AppLanguage
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.HelpContact
 import com.russhwolf.settings.Settings
@@ -24,6 +25,18 @@ class SettingsManager(private val settings: Settings) {
         val trimmed = value.trim()
         settings.putString(KEY_USER_NAME, trimmed)
         _userName.value = trimmed
+    }
+
+    private val _appLanguage =
+        MutableStateFlow(AppLanguage.fromCode(settings.getStringOrNull(KEY_APP_LANGUAGE)))
+
+    /** The language chosen in Settings; [AppLanguage.System] follows the phone. Observable so the UI switches at once. */
+    val appLanguage: StateFlow<AppLanguage> = _appLanguage.asStateFlow()
+
+    fun setAppLanguage(language: AppLanguage) {
+        val code = language.code
+        if (code == null) settings.remove(KEY_APP_LANGUAGE) else settings.putString(KEY_APP_LANGUAGE, code)
+        _appLanguage.value = language
     }
 
     /** Pattern used by the breathing step of the crisis flow. */
@@ -93,6 +106,7 @@ class SettingsManager(private val settings: Settings) {
 
     private companion object {
         const val KEY_USER_NAME = "user_name"
+        const val KEY_APP_LANGUAGE = "app_language"
         const val KEY_MOOD_ENABLED = "mood_reminders_enabled"
         const val KEY_OLD_HOUR = "mood_reminder_hour"
         const val KEY_OLD_MINUTE = "mood_reminder_minute"

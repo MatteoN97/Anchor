@@ -1,5 +1,11 @@
 package ch.bfh.anchor.ui.mood
 
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.*
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import androidx.compose.ui.text.intl.Locale
+import org.jetbrains.compose.resources.StringResource
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -20,6 +26,14 @@ import ch.bfh.anchor.model.MoodScale
 import ch.bfh.anchor.platform.formatMoodDateTime
 
 private const val DAY_MILLIS = 86_400_000L
+
+/** Where a mood entry came from, as shown next to it in the history. */
+internal fun moodSourceLabel(source: String): StringResource = when (source) {
+    MoodEntry.SOURCE_TEST_NOTIFICATION -> Res.string.mood_source_test
+    MoodEntry.SOURCE_NOTIFICATION -> Res.string.mood_source_reminder
+    MoodEntry.SOURCE_CRISIS -> Res.string.mood_source_crisis
+    else -> Res.string.mood_source_app
+}
 
 /** Use the same exact rolling period for graph dots and the expanded history list. */
 internal fun moodEntriesInPeriod(entries: List<MoodEntry>, periodDays: Int, now: Long): List<MoodEntry> {
@@ -54,17 +68,17 @@ internal fun MoodHistoryChart(
         ) {
             FilterChip(selected = periodDays == 1, onClick = {
                 selectedId = null; onPeriodDaysChange(1)
-            }, label = { Text("1 day") })
+            }, label = { Text(pluralStringResource(Res.plurals.mood_period_days, 1, 1)) })
             Spacer(Modifier.width(6.dp))
             FilterChip(selected = periodDays == 7, onClick = {
                 selectedId = null; onPeriodDaysChange(7)
-            }, label = { Text("7 days") })
+            }, label = { Text(pluralStringResource(Res.plurals.mood_period_days, 7, 7)) })
             Spacer(Modifier.width(6.dp))
             FilterChip(selected = periodDays == 30, onClick = {
                 selectedId = null; onPeriodDaysChange(30)
-            }, label = { Text("30 days") })
+            }, label = { Text(pluralStringResource(Res.plurals.mood_period_days, 30, 30)) })
         }
-        Text("Each dot is one check-in. Tap a dot to see when it happened.",
+        Text(stringResource(Res.string.mood_chart_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
 
@@ -76,11 +90,11 @@ internal fun MoodHistoryChart(
                         modifier = Modifier.width(78.dp).height(200.dp),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("5  ${MoodScale.label(5)}", style = MaterialTheme.typography.labelSmall,
+                        Text("5  " + stringResource(MoodScale.labelRes(5)), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("3  ${MoodScale.label(3)}", style = MaterialTheme.typography.labelSmall,
+                        Text("3  " + stringResource(MoodScale.labelRes(3)), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("1  ${MoodScale.label(1)}", style = MaterialTheme.typography.labelSmall,
+                        Text("1  " + stringResource(MoodScale.labelRes(1)), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Canvas(
@@ -144,15 +158,16 @@ internal fun MoodHistoryChart(
                 }
                 Row(modifier = Modifier.fillMaxWidth().padding(start = 78.dp),
                     horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(if (periodDays == 1) "24 hours ago" else "$periodDays days ago",
+                    Text(if (periodDays == 1) stringResource(Res.string.mood_chart_24h_ago)
+                         else pluralStringResource(Res.plurals.mood_chart_days_ago, periodDays, periodDays),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Now", style = MaterialTheme.typography.labelSmall,
+                    Text(stringResource(Res.string.mood_chart_now), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (visible.isEmpty()) {
-                    Text(if (periodDays == 1) "No check-ins in the last 24 hours."
-                         else "No check-ins in the last $periodDays days.",
+                    Text(if (periodDays == 1) stringResource(Res.string.mood_chart_empty_24h)
+                         else pluralStringResource(Res.plurals.mood_chart_empty_days, periodDays, periodDays),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
@@ -162,18 +177,13 @@ internal fun MoodHistoryChart(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text(MoodScale.emoji(entry.score), style = MaterialTheme.typography.headlineSmall)
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(MoodScale.label(entry.score), style = MaterialTheme.typography.bodyMedium,
+                                Text(stringResource(MoodScale.labelRes(entry.score)), style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold)
-                                Text(formatMoodDateTime(entry.recordedAt),
+                                Text(formatMoodDateTime(entry.recordedAt, Locale.current.language),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            val sourceLabel = when (entry.source) {
-                                MoodEntry.SOURCE_TEST_NOTIFICATION -> "Test"
-                                MoodEntry.SOURCE_NOTIFICATION -> "Reminder"
-                                MoodEntry.SOURCE_CRISIS -> "After support"
-                                else -> "In app"
-                            }
+                            val sourceLabel = stringResource(moodSourceLabel(entry.source))
                             Text(sourceLabel, style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -181,7 +191,7 @@ internal fun MoodHistoryChart(
                 }
             }
         }
-        Text("${visible.size} in this view · ${entries.size} total",
+        Text(stringResource(Res.string.mood_chart_count, visible.size, entries.size),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
     }

@@ -1,5 +1,6 @@
 package ch.bfh.anchor.ui.journal
 
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -198,7 +199,7 @@ private fun NoteRow(
             supporting = {
                 Column(verticalArrangement = Arrangement.spacedBy(if (isIos) 6.dp else 4.dp)) {
                     Text(
-                        text = formatNoteDate(note.date),
+                        text = formatNoteDate(note.date, Locale.current.language),
                         style = if (isIos) MaterialTheme.typography.bodySmall else MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

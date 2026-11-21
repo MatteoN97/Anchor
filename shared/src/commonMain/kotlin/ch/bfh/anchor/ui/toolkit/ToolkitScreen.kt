@@ -70,7 +70,7 @@ fun ToolkitScreen(viewModel: AnchorViewModel) {
                         supporting = {
                             Column {
                                 Text(
-                                    tool.category,
+                                    categoryLabel(tool.category),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )

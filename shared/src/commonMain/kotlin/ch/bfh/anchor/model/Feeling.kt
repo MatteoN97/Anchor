@@ -29,35 +29,35 @@ enum class Feeling(
         labelRes = Res.string.feeling_anxious,
         phraseRes = Res.string.feeling_anxious_phrase,
         emoji = "😰",
-        matchingCategories = listOf("Breathing", "Grounding"),
+        matchingCategories = listOf(ToolCategory.Breathing.key, ToolCategory.Grounding.key),
         skipBreathing = false
     ),
     SAD(
         labelRes = Res.string.feeling_sad,
         phraseRes = Res.string.feeling_sad_phrase,
         emoji = "😢",
-        matchingCategories = listOf("Social", "Grounding"),
+        matchingCategories = listOf(ToolCategory.Social.key, ToolCategory.Grounding.key),
         skipBreathing = true
     ),
     ANGRY(
         labelRes = Res.string.feeling_angry,
         phraseRes = Res.string.feeling_angry_phrase,
         emoji = "😡",
-        matchingCategories = listOf("Physical"),
+        matchingCategories = listOf(ToolCategory.Physical.key),
         skipBreathing = true
     ),
     NUMB(
         labelRes = Res.string.feeling_numb,
         phraseRes = Res.string.feeling_numb_phrase,
         emoji = "😶",
-        matchingCategories = listOf("Grounding", "Physical"),
+        matchingCategories = listOf(ToolCategory.Grounding.key, ToolCategory.Physical.key),
         skipBreathing = false
     ),
     EXHAUSTED(
         labelRes = Res.string.feeling_exhausted,
         phraseRes = Res.string.feeling_exhausted_phrase,
         emoji = "😴",
-        matchingCategories = listOf("Grounding"),
+        matchingCategories = listOf(ToolCategory.Grounding.key),
         skipBreathing = true
     )
 }

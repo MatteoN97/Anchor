@@ -1,0 +1,13 @@
+<resources>
+    <string name="mood_notification_channel">Stimmungs-Erinnerungen</string>
+    <string name="mood_notification_channel_desc">Freiwillige Erinnerungen, deine Stimmung festzuhalten</string>
+    <string name="mood_notification_public">Erinnerung von Anchor</string>
+    <string name="mood_notification_title">Ein kurzer Check-in</string>
+    <string name="mood_notification_text">Wie fühlst du dich? Aufklappen, um eine Stimmung zu wählen.</string>
+    <string name="mood_notification_question">Wie fühlst du dich?</string>
+    <string name="mood_notification_great">Sehr gut</string>
+    <string name="mood_notification_good">Gut</string>
+    <string name="mood_notification_okay">Okay</string>
+    <string name="mood_notification_low">Gedrückt</string>
+    <string name="mood_notification_not_great">Nicht gut</string>
+</resources>

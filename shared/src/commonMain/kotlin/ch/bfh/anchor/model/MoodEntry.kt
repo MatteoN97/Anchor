@@ -5,6 +5,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import ch.bfh.anchor.platform.nowMillis
 import ch.bfh.anchor.platform.randomId
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /** Mood records share one stable scale (1 = Not great, 5 = Great).
  * Crisis check-ins keep their existing reversed numeric scale in their own table,
@@ -38,12 +41,12 @@ object MoodScale {
         require(rating in 1..5) { "Crisis rating must be between 1 and 5" }
         return 6 - rating
     }
-    fun label(score: Int): String = when (score) {
-        1 -> "Not great"
-        2 -> "Low"
-        3 -> "Okay"
-        4 -> "Good"
-        5 -> "Great"
+    fun labelRes(score: Int): StringResource = when (score) {
+        1 -> Res.string.mood_not_great
+        2 -> Res.string.mood_low
+        3 -> Res.string.mood_okay
+        4 -> Res.string.mood_good
+        5 -> Res.string.mood_great
         else -> throw IllegalArgumentException("Unknown mood: $score")
     }
     fun emoji(score: Int): String = when (score) {

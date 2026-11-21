@@ -165,4 +165,106 @@
         <item quantity="one">Last crisis session: %1$d day ago</item>
         <item quantity="other">Last crisis session: %1$d days ago</item>
     </plurals>
+
+    <!-- Language -->
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_system">Same as phone</string>
+    <string name="settings_language_helper">With "Same as phone", Anchor follows your phone's language, and uses English if Anchor isn't available in it.</string>
+
+    <string name="common_back">Back</string>
+    <string name="common_close">Close</string>
+
+    <!-- Countries, for the automatic crisis line -->
+    <string name="country_ch">Switzerland</string>
+    <string name="country_de">Germany</string>
+    <string name="country_at">Austria</string>
+    <string name="country_fr">France</string>
+    <string name="country_es">Spain</string>
+    <string name="country_nl">the Netherlands</string>
+    <string name="country_gb">the United Kingdom</string>
+    <string name="country_ie">Ireland</string>
+    <string name="country_us">the United States</string>
+    <string name="country_ca">Canada</string>
+    <string name="country_au">Australia</string>
+    <string name="country_nz">New Zealand</string>
+
+    <!-- Built-in coping techniques -->
+    <string name="builtin_478_name">4-7-8 Breathing</string>
+    <string name="builtin_478_description">Inhale 4s, hold 7s, exhale 8s. Activates the parasympathetic nervous system.</string>
+    <string name="builtin_54321_name">5-4-3-2-1 Grounding</string>
+    <string name="builtin_54321_description">Name 5 things you see, 4 you hear, 3 you can touch, 2 you smell, 1 you taste.</string>
+    <string name="builtin_reach_out_name">Reach out</string>
+    <string name="builtin_reach_out_description">Text or call someone you trust, even just to say hi.</string>
+    <string name="builtin_comfort_object_name">Comfort object</string>
+    <string name="builtin_comfort_object_description">Hold something soft or familiar. Let yourself feel it.</string>
+    <string name="builtin_cold_water_name">Cold water</string>
+    <string name="builtin_cold_water_description">Splash cold water on your face or hold ice. It triggers the dive reflex and slows your heart rate.</string>
+    <string name="builtin_move_name">Move your body</string>
+    <string name="builtin_move_description">Even 60 seconds of jumping jacks or walking can release tension.</string>
+    <string name="builtin_temperature_name">Temperature change</string>
+    <string name="builtin_temperature_description">Hold something cold or warm. Focus entirely on the sensation.</string>
+    <string name="builtin_one_thing_name">One thing only</string>
+    <string name="builtin_one_thing_description">Pick one tiny thing to do. Just one. Nothing else matters right now.</string>
+    <string name="builtin_rest_name">Rest without guilt</string>
+    <string name="builtin_rest_description">Lie down. You don't have to be productive right now.</string>
+
+    <!-- Mood tracker -->
+    <string name="home_mood_title">Mood tracker</string>
+    <string name="home_mood_subtitle">Check in whenever you like</string>
+    <string name="mood_great">Great</string>
+    <string name="mood_good">Good</string>
+    <string name="mood_okay">Okay</string>
+    <string name="mood_low">Low</string>
+    <string name="mood_not_great">Not great</string>
+    <string name="mood_question">How are you feeling?</string>
+    <string name="mood_saved">Saved. That's all you need to do.</string>
+    <string name="mood_close_panel">Close panel</string>
+    <string name="mood_tab_history">Mood over time</string>
+    <string name="mood_tab_notifications">Notifications</string>
+    <string name="mood_hide_entries">Hide entries</string>
+    <string name="mood_history_empty">Your history will appear after your first check-in.</string>
+    <string name="mood_period_empty">No check-ins in this period.</string>
+    <string name="mood_allow_notifications">Allow notifications</string>
+    <string name="mood_why_notifications">Why allow notifications?</string>
+    <string name="mood_notifications_info">Reminders are completely optional. They can gently prompt you to check in during the hours you choose. You can leave them off and simply open this page whenever you want to record how you feel.</string>
+    <string name="mood_reminders_on">Reminders are on</string>
+    <string name="mood_reminders_off">Off — check in here whenever you like</string>
+    <string name="mood_send_test">Send test notification</string>
+    <string name="mood_test_sent">Test sent. Tap a mood in the notification, then open Mood over time.</string>
+    <string name="mood_notifications_blocked">Notifications are blocked. Allow Anchor notifications in Android settings.</string>
+    <string name="mood_start">Start  %1$s</string>
+    <string name="mood_end">End  %1$s</string>
+    <string name="mood_repeat">Repeat</string>
+    <string name="mood_local_time_hint">Uses your phone's local time. Android may delay reminders.</string>
+    <string name="mood_choose_times_hint">Choose your preferred times here; turn on notifications whenever you're ready.</string>
+    <string name="mood_notifications_unavailable">Scheduled notifications aren't available on this device yet.</string>
+    <string name="mood_source_test">Test</string>
+    <string name="mood_source_reminder">Reminder</string>
+    <string name="mood_source_crisis">After support</string>
+    <string name="mood_source_app">In app</string>
+    <string name="mood_chart_hint">Each dot is one check-in. Tap a dot to see when it happened.</string>
+    <string name="mood_chart_24h_ago">24 hours ago</string>
+    <string name="mood_chart_now">Now</string>
+    <string name="mood_chart_empty_24h">No check-ins in the last 24 hours.</string>
+    <string name="mood_chart_count">%1$d in this view · %2$d total</string>
+    <plurals name="mood_view_entries">
+        <item quantity="one">View entries · %1$d day</item>
+        <item quantity="other">View entries · %1$d days</item>
+    </plurals>
+    <plurals name="mood_every_hours">
+        <item quantity="one">Every %1$d hour</item>
+        <item quantity="other">Every %1$d hours</item>
+    </plurals>
+    <plurals name="mood_period_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="mood_chart_days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
+    <plurals name="mood_chart_empty_days">
+        <item quantity="one">No check-ins in the last %1$d day.</item>
+        <item quantity="other">No check-ins in the last %1$d days.</item>
+    </plurals>
 </resources>

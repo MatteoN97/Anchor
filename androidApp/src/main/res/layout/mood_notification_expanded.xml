@@ -6,10 +6,12 @@
     android:paddingBottom="8dp"
     android:orientation="vertical">
 
+    <!-- Texts are set in code, in the language chosen in Anchor (see MoodNotifications.show). -->
     <TextView
+        android:id="@+id/mood_prompt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="How are you feeling?"
+        android:text="@string/mood_notification_question"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
         android:textSize="14sp"
@@ -20,10 +22,10 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <TextView android:id="@+id/mood_5" style="@style/MoodNotificationChoice" android:text="😊&#10;Great" />
-        <TextView android:id="@+id/mood_4" style="@style/MoodNotificationChoice" android:text="🙂&#10;Good" />
-        <TextView android:id="@+id/mood_3" style="@style/MoodNotificationChoice" android:text="😐&#10;Okay" />
-        <TextView android:id="@+id/mood_2" style="@style/MoodNotificationChoice" android:text="😔&#10;Low" />
-        <TextView android:id="@+id/mood_1" style="@style/MoodNotificationChoice" android:text="😢&#10;Not great" />
+        <TextView android:id="@+id/mood_5" style="@style/MoodNotificationChoice" android:text="@string/mood_notification_great" />
+        <TextView android:id="@+id/mood_4" style="@style/MoodNotificationChoice" android:text="@string/mood_notification_good" />
+        <TextView android:id="@+id/mood_3" style="@style/MoodNotificationChoice" android:text="@string/mood_notification_okay" />
+        <TextView android:id="@+id/mood_2" style="@style/MoodNotificationChoice" android:text="@string/mood_notification_low" />
+        <TextView android:id="@+id/mood_1" style="@style/MoodNotificationChoice" android:text="@string/mood_notification_not_great" />
     </LinearLayout>
 </LinearLayout>
