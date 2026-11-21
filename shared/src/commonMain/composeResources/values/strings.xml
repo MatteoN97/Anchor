@@ -49,6 +49,9 @@
     <string name="settings_name_not_set">Not set</string>
     <string name="settings_edit_name">Edit name</string>
     <string name="settings_name_helper_updated">Your name is used to personalise your home screen greeting.</string>
+    <string name="settings_crisis_title">Crisis mode</string>
+    <string name="settings_crisis_breathing_label">Breathing pattern</string>
+    <string name="settings_crisis_breathing_helper">Used for the breathing step when you tap "I need help now". Pick the one you've practised most.</string>
     <string name="crisis_breathe_title">Let's breathe first</string>
     <string name="breath_phase_inhale">Breathe in</string>
     <string name="breath_phase_hold">Hold</string>

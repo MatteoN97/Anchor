@@ -56,7 +56,11 @@ fun HomeScreen(vm: AnchorViewModel, settingsManager: SettingsManager) {
     }
 
     if (showCrisis) {
-        CrisisScreen(onDismiss = { showCrisis = false }, vm = vm)
+        CrisisScreen(
+            onDismiss = { showCrisis = false },
+            vm = vm,
+            breathingPattern = settingsManager.crisisBreathingPattern
+        )
     }
 }
 

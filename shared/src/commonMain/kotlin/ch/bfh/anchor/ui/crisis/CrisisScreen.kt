@@ -20,7 +20,8 @@ enum class CrisisStep { FeelingPicker, Breathing, Suggestions, CheckIn }
 @Composable
 fun CrisisScreen(
     onDismiss: () -> Unit,
-    vm: AnchorViewModel
+    vm: AnchorViewModel,
+    breathingPattern: BreathingPattern
 ) {
     var step by remember { mutableStateOf(CrisisStep.FeelingPicker) }
     var selectedFeeling by remember { mutableStateOf<Feeling?>(null) }
@@ -40,7 +41,7 @@ fun CrisisScreen(
                 )
 
                 CrisisStep.Breathing -> BreathingExercise(
-                    pattern = BreathingPattern.Calm,
+                    pattern = breathingPattern,
                     cycles = 3,
                     title = stringResource(Res.string.crisis_breathe_title),
                     onComplete = { step = CrisisStep.Suggestions },
