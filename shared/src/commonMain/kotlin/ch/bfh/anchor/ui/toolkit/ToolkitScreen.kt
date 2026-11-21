@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.CopingTool
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
@@ -44,7 +45,11 @@ fun ToolkitScreen(viewModel: AnchorViewModel) {
     ) { padding ->
         LazyColumn(
             state = listState,
-            contentPadding = padding,
+            // Room below the last row so the floating "+" never covers it.
+            contentPadding = PaddingValues(
+                top = padding.calculateTopPadding(),
+                bottom = padding.calculateBottomPadding() + 88.dp
+            ),
             modifier = Modifier.fillMaxSize()
         ) {
             largeTitle(title)
