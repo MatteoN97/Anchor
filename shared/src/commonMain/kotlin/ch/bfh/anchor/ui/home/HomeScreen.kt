@@ -9,6 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import ch.bfh.anchor.ui.theme.AnchorPalette
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -193,8 +195,10 @@ private fun HomeScreenContent(
                 icon = AnchorIcons.Insights,
                 title = stringResource(Res.string.home_mood_title),
                 subtitle = stringResource(Res.string.home_mood_subtitle),
-                containerColor = colors.secondaryContainer.takeIfOpaque() ?: colors.surfaceVariant,
-                contentColor = colors.onSecondaryContainer,
+                containerColor = colors.secondaryContainer.takeIfOpaque()
+                    ?: if (colors.background.luminance() > 0.5f) AnchorPalette.Lavender90 else AnchorPalette.Lavender30,
+                contentColor = if (colors.secondaryContainer.takeIfOpaque() != null) colors.onSecondaryContainer
+                else colors.onBackground,
                 onClick = onMoodClick,
                 modifier = Modifier.weight(1f).fillMaxHeight()
             )
