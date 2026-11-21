@@ -1,0 +1,4 @@
+<resources>
+    <!-- Launcher label only. All in-app strings live in commonMain/composeResources. -->
+    <string name="app_name">Anchor</string>
+</resources>

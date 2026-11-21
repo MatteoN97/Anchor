@@ -1,0 +1,55 @@
+[versions]
+agp = "9.1.1"
+kotlin = "2.3.20"
+ksp = "2.3.14"
+composeMultiplatform = "1.12.2"
+
+activityCompose = "1.13.0"
+coreKtx = "1.18.0"
+jetbrainsLifecycle = "2.10.0"
+jetbrainsNavigation = "2.9.2"
+room = "2.8.4"
+sqlite = "2.7.1"
+coroutines = "1.11.0"
+kotlinxDatetime = "0.8.0"
+multiplatformSettings = "1.3.0"
+
+junit = "4.13.2"
+
+[libraries]
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+
+# Multiplatform ports maintained by JetBrains. The androidx.* artifacts of these
+# two libraries publish no iOS targets.
+jetbrains-lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "jetbrainsLifecycle" }
+jetbrains-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "jetbrainsLifecycle" }
+jetbrains-navigation-compose = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "jetbrainsNavigation" }
+
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqlite" }
+
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
+multiplatform-settings = { group = "com.russhwolf", name = "multiplatform-settings", version.ref = "multiplatformSettings" }
+
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }
+
+# Toolchain notes (verified against the published artifacts on 2026-11-21):
+#  - Compose Multiplatform 1.12.2 klibs are produced by Kotlin 2.3.20 (ABI 2.3.0),
+#    so Kotlin must be >= 2.3.20 despite the POM declaring stdlib 2.2.20.
+#  - KSP 2.3.14 is the newest release and caps Kotlin at 2.3.x, so Kotlin 2.3.20
+#    is both the floor and the ceiling while Room needs KSP.
+#  - org.jetbrains.androidx navigation 2.10.0 / lifecycle 2.11.0 need Kotlin 2.4+,
+#    hence navigation 2.9.2 and lifecycle 2.10.0 here.
+#  - Compose UI 1.12.1 (pulled by CMP) requires compileSdk 37.
