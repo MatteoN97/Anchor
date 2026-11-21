@@ -15,6 +15,10 @@ import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
+import ch.bfh.anchor.ui.adaptive.AnchorButton
+import ch.bfh.anchor.ui.adaptive.AnchorCardButton
+import ch.bfh.anchor.ui.adaptive.AnchorIconButton
+import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -33,7 +37,7 @@ fun BreathingPracticeScreen(onDismiss: () -> Unit) {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))) {
             when (step) {
                 PracticeStep.Choose -> PatternChooser(
                     selected = pattern,
@@ -59,7 +63,7 @@ fun BreathingPracticeScreen(onDismiss: () -> Unit) {
                 )
             }
 
-            IconButton(
+            AnchorIconButton(
                 onClick = onDismiss,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -116,7 +120,7 @@ private fun PatternChooser(
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             BreathingPattern.entries.forEach { pattern ->
                 val isSelected = pattern == selected
-                Surface(
+                AnchorCardButton(
                     selected = isSelected,
                     onClick = { onSelect(pattern) },
                     modifier = Modifier.fillMaxWidth(),
@@ -158,7 +162,7 @@ private fun PatternChooser(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Button(
+        AnchorButton(
             onClick = onStart,
             modifier = Modifier
                 .fillMaxWidth()
@@ -196,7 +200,7 @@ private fun FinishedContent(onDone: () -> Unit, onMore: () -> Unit) {
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(40.dp))
-        Button(
+        AnchorButton(
             onClick = onDone,
             modifier = Modifier
                 .fillMaxWidth()
@@ -206,7 +210,7 @@ private fun FinishedContent(onDone: () -> Unit, onMore: () -> Unit) {
             Text(stringResource(Res.string.common_done), style = MaterialTheme.typography.titleMedium)
         }
         Spacer(modifier = Modifier.height(8.dp))
-        TextButton(onClick = onMore) {
+        AnchorTextButton(onClick = onMore) {
             Text(stringResource(Res.string.breathing_more))
         }
     }

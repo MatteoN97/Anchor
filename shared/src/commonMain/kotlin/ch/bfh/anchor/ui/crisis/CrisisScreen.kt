@@ -13,6 +13,8 @@ import org.jetbrains.compose.resources.stringResource
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.Feeling
 import ch.bfh.anchor.model.HelpContact
+import ch.bfh.anchor.ui.adaptive.AnchorIconButton
+import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.ui.breathing.BreathingExercise
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 
@@ -33,7 +35,7 @@ fun CrisisScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))) {
             when (step) {
                 CrisisStep.FeelingPicker -> FeelingPickerScreen(
                     onSelected = { feeling ->
@@ -49,7 +51,7 @@ fun CrisisScreen(
                     title = stringResource(Res.string.crisis_breathe_title),
                     onComplete = { step = CrisisStep.Suggestions },
                     bottomAction = {
-                        TextButton(onClick = { step = CrisisStep.Suggestions }) {
+                        AnchorTextButton(onClick = { step = CrisisStep.Suggestions }) {
                             Text(
                                 stringResource(Res.string.common_skip),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -76,7 +78,7 @@ fun CrisisScreen(
                 )
             }
 
-            IconButton(
+            AnchorIconButton(
                 onClick = onDismiss,
                 modifier = Modifier
                     .align(Alignment.TopEnd)

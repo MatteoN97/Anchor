@@ -11,7 +11,9 @@ struct ComposeView: UIViewControllerRepresentable {
 
 struct ContentView: View {
     var body: some View {
+        // Compose draws edge to edge and reads the safe area itself (WindowInsets.safeDrawing).
+        // Keeping SwiftUI's safe area left white bands above and below the app.
         ComposeView()
-            .ignoresSafeArea(.keyboard) // Compose handles the keyboard inset itself
+            .ignoresSafeArea()
     }
 }

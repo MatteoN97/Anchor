@@ -2,7 +2,10 @@ package ch.bfh.anchor.ui.crisis
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import ch.bfh.anchor.ui.adaptive.AnchorCardButton
+import ch.bfh.anchor.ui.adaptive.Chevron
 import ch.bfh.anchor.ui.icons.AnchorIcons
+import ch.bfh.anchor.ui.theme.LocalIsIos
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +47,7 @@ fun FeelingPickerScreen(onSelected: (Feeling) -> Unit) {
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Feeling.entries.forEach { feeling ->
-                Surface(
+                AnchorCardButton(
                     onClick = { onSelected(feeling) },
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.surfaceVariant,
@@ -61,11 +64,15 @@ fun FeelingPickerScreen(onSelected: (Feeling) -> Unit) {
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.weight(1f)
                         )
-                        Icon(
-                            imageVector = AnchorIcons.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (LocalIsIos.current) {
+                            Chevron()
+                        } else {
+                            Icon(
+                                imageVector = AnchorIcons.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
