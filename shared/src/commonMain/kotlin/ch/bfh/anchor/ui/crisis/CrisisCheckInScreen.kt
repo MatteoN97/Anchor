@@ -10,14 +10,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.platform.rememberPhoneDialer
-
-private val checkInOptions = listOf(
-    Triple(1, "😊", "Great"),
-    Triple(2, "🙂", "Better"),
-    Triple(3, "😐", "Okay"),
-    Triple(4, "😔", "Still rough"),
-    Triple(5, "😢", "Not great")
-)
+import ch.bfh.anchor.model.MoodScale
+import ch.bfh.anchor.ui.mood.MoodChoices
 
 @Composable
 fun CrisisCheckInScreen(
@@ -84,35 +78,12 @@ private fun CheckInContent(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            checkInOptions.forEach { (rating, emoji, label) ->
-                val selected = selectedRating == rating
-                Surface(
-                    onClick = { onRatingSelected(rating) },
-                    modifier = Modifier.weight(1f),
-                    color = if (selected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Column(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(text = emoji, style = MaterialTheme.typography.titleLarge)
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (selected) Color.White
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
+        // The crisis flow still stores its historical 1=Great to 5=Not great rating.
+        // MoodChoices always uses the shared 5=Great to 1=Not great scale.
+        MoodChoices(
+            selectedScore = selectedRating?.let(MoodScale::fromCrisisRating),
+            onScoreSelected = { score -> onRatingSelected(6 - score) }
+        )
 
         Button(
             onClick = onDone,
