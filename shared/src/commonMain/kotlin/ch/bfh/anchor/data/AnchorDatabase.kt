@@ -33,10 +33,12 @@ expect object AnchorDatabaseConstructor : RoomDatabaseConstructor<AnchorDatabase
 /**
  * Shared configuration applied to the platform-specific builder.
  *
- * `fallbackToDestructiveMigration` is carried over from the Android app as-is. It drops all
- * user data on any schema change and should be replaced with real migrations before release.
+ * There is deliberately no `fallbackToDestructiveMigration` here: this database holds therapy
+ * notes, and falling back would delete them. Every version is covered by [ANCHOR_MIGRATIONS]
+ * instead, so a missing migration fails loudly at open time rather than silently wiping the
+ * journal. Adding a version means adding a migration.
  */
 internal fun RoomDatabase.Builder<AnchorDatabase>.configured(): AnchorDatabase =
     this.setDriver(BundledSQLiteDriver())
-        .fallbackToDestructiveMigration(dropAllTables = true)
+        .addMigrations(*ANCHOR_MIGRATIONS)
         .build()
