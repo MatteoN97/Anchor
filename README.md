@@ -15,7 +15,7 @@ you are least able to think clearly? The app keeps the answer ready in advance.
 - **A therapy journal.** Notes with tags, and questions you want to raise in the next session,
   so the thought you had on a Tuesday is still there on Thursday.
 - **A check-in afterwards.** Anchor asks how you feel now. If the answer is "still rough" it
-  does not congratulate you — it offers another round, or the number of a crisis line.
+  does not congratulate you — it offers another round, a person you trust, or a crisis line.
 
 Everything stays on the device. There is no account, no network call, no analytics.
 
@@ -29,9 +29,9 @@ Kotlin Multiplatform with Compose Multiplatform: one codebase, two native apps.
 | `androidApp` | Android application shell — `MainActivity`, launcher icons, manifest.           |
 | `iosApp`     | Xcode project hosting the shared UI in a `UIViewControllerRepresentable`.       |
 
-Essentially all application code lives in `shared/src/commonMain`, UI included. Only five things
+Essentially all application code lives in `shared/src/commonMain`, UI included. Only six things
 differ per platform, behind `expect`/`actual` in `shared/src/{androidMain,iosMain}`: the database
-file location, preference storage, the phone dialer, Material You colours, and the clock.
+file location, preference storage, the phone dialer, the device region, Material You colours, and the clock.
 
 Persistence is Room with the bundled SQLite driver, which compiles to both targets.
 
@@ -59,5 +59,9 @@ Multiplatform 1.12 nor `androidx.sqlite:sqlite-bundled` publishes that target an
 
 Anchor is not a therapy app and does not try to be one. It holds no advice and makes no
 assessment — it is a place to put what already works for you, arranged so you can reach it
-one-handed on a bad day. The crisis line it offers in Switzerland is
-[Die Dargebotene Hand / La Main Tendue](https://www.143.ch), reachable on **143**.
+one-handed on a bad day.
+
+The crisis line it offers follows the device's region (SIM country on Android, the Region setting
+on iOS), drawn from a short list in `model/HelpContact.kt`; it can be replaced with any number in
+Settings, alongside an optional trusted person. Where the region is unknown or not listed, Anchor
+falls back to Switzerland's [Die Dargebotene Hand / La Main Tendue](https://www.143.ch) on **143**.

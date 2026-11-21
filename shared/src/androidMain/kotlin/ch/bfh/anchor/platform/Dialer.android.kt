@@ -11,7 +11,7 @@ actual fun rememberPhoneDialer(): (number: String) -> Unit {
     val context = LocalContext.current
     return remember(context) {
         { number ->
-            context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number")))
+            context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${dialable(number)}")))
         }
     }
 }

@@ -52,6 +52,21 @@
     <string name="settings_crisis_title">Crisis mode</string>
     <string name="settings_crisis_breathing_label">Breathing pattern</string>
     <string name="settings_crisis_breathing_helper">Used for the breathing step when you tap "I need help now". Pick the one you've practised most.</string>
+    <string name="settings_contacts_title">Who to call</string>
+    <string name="settings_contacts_helper">Offered when you finish crisis mode and still feel rough. Anchor opens the dialer; it never calls on its own.</string>
+    <string name="settings_crisis_line_label">Crisis line</string>
+    <string name="settings_crisis_line_auto">Automatic for %1$s</string>
+    <string name="settings_crisis_line_auto_fallback">Default (%1$s). Anchor doesn't know a line for your region yet, so consider adding your own.</string>
+    <string name="settings_crisis_line_custom">Your own choice</string>
+    <string name="settings_crisis_line_reset">Use automatic</string>
+    <string name="settings_crisis_line_name_placeholder">e.g. local crisis service</string>
+    <string name="settings_trusted_label">Trusted person</string>
+    <string name="settings_trusted_not_set">Not set. Add a friend, relative or your therapist.</string>
+    <string name="settings_trusted_name_placeholder">e.g. Anna</string>
+    <string name="settings_contact_name">Name</string>
+    <string name="settings_contact_number">Phone number</string>
+    <string name="settings_contact_edit">Edit %1$s</string>
+    <string name="settings_contact_remove">Remove</string>
     <string name="crisis_breathe_title">Let's breathe first</string>
     <string name="breath_phase_inhale">Breathe in</string>
     <string name="breath_phase_hold">Hold</string>
@@ -89,4 +104,7 @@
         <item quantity="one">%1$d breath</item>
         <item quantity="other">%1$d breaths</item>
     </plurals>
+    <string name="crisis_call_line_title">Call a crisis line</string>
+    <string name="crisis_call_trusted_title">Call %1$s</string>
+    <string name="crisis_call_trusted_fallback">Call someone you trust</string>
 </resources>

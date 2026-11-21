@@ -12,6 +12,7 @@ import ch.bfh.anchor.resources.*
 import org.jetbrains.compose.resources.stringResource
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.Feeling
+import ch.bfh.anchor.model.HelpContact
 import ch.bfh.anchor.ui.breathing.BreathingExercise
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 
@@ -21,7 +22,9 @@ enum class CrisisStep { FeelingPicker, Breathing, Suggestions, CheckIn }
 fun CrisisScreen(
     onDismiss: () -> Unit,
     vm: AnchorViewModel,
-    breathingPattern: BreathingPattern
+    breathingPattern: BreathingPattern,
+    crisisLine: HelpContact,
+    trustedContact: HelpContact?
 ) {
     var step by remember { mutableStateOf(CrisisStep.FeelingPicker) }
     var selectedFeeling by remember { mutableStateOf<Feeling?>(null) }
@@ -63,6 +66,8 @@ fun CrisisScreen(
                 )
 
                 CrisisStep.CheckIn -> CrisisCheckInScreen(
+                    crisisLine = crisisLine,
+                    trustedContact = trustedContact,
                     onFinished = { rating ->
                         vm.addCrisisCheckIn(selectedFeeling ?: Feeling.ANXIOUS, rating)
                         onDismiss()

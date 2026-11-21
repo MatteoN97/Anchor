@@ -13,7 +13,9 @@ import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
 import org.jetbrains.compose.resources.stringResource
+import ch.bfh.anchor.model.effectiveCrisisLine
 import ch.bfh.anchor.platform.daysSince
+import ch.bfh.anchor.platform.rememberDeviceRegion
 import ch.bfh.anchor.settings.SettingsManager
 import ch.bfh.anchor.ui.breathing.BreathingPracticeScreen
 import ch.bfh.anchor.ui.crisis.CrisisScreen
@@ -56,10 +58,13 @@ fun HomeScreen(vm: AnchorViewModel, settingsManager: SettingsManager) {
     }
 
     if (showCrisis) {
+        val region = rememberDeviceRegion()
         CrisisScreen(
             onDismiss = { showCrisis = false },
             vm = vm,
-            breathingPattern = settingsManager.crisisBreathingPattern
+            breathingPattern = settingsManager.crisisBreathingPattern,
+            crisisLine = effectiveCrisisLine(settingsManager.customCrisisLine, region),
+            trustedContact = settingsManager.trustedContact
         )
     }
 }
