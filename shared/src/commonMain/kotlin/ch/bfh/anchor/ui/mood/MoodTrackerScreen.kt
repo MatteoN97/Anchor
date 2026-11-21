@@ -1,5 +1,10 @@
 package ch.bfh.anchor.ui.mood
 
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.*
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -64,6 +69,9 @@ fun MoodTrackerScreen(
     var notificationInfoExpanded by remember { mutableStateOf(false) }
     var permissionWarning by remember { mutableStateOf(false) }
     var testFeedback by remember { mutableStateOf<String?>(null) }
+    // Resolved up front: they are set from click handlers, which cannot load resources.
+    val testSentText = stringResource(Res.string.mood_test_sent)
+    val whyNotificationsLabel = stringResource(Res.string.mood_why_notifications)
 
     val startMinutes = startSlot * 30
     val endMinutes = if (endSlot == 48) 1439 else endSlot * 30
@@ -104,7 +112,7 @@ fun MoodTrackerScreen(
                 title = {},
                 navigationIcon = {
                     TextButton(onClick = { if (activePanel == null) onBack() else closePanel() }) {
-                        Text(if (activePanel == null) "Back" else "Close")
+                        Text(stringResource(if (activePanel == null) Res.string.common_back else Res.string.common_close))
                     }
                 }
             )
@@ -128,7 +136,7 @@ fun MoodTrackerScreen(
                     verticalArrangement = Arrangement.spacedBy(22.dp)
                 ) {
                     Text(
-                        "How are you feeling?",
+                        stringResource(Res.string.mood_question),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center
@@ -141,7 +149,7 @@ fun MoodTrackerScreen(
                     )
                     if (lastSelected != null) {
                         Text(
-                            "Saved. That's all you need to do.",
+                            stringResource(Res.string.mood_saved),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                             textAlign = TextAlign.Center
@@ -164,7 +172,7 @@ fun MoodTrackerScreen(
                 Box(
                     modifier = Modifier.fillMaxSize()
                         .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.26f))
-                        .clickable(onClickLabel = "Close panel") { closePanel() }
+                        .clickable(onClickLabel = stringResource(Res.string.mood_close_panel)) { closePanel() }
                 )
 
                 val maximumPanelHeight = (maxHeight - 80.dp).coerceAtLeast(180.dp)
@@ -236,8 +244,8 @@ fun MoodTrackerScreen(
                                                         onClick = { showFullHistory = !showFullHistory }
                                                     ) {
                                                         Text(
-                                                            if (showFullHistory) "Hide entries"
-                                                            else "View entries · $historyPeriodDays ${if (historyPeriodDays == 1) "day" else "days"}"
+                                                            if (showFullHistory) stringResource(Res.string.mood_hide_entries)
+                                                            else pluralStringResource(Res.plurals.mood_view_entries, historyPeriodDays, historyPeriodDays)
                                                         )
                                                     }
                                                 }
@@ -251,8 +259,8 @@ fun MoodTrackerScreen(
                                         if (matchingHistory.isEmpty()) {
                                             item {
                                                 Text(
-                                                    if (entries.isEmpty()) "Your history will appear after your first check-in."
-                                                    else "No check-ins in this period.",
+                                                    if (entries.isEmpty()) stringResource(Res.string.mood_history_empty)
+                                                    else stringResource(Res.string.mood_period_empty),
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -275,14 +283,14 @@ fun MoodTrackerScreen(
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                                     Text(
-                                                        "Allow notifications",
+                                                        stringResource(Res.string.mood_allow_notifications),
                                                         style = MaterialTheme.typography.titleMedium
                                                     )
                                                     Box {
                                                         IconButton(
                                                             onClick = { notificationInfoExpanded = true },
                                                             modifier = Modifier.size(40.dp).semantics {
-                                                                contentDescription = "Why allow notifications?"
+                                                                contentDescription = whyNotificationsLabel
                                                             }
                                                         ) {
                                                             Text(
@@ -297,7 +305,7 @@ fun MoodTrackerScreen(
                                                             modifier = Modifier.width(280.dp)
                                                         ) {
                                                             Text(
-                                                                "Reminders are completely optional. They can gently prompt you to check in during the hours you choose. You can leave them off and simply open this page whenever you want to record how you feel.",
+                                                                stringResource(Res.string.mood_notifications_info),
                                                                 modifier = Modifier.padding(16.dp),
                                                                 style = MaterialTheme.typography.bodyMedium
                                                             )
@@ -305,8 +313,8 @@ fun MoodTrackerScreen(
                                                     }
                                                 }
                                                 Text(
-                                                    if (remindersEnabled) "Reminders are on"
-                                                    else "Off — check in here whenever you like",
+                                                    if (remindersEnabled) stringResource(Res.string.mood_reminders_on)
+                                                    else stringResource(Res.string.mood_reminders_off),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -338,7 +346,7 @@ fun MoodTrackerScreen(
                                                     permissionWarning = false
                                                     reminderController.sendTestNotification { success ->
                                                         if (success) {
-                                                            testFeedback = "Test sent. Tap a mood in the notification, then open Mood over time."
+                                                            testFeedback = testSentText
                                                         } else {
                                                             permissionWarning = true
                                                         }
@@ -346,7 +354,7 @@ fun MoodTrackerScreen(
                                                 },
                                                 enabled = remindersEnabled
                                             ) {
-                                                Text("Send test notification")
+                                                Text(stringResource(Res.string.mood_send_test))
                                             }
                                         }
                                         testFeedback?.let { feedback ->
@@ -361,7 +369,7 @@ fun MoodTrackerScreen(
                                         if (permissionWarning) {
                                             item {
                                                 Text(
-                                                    "Notifications are blocked. Allow Anchor notifications in Android settings.",
+                                                    stringResource(Res.string.mood_notifications_blocked),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.error
                                                 )
@@ -380,11 +388,11 @@ fun MoodTrackerScreen(
                                                     horizontalArrangement = Arrangement.SpaceBetween
                                                 ) {
                                                     Text(
-                                                        "Start  ${MoodReminderSchedule.timeLabel(startMinutes)}",
+                                                        stringResource(Res.string.mood_start, MoodReminderSchedule.timeLabel(startMinutes)),
                                                         style = MaterialTheme.typography.labelMedium
                                                     )
                                                     Text(
-                                                        "End  $endLabel",
+                                                        stringResource(Res.string.mood_end, endLabel),
                                                         style = MaterialTheme.typography.labelMedium
                                                     )
                                                 }
@@ -417,13 +425,13 @@ fun MoodTrackerScreen(
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.SpaceBetween
                                                 ) {
-                                                    Text("Repeat", style = MaterialTheme.typography.bodyMedium)
+                                                    Text(stringResource(Res.string.mood_repeat), style = MaterialTheme.typography.bodyMedium)
                                                     Box {
                                                         OutlinedButton(
                                                             onClick = { frequencyMenuExpanded = true }
                                                         ) {
                                                             Text(
-                                                                "Every $intervalHours ${if (intervalHours == 1) "hour" else "hours"}  ▾"
+                                                                pluralStringResource(Res.plurals.mood_every_hours, intervalHours, intervalHours) + "  ▾"
                                                             )
                                                         }
                                                         DropdownMenu(
@@ -434,7 +442,7 @@ fun MoodTrackerScreen(
                                                                 DropdownMenuItem(
                                                                     text = {
                                                                         Text(
-                                                                            "Every $option ${if (option == 1) "hour" else "hours"}"
+                                                                            pluralStringResource(Res.plurals.mood_every_hours, option, option)
                                                                         )
                                                                     },
                                                                     onClick = {
@@ -449,9 +457,9 @@ fun MoodTrackerScreen(
                                                 }
                                                 Text(
                                                     if (remindersEnabled)
-                                                        "Uses your phone's local time. Android may delay reminders."
+                                                        stringResource(Res.string.mood_local_time_hint)
                                                     else
-                                                        "Choose your preferred times here; turn on notifications whenever you're ready.",
+                                                        stringResource(Res.string.mood_choose_times_hint),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -460,7 +468,7 @@ fun MoodTrackerScreen(
                                     } else if (!reminderController.supported) {
                                         item {
                                             Text(
-                                                "Scheduled notifications aren't available on this device yet.",
+                                                stringResource(Res.string.mood_notifications_unavailable),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -496,7 +504,7 @@ private fun MoodPanelTabs(
             onClick = { onSelect(MoodPanel.HISTORY) },
             label = {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text("Mood over time", maxLines = 1)
+                    Text(stringResource(Res.string.mood_tab_history), maxLines = 1)
                 }
             }
         )
@@ -506,7 +514,7 @@ private fun MoodPanelTabs(
             onClick = { onSelect(MoodPanel.NOTIFICATIONS) },
             label = {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text("Notifications", maxLines = 1)
+                    Text(stringResource(Res.string.mood_tab_notifications), maxLines = 1)
                 }
             }
         )
@@ -523,19 +531,14 @@ private fun MoodHistoryRow(entry: MoodEntry) {
         ) {
             Text(MoodScale.emoji(entry.score), fontSize = 25.sp)
             Column(modifier = Modifier.weight(1f)) {
-                Text(MoodScale.label(entry.score), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(MoodScale.labelRes(entry.score)), style = MaterialTheme.typography.bodyLarge)
                 Text(
-                    formatMoodDateTime(entry.recordedAt),
+                    formatMoodDateTime(entry.recordedAt, Locale.current.language),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            val sourceLabel = when (entry.source) {
-                MoodEntry.SOURCE_TEST_NOTIFICATION -> "Test"
-                MoodEntry.SOURCE_NOTIFICATION -> "Reminder"
-                MoodEntry.SOURCE_CRISIS -> "After support"
-                else -> "In app"
-            }
+            val sourceLabel = stringResource(moodSourceLabel(entry.source))
             Text(
                 sourceLabel,
                 style = MaterialTheme.typography.labelSmall,

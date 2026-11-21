@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import ch.bfh.anchor.model.AppLanguage
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.CrisisLines
 import ch.bfh.anchor.model.HelpContact
@@ -35,7 +36,11 @@ import org.jetbrains.compose.resources.stringResource
 private enum class EditTarget { Name, CrisisLine, TrustedContact }
 
 @Composable
-fun SettingsScreen(settingsManager: SettingsManager) {
+fun SettingsScreen(
+    settingsManager: SettingsManager,
+    onLanguageChange: (AppLanguage) -> Unit = settingsManager::setAppLanguage
+) {
+    val language by settingsManager.appLanguage.collectAsState()
     val userName by settingsManager.userName.collectAsState()
     var crisisPattern by remember { mutableStateOf(settingsManager.crisisBreathingPattern) }
     var customLine by remember { mutableStateOf(settingsManager.customCrisisLine) }
@@ -65,8 +70,13 @@ fun SettingsScreen(settingsManager: SettingsManager) {
     val remove = stringResource(Res.string.settings_contact_remove)
     val lineSource = when {
         customLine != null -> stringResource(Res.string.settings_crisis_line_custom)
-        regionalLine != null -> stringResource(Res.string.settings_crisis_line_auto, regionalLine.countryName)
-        else -> stringResource(Res.string.settings_crisis_line_auto_fallback, CrisisLines.fallback.countryName)
+        regionalLine != null -> stringResource(Res.string.settings_crisis_line_auto, stringResource(regionalLine.countryName))
+        else -> stringResource(Res.string.settings_crisis_line_auto_fallback, stringResource(CrisisLines.fallback.countryName))
+    }
+    val languageTitle = stringResource(Res.string.settings_language_title)
+    val languageHelper = stringResource(Res.string.settings_language_helper)
+    val languageNames = AppLanguage.entries.associateWith {
+        if (it == AppLanguage.System) stringResource(Res.string.settings_language_system) else it.nativeName
     }
     val patternNames = BreathingPattern.entries.associateWith { stringResource(it.nameRes) }
     val patternDescriptions = BreathingPattern.entries.associateWith { stringResource(it.descriptionRes) }
@@ -93,11 +103,24 @@ fun SettingsScreen(settingsManager: SettingsManager) {
             )
 
             adaptiveSection(
+                items = AppLanguage.entries,
+                header = languageTitle,
+                footer = languageHelper
+            ) { option ->
+                ChoiceRow(
+                    name = languageNames.getValue(option),
+                    description = null,
+                    selected = option == language,
+                    onSelect = { if (option != language) onLanguageChange(option) }
+                )
+            }
+
+            adaptiveSection(
                 items = BreathingPattern.entries,
                 header = breathingTitle,
                 footer = breathingHelper
             ) { pattern ->
-                PatternRow(
+                ChoiceRow(
                     name = patternNames.getValue(pattern),
                     description = patternDescriptions.getValue(pattern),
                     selected = pattern == crisisPattern,
@@ -207,13 +230,13 @@ private fun ValueRow(label: String, value: String, editLabel: String, onClick: (
     )
 }
 
-/** iOS: a checkmark on the chosen row. Android: a leading radio button. */
+/** One option of a single choice. iOS: a checkmark on the chosen row. Android: a leading radio button. */
 @Composable
-private fun PatternRow(name: String, description: String, selected: Boolean, onSelect: () -> Unit) {
+private fun ChoiceRow(name: String, description: String?, selected: Boolean, onSelect: () -> Unit) {
     val isIos = LocalIsIos.current
     AdaptiveListRow(
         headline = { Text(name) },
-        supporting = { Text(description) },
+        supporting = description?.let { { Text(it) } },
         leading = if (isIos) null else ({ RadioButton(selected = selected, onClick = null) }),
         trailing = if (isIos) ({
             Box(Modifier.width(20.dp)) {

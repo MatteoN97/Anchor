@@ -11,6 +11,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.util.Log
 import android.net.Uri
 import android.os.Build
@@ -21,12 +22,14 @@ import ch.bfh.anchor.android.R
 import ch.bfh.anchor.data.createDatabase
 import ch.bfh.anchor.model.MoodEntry
 import ch.bfh.anchor.model.MoodReminderSchedule
+import ch.bfh.anchor.model.MoodScale
 import ch.bfh.anchor.settings.SettingsManager
 import ch.bfh.anchor.settings.createSettingsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.Locale
 import java.util.UUID
 
 private const val CHANNEL_ID = "mood_check_ins"
@@ -37,6 +40,17 @@ private const val EXTRA_SCORE = "score"
 private const val EXTRA_PROMPT = "prompt"
 private const val EXTRA_IS_TEST = "is_test"
 const val EXTRA_OPEN_MOOD = "open_mood_tracker"
+
+/**
+ * [this] with its resources in the language chosen in Anchor's settings. Notifications are built
+ * outside the app's screens, so they would otherwise follow the phone's language.
+ */
+private fun Context.inAppLanguage(): Context {
+    val code = createSettingsManager(this).appLanguage.value.code ?: return this
+    val configuration = Configuration(resources.configuration)
+    configuration.setLocale(Locale.forLanguageTag(code))
+    return createConfigurationContext(configuration)
+}
 
 /** Inexact, one-shot alarms: after each delivery, schedule the next daily window slot. */
 internal object MoodNotifications {
@@ -100,10 +114,14 @@ internal object MoodNotifications {
     private fun ensureChannel(context: Context): NotificationManager {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= 26) {
+            // Re-creating an existing channel only updates its name and description, so this
+            // also renames it after a language change.
+            val text = context.inAppLanguage()
             manager.createNotificationChannel(NotificationChannel(
-                CHANNEL_ID, "Mood check-in reminders", NotificationManager.IMPORTANCE_DEFAULT
+                CHANNEL_ID, text.getString(R.string.mood_notification_channel),
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Optional mood check-in reminders"
+                description = text.getString(R.string.mood_notification_channel_desc)
                 setShowBadge(false)
             })
         }
@@ -127,7 +145,15 @@ internal object MoodNotifications {
 
         val promptId = "android-${UUID.randomUUID()}"
         val choiceIds = intArrayOf(R.id.mood_1, R.id.mood_2, R.id.mood_3, R.id.mood_4, R.id.mood_5)
+        val text = context.inAppLanguage()
+        val labels = mapOf(
+            5 to R.string.mood_notification_great, 4 to R.string.mood_notification_good,
+            3 to R.string.mood_notification_okay, 2 to R.string.mood_notification_low,
+            1 to R.string.mood_notification_not_great
+        ).mapValues { (_, id) -> text.getString(id) }
         val layout = RemoteViews(context.packageName, R.layout.mood_notification_expanded)
+        // Set here rather than in the layout: the system draws it in the phone's language.
+        layout.setTextViewText(R.id.mood_prompt, text.getString(R.string.mood_notification_question))
         val choiceActions = mutableMapOf<Int, PendingIntent>()
         choiceIds.forEachIndexed { index, id ->
             val score = index + 1
@@ -144,6 +170,7 @@ internal object MoodNotifications {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
             layout.setOnClickPendingIntent(id, click)
+            layout.setTextViewText(id, "${MoodScale.emoji(score)}\n${labels.getValue(score)}")
             choiceActions[score] = click
         }
 
@@ -166,13 +193,13 @@ internal object MoodNotifications {
         } else {
             Notification.Builder(context)
         }.setSmallIcon(R.drawable.ic_mood_notification)
-            .setContentTitle("Anchor reminder")
+            .setContentTitle(text.getString(R.string.mood_notification_public))
             .build()
 
         val notification = builder
             .setSmallIcon(R.drawable.ic_mood_notification)
-            .setContentTitle("A quick check-in")
-            .setContentText("How are you feeling? Expand to choose a mood.")
+            .setContentTitle(text.getString(R.string.mood_notification_title))
+            .setContentText(text.getString(R.string.mood_notification_text))
             .setContentIntent(openApp)
             .setAutoCancel(true)
             .setVisibility(Notification.VISIBILITY_PRIVATE)
@@ -181,9 +208,9 @@ internal object MoodNotifications {
             .setCustomBigContentView(layout)
             .setCategory(Notification.CATEGORY_REMINDER)
             // Standard actions remain usable if an OEM limits custom expanded layouts.
-            .addAction(Notification.Action.Builder(R.drawable.ic_mood_notification, "5 · Great", choiceActions.getValue(5)).build())
-            .addAction(Notification.Action.Builder(R.drawable.ic_mood_notification, "3 · Okay", choiceActions.getValue(3)).build())
-            .addAction(Notification.Action.Builder(R.drawable.ic_mood_notification, "1 · Not great", choiceActions.getValue(1)).build())
+            .addAction(Notification.Action.Builder(R.drawable.ic_mood_notification, "5 · ${labels.getValue(5)}", choiceActions.getValue(5)).build())
+            .addAction(Notification.Action.Builder(R.drawable.ic_mood_notification, "3 · ${labels.getValue(3)}", choiceActions.getValue(3)).build())
+            .addAction(Notification.Action.Builder(R.drawable.ic_mood_notification, "1 · ${labels.getValue(1)}", choiceActions.getValue(1)).build())
             .build()
 
         return try {

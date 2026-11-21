@@ -1,4 +1,16 @@
 <resources>
-    <!-- Launcher label only. All in-app strings live in commonMain/composeResources. -->
+    <!-- Launcher label and the reminder notification, which Android draws outside the app.
+         Every in-app string lives in shared/src/commonMain/composeResources. -->
     <string name="app_name">Anchor</string>
+    <string name="mood_notification_channel">Mood check-in reminders</string>
+    <string name="mood_notification_channel_desc">Optional mood check-in reminders</string>
+    <string name="mood_notification_public">Anchor reminder</string>
+    <string name="mood_notification_title">A quick check-in</string>
+    <string name="mood_notification_text">How are you feeling? Expand to choose a mood.</string>
+    <string name="mood_notification_question">How are you feeling?</string>
+    <string name="mood_notification_great">Great</string>
+    <string name="mood_notification_good">Good</string>
+    <string name="mood_notification_okay">Okay</string>
+    <string name="mood_notification_low">Low</string>
+    <string name="mood_notification_not_great">Not great</string>
 </resources>

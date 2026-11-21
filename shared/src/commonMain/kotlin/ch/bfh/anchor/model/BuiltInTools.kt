@@ -1,44 +1,68 @@
 package ch.bfh.anchor.model
 
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.*
+import org.jetbrains.compose.resources.StringResource
+
 object BuiltInTools {
-    private val byFeeling: Map<Feeling, List<CopingTool>> = mapOf(
-        Feeling.ANXIOUS to listOf(
-            CopingTool(name = "4-7-8 Breathing", category = "Breathing",
-                description = "Inhale 4s, hold 7s, exhale 8s. Activates the parasympathetic nervous system."),
-            CopingTool(name = "5-4-3-2-1 Grounding", category = "Grounding",
-                description = "Name 5 things you see, 4 you hear, 3 you can touch, 2 you smell, 1 you taste.")
-        ),
-        Feeling.SAD to listOf(
-            CopingTool(name = "Reach out", category = "Social",
-                description = "Text or call someone you trust, even just to say hi."),
-            CopingTool(name = "Comfort object", category = "Grounding",
-                description = "Hold something soft or familiar. Let yourself feel it.")
-        ),
-        Feeling.ANGRY to listOf(
-            CopingTool(name = "Cold water", category = "Physical",
-                description = "Splash cold water on your face or hold ice. It triggers the dive reflex and slows your heart rate."),
-            CopingTool(name = "Move your body", category = "Physical",
-                description = "Even 60 seconds of jumping jacks or walking can release tension.")
-        ),
-        Feeling.NUMB to listOf(
-            CopingTool(name = "5-4-3-2-1 Grounding", category = "Grounding",
-                description = "Name 5 things you see, 4 you hear, 3 you can touch, 2 you smell, 1 you taste."),
-            CopingTool(name = "Temperature change", category = "Physical",
-                description = "Hold something cold or warm. Focus entirely on the sensation.")
-        ),
-        Feeling.EXHAUSTED to listOf(
-            CopingTool(name = "One thing only", category = "Grounding",
-                description = "Pick one tiny thing to do. Just one. Nothing else matters right now."),
-            CopingTool(name = "Rest without guilt", category = "Grounding",
-                description = "Lie down. You don't have to be productive right now.")
-        )
+    /**
+     * A technique Anchor ships with. Its name and description are string resources, so they are
+     * resolved where they are shown and appear in the user's language.
+     */
+    class Definition(
+        val id: String,
+        val category: ToolCategory,
+        val nameRes: StringResource,
+        val descriptionRes: StringResource
+    ) {
+        fun toTool(name: String, description: String) =
+            CopingTool(id = id, name = name, category = category.key, description = description)
+    }
+
+    private val breathing478 = Definition("builtin-478", ToolCategory.Breathing,
+        Res.string.builtin_478_name, Res.string.builtin_478_description)
+    private val grounding54321 = Definition("builtin-54321", ToolCategory.Grounding,
+        Res.string.builtin_54321_name, Res.string.builtin_54321_description)
+    private val reachOut = Definition("builtin-reach-out", ToolCategory.Social,
+        Res.string.builtin_reach_out_name, Res.string.builtin_reach_out_description)
+    private val comfortObject = Definition("builtin-comfort-object", ToolCategory.Grounding,
+        Res.string.builtin_comfort_object_name, Res.string.builtin_comfort_object_description)
+    private val coldWater = Definition("builtin-cold-water", ToolCategory.Physical,
+        Res.string.builtin_cold_water_name, Res.string.builtin_cold_water_description)
+    private val moveYourBody = Definition("builtin-move", ToolCategory.Physical,
+        Res.string.builtin_move_name, Res.string.builtin_move_description)
+    private val temperatureChange = Definition("builtin-temperature", ToolCategory.Physical,
+        Res.string.builtin_temperature_name, Res.string.builtin_temperature_description)
+    private val oneThingOnly = Definition("builtin-one-thing", ToolCategory.Grounding,
+        Res.string.builtin_one_thing_name, Res.string.builtin_one_thing_description)
+    private val restWithoutGuilt = Definition("builtin-rest", ToolCategory.Grounding,
+        Res.string.builtin_rest_name, Res.string.builtin_rest_description)
+
+    private val byFeeling: Map<Feeling, List<Definition>> = mapOf(
+        Feeling.ANXIOUS to listOf(breathing478, grounding54321),
+        Feeling.SAD to listOf(reachOut, comfortObject),
+        Feeling.ANGRY to listOf(coldWater, moveYourBody),
+        Feeling.NUMB to listOf(grounding54321, temperatureChange),
+        Feeling.EXHAUSTED to listOf(oneThingOnly, restWithoutGuilt)
     )
+
+    /** Every built-in technique, once each. */
+    val all: List<Definition> = byFeeling.values.flatten().distinctBy { it.id }
 
     data class Suggestions(val tools: List<CopingTool>, val builtIn: List<CopingTool>)
 
-    fun suggestionsFor(feeling: Feeling, userTools: List<CopingTool>): Suggestions {
+    /**
+     * [resolve] turns a built-in definition into a tool with its text in the current language.
+     * The default leaves the text empty, which is enough for anything that only looks at ids
+     * and categories.
+     */
+    fun suggestionsFor(
+        feeling: Feeling,
+        userTools: List<CopingTool>,
+        resolve: (Definition) -> CopingTool = { it.toTool(name = it.id, description = "") }
+    ): Suggestions {
         val matching = userTools.filter { it.category in feeling.matchingCategories }
-        val fallbacks = byFeeling[feeling] ?: emptyList()
+        val fallbacks = byFeeling[feeling].orEmpty().map(resolve)
 
         return if (matching.size >= 2) {
             Suggestions(tools = matching.shuffled().take(3), builtIn = emptyList())

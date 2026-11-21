@@ -1,0 +1,13 @@
+<resources>
+    <string name="mood_notification_channel">Promemoria per l\'umore</string>
+    <string name="mood_notification_channel_desc">Promemoria facoltativi per registrare l\'umore</string>
+    <string name="mood_notification_public">Promemoria di Anchor</string>
+    <string name="mood_notification_title">Un breve check-in</string>
+    <string name="mood_notification_text">Come ti senti? Espandi per scegliere un umore.</string>
+    <string name="mood_notification_question">Come ti senti?</string>
+    <string name="mood_notification_great">Molto bene</string>
+    <string name="mood_notification_good">Bene</string>
+    <string name="mood_notification_okay">Così così</string>
+    <string name="mood_notification_low">Giù</string>
+    <string name="mood_notification_not_great">Non bene</string>
+</resources>

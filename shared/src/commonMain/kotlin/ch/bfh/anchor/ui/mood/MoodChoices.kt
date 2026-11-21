@@ -1,5 +1,6 @@
 package ch.bfh.anchor.ui.mood
 
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -38,7 +39,7 @@ fun MoodChoices(
                 ) {
                     Text(MoodScale.emoji(score), fontSize = 24.sp)
                     Text(
-                        MoodScale.label(score),
+                        stringResource(MoodScale.labelRes(score)),
                         fontSize = 10.sp,
                         lineHeight = 12.sp,
                         maxLines = 2,

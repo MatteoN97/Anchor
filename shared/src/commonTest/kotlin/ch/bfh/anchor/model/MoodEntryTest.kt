@@ -1,5 +1,7 @@
 package ch.bfh.anchor.model
 
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -7,13 +9,17 @@ import kotlin.test.assertFailsWith
 class MoodEntryTest {
     @Test
     fun allFiveScoresHaveStableLabelsAndEmojis() {
-        assertEquals(listOf("Not great", "Low", "Okay", "Good", "Great"),
-            MoodScale.scores.map(MoodScale::label))
+        assertEquals(
+            listOf(Res.string.mood_not_great, Res.string.mood_low, Res.string.mood_okay,
+                Res.string.mood_good, Res.string.mood_great),
+            MoodScale.scores.map(MoodScale::labelRes))
         MoodScale.scores.forEach { score ->
             assertEquals(true, MoodScale.emoji(score).isNotBlank())
         }
-        assertEquals(listOf("Great", "Good", "Okay", "Low", "Not great"),
-            MoodScale.displayScores.map(MoodScale::label))
+        assertEquals(
+            listOf(Res.string.mood_great, Res.string.mood_good, Res.string.mood_okay,
+                Res.string.mood_low, Res.string.mood_not_great),
+            MoodScale.displayScores.map(MoodScale::labelRes))
         assertEquals(listOf("😊", "🙂", "😐", "😔", "😢"),
             MoodScale.displayScores.map(MoodScale::emoji))
     }
@@ -22,7 +28,7 @@ class MoodEntryTest {
     fun outsideScaleIsRejected() {
         assertFailsWith<IllegalArgumentException> { MoodEntry(score = 0) }
         assertFailsWith<IllegalArgumentException> { MoodEntry(score = 6) }
-        assertFailsWith<IllegalArgumentException> { MoodScale.label(-1) }
+        assertFailsWith<IllegalArgumentException> { MoodScale.labelRes(-1) }
     }
 
     @Test

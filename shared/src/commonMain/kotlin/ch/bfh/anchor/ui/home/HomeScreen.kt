@@ -231,8 +231,8 @@ private fun MoodCard(onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Mood tracker", style = MaterialTheme.typography.titleMedium)
-                Text("Check in whenever you like", style = MaterialTheme.typography.bodySmall,
+                Text(stringResource(Res.string.home_mood_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(Res.string.home_mood_subtitle), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (LocalIsIos.current) {
