@@ -10,6 +10,6 @@ data class TherapyNote(
     @PrimaryKey val id: String = randomId(),
     val date: Long = nowMillis(),
     val body: String,
-    val tags: String = "",
+    val tags: List<String> = emptyList(),
     val flaggedForNextSession: Boolean = false
 )

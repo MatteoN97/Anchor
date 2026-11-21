@@ -25,9 +25,9 @@ import androidx.compose.ui.semantics.Role
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(settingsManager: SettingsManager) {
-    var userName by remember { mutableStateOf(settingsManager.userName) }
+    val userName by settingsManager.userName.collectAsState()
     var isEditing by remember { mutableStateOf(false) }
-    var tempName by remember { mutableStateOf(settingsManager.userName) }
+    var tempName by remember { mutableStateOf(userName) }
     var crisisPattern by remember { mutableStateOf(settingsManager.crisisBreathingPattern) }
 
     Scaffold(
@@ -76,8 +76,7 @@ fun SettingsScreen(settingsManager: SettingsManager) {
                     }
                     Button(
                         onClick = {
-                            settingsManager.userName = tempName.trim()
-                            userName = tempName.trim()
+                            settingsManager.setUserName(tempName)
                             isEditing = false
                         },
                         enabled = tempName.isNotBlank(),

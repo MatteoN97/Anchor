@@ -5,42 +5,45 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
-import ch.bfh.anchor.model.effectiveCrisisLine
 import ch.bfh.anchor.platform.daysSince
-import ch.bfh.anchor.platform.rememberDeviceRegion
 import ch.bfh.anchor.settings.SettingsManager
-import ch.bfh.anchor.ui.breathing.BreathingPracticeScreen
-import ch.bfh.anchor.ui.crisis.CrisisScreen
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.ui.theme.AnchorTheme
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 
 @Composable
-fun HomeScreen(vm: AnchorViewModel, settingsManager: SettingsManager) {
-    val userName = settingsManager.userName
-    var showCrisis by remember { mutableStateOf(false) }
-    var showBreathing by remember { mutableStateOf(false) }
+fun HomeScreen(
+    vm: AnchorViewModel,
+    settingsManager: SettingsManager,
+    onSosClick: () -> Unit,
+    onBreathingClick: () -> Unit
+) {
+    val userName by settingsManager.userName.collectAsState()
 
     val tools by vm.tools.collectAsState()
     val notes by vm.notes.collectAsState()
     val crisisCheckIns by vm.crisisCheckIns.collectAsState()
 
-    val lastCrisisText: String? = remember(crisisCheckIns) {
-        val last = crisisCheckIns.maxByOrNull { it.date } ?: return@remember null
-        val days = daysSince(last.date)
-        when (days) {
-            0 -> "Last crisis session: today"
-            1 -> "Last crisis session: yesterday"
-            else -> "Last crisis session: $days days ago"
-        }
+    val lastCrisisDays: Int? = remember(crisisCheckIns) {
+        crisisCheckIns.maxByOrNull { it.date }?.let { daysSince(it.date) }
+    }
+    val lastCrisisText: String? = when (lastCrisisDays) {
+        null -> null
+        0 -> stringResource(Res.string.home_last_crisis_today)
+        1 -> stringResource(Res.string.home_last_crisis_yesterday)
+        else -> pluralStringResource(
+            Res.plurals.home_last_crisis_days,
+            lastCrisisDays,
+            lastCrisisDays
+        )
     }
 
     HomeScreenContent(
@@ -49,24 +52,9 @@ fun HomeScreen(vm: AnchorViewModel, settingsManager: SettingsManager) {
         notesCount = notes.size,
         crisisCount = crisisCheckIns.size,
         lastCrisisText = lastCrisisText,
-        onSosClick = { showCrisis = true },
-        onBreathingClick = { showBreathing = true }
+        onSosClick = onSosClick,
+        onBreathingClick = onBreathingClick
     )
-
-    if (showBreathing) {
-        BreathingPracticeScreen(onDismiss = { showBreathing = false })
-    }
-
-    if (showCrisis) {
-        val region = rememberDeviceRegion()
-        CrisisScreen(
-            onDismiss = { showCrisis = false },
-            vm = vm,
-            breathingPattern = settingsManager.crisisBreathingPattern,
-            crisisLine = effectiveCrisisLine(settingsManager.customCrisisLine, region),
-            trustedContact = settingsManager.trustedContact
-        )
-    }
 }
 
 @Composable
@@ -116,9 +104,21 @@ private fun HomeScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                StatCard(label = "Tools", value = toolsCount, modifier = Modifier.weight(1f))
-                StatCard(label = "Sessions", value = crisisCount, modifier = Modifier.weight(1f))
-                StatCard(label = "Notes", value = notesCount, modifier = Modifier.weight(1f))
+                StatCard(
+                    label = stringResource(Res.string.home_stat_tools),
+                    value = toolsCount,
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    label = stringResource(Res.string.home_stat_sessions),
+                    value = crisisCount,
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    label = stringResource(Res.string.home_stat_notes),
+                    value = notesCount,
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             if (lastCrisisText != null) {
@@ -152,14 +152,14 @@ private fun HomeScreenContent(
                         .fillMaxWidth()
                         .height(64.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
                     ),
                     shape = MaterialTheme.shapes.large
                 ) {
                     Text(
                         text = stringResource(Res.string.home_sos_button),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
             }

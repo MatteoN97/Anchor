@@ -7,14 +7,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.BuiltInTools
 import ch.bfh.anchor.model.CopingTool
 import ch.bfh.anchor.model.Feeling
+import ch.bfh.anchor.resources.Res
+import ch.bfh.anchor.resources.common_continue
+import ch.bfh.anchor.resources.crisis_suggestions_add
+import ch.bfh.anchor.resources.crisis_suggestions_added
+import ch.bfh.anchor.resources.crisis_suggestions_badge
+import ch.bfh.anchor.resources.crisis_suggestions_subtitle_feeling
+import ch.bfh.anchor.resources.crisis_suggestions_title
 import ch.bfh.anchor.viewmodel.AnchorViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SuggestedToolsScreen(
@@ -24,7 +31,26 @@ fun SuggestedToolsScreen(
     onToolAdded: (CopingTool) -> Unit = {}
 ) {
     val tools by viewModel.tools.collectAsState()
-    val suggestions = remember(tools, feeling) { BuiltInTools.suggestionsFor(feeling, tools) }
+
+    // The suggestions are picked once and then held for as long as this step is on screen.
+    // Deriving them from the live tool list reshuffled the rows under the finger that had just
+    // tapped "add to my toolkit": the new tool changed what suggestionsFor returns, so the row
+    // being tapped could move or disappear. The only recompute allowed is the first list to
+    // arrive from the database, in case this screen opened before that happened.
+    var suggestions by remember(feeling) {
+        mutableStateOf(BuiltInTools.suggestionsFor(feeling, tools))
+    }
+    var pickedFromStoredTools by remember(feeling) { mutableStateOf(tools.isNotEmpty()) }
+    LaunchedEffect(feeling, tools) {
+        if (!pickedFromStoredTools && tools.isNotEmpty()) {
+            suggestions = BuiltInTools.suggestionsFor(feeling, tools)
+            pickedFromStoredTools = true
+        }
+    }
+
+    // Reacts to the live list on purpose: the suggestion rows stay put, but a built-in tool that
+    // has just been added says so, instead of offering to add it a second time.
+    val toolkitNames = remember(tools) { tools.mapTo(mutableSetOf()) { it.name.trim().lowercase() } }
 
     Column(
         modifier = Modifier
@@ -40,12 +66,15 @@ fun SuggestedToolsScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "You've got this.",
+                text = stringResource(Res.string.crisis_suggestions_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "Here are some things that might help with feeling ${feeling.label.lowercase()}.",
+                text = stringResource(
+                    Res.string.crisis_suggestions_subtitle_feeling,
+                    stringResource(feeling.phraseRes)
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -57,58 +86,12 @@ fun SuggestedToolsScreen(
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             suggestions.tools.forEach { tool ->
                 val isBuiltIn = suggestions.builtIn.any { it.id == tool.id }
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = tool.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            if (isBuiltIn) {
-                                Surface(
-                                    color = MaterialTheme.colorScheme.secondaryContainer,
-                                    shape = MaterialTheme.shapes.extraLarge
-                                ) {
-                                    Text(
-                                        text = "Suggested",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                }
-                            }
-                        }
-                        if (tool.description.isNotEmpty()) {
-                            Text(
-                                text = tool.description,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        if (isBuiltIn) {
-                            TextButton(
-                                onClick = { onToolAdded(tool) },
-                                contentPadding = PaddingValues(0.dp)
-                            ) {
-                                Text(
-                                    text = "+ Add to my toolkit",
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            }
-                        }
-                    }
-                }
+                SuggestedToolCard(
+                    tool = tool,
+                    isBuiltIn = isBuiltIn,
+                    alreadyInToolkit = tool.name.trim().lowercase() in toolkitNames,
+                    onAdd = { onToolAdded(tool) }
+                )
             }
         }
 
@@ -119,16 +102,80 @@ fun SuggestedToolsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = MaterialTheme.shapes.large
         ) {
             Text(
-                text = "Continue",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White
+                text = stringResource(Res.string.common_continue),
+                style = MaterialTheme.typography.titleMedium
             )
         }
 
         Spacer(modifier = Modifier.height(40.dp))
+    }
+}
+
+@Composable
+private fun SuggestedToolCard(
+    tool: CopingTool,
+    isBuiltIn: Boolean,
+    alreadyInToolkit: Boolean,
+    onAdd: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = tool.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                if (isBuiltIn) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.extraLarge
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.crisis_suggestions_badge),
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+            }
+            if (tool.description.isNotEmpty()) {
+                Text(
+                    text = tool.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (isBuiltIn) {
+                if (alreadyInToolkit) {
+                    Text(
+                        text = stringResource(Res.string.crisis_suggestions_added),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    TextButton(onClick = onAdd, contentPadding = PaddingValues(0.dp)) {
+                        Text(
+                            text = stringResource(Res.string.crisis_suggestions_add),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+            }
+        }
     }
 }

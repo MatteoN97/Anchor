@@ -51,7 +51,7 @@ class AnchorViewModel(db: AnchorDatabase) : ViewModel() {
             noteDao.insert(
                 TherapyNote(
                     body = body,
-                    tags = tags.joinToString(","),
+                    tags = tags,
                     flaggedForNextSession = flagged
                 )
             )
