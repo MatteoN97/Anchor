@@ -240,9 +240,9 @@
     <string name="mood_period_empty">Nessuna registrazione in questo periodo.</string>
     <string name="mood_allow_notifications">Consenti notifiche</string>
     <string name="mood_why_notifications">Perché consentire le notifiche?</string>
-    <string name="mood_notifications_info">I promemoria sono del tutto facoltativi. Possono ricordarti con delicatezza di registrare il tuo umore nelle ore che scegli. Puoi lasciarli disattivati e aprire semplicemente questa pagina quando vuoi annotare come ti senti.</string>
+    <string name="mood_notifications_info">I promemoria sono del tutto facoltativi. Possono ricordarti con delicatezza di registrare il tuo umore nelle ore che scegli. Puoi lasciarli disattivati e aprire semplicemente il diario dell\'umore quando vuoi annotare come ti senti.</string>
     <string name="mood_reminders_on">Promemoria attivi</string>
-    <string name="mood_reminders_off">Disattivati: registra qui quando vuoi</string>
+    <string name="mood_reminders_off">Disattivati: registra nel diario dell\'umore quando vuoi</string>
     <string name="mood_send_test">Invia notifica di prova</string>
     <string name="mood_test_sent">Prova inviata. Tocca un umore nella notifica, poi apri Umore nel tempo.</string>
     <string name="mood_notifications_blocked">Le notifiche sono bloccate. Consenti le notifiche di Anchor nelle impostazioni di Android.</string>
@@ -320,4 +320,7 @@
     <string name="mood_schedule_title">Orari</string>
     <string name="mood_start_label">Inizio</string>
     <string name="mood_end_label">Fine</string>
+    <string name="settings_mood_reminders_title">Promemoria dell\'umore</string>
+    <string name="settings_value_on">Attivi</string>
+    <string name="settings_value_off">Disattivati</string>
 </resources>

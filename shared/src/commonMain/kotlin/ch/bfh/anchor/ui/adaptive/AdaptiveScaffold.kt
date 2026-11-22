@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -31,19 +32,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.ui.theme.IosMetrics
 import ch.bfh.anchor.ui.theme.LocalIsIos
 
 /** The one primary action of a page: a floating round button at the bottom right on both platforms. */
 data class PageAction(val icon: ImageVector, val label: String, val onClick: () -> Unit)
 
+/** Leads back from a pushed page; [label] names the page it returns to. */
+data class PageBack(val label: String, val onClick: () -> Unit)
+
 /**
- * A top-level tab page.
+ * A top-level tab page, or with [back] a page pushed from one.
  *
- * Android: Scaffold with a TopAppBar and a FAB for [action].
+ * Android: Scaffold with a TopAppBar (and a back arrow for [back]) and a FAB for [action].
  * iOS: a navigation bar whose small centred title fades in once [listState] has scrolled the
  * large title away. The page's list must start with [largeTitle] for that to work, which renders
- * nothing on Android.
+ * nothing on Android. A pushed page has no large title: its bar shows "‹ [PageBack.label]" and
+ * the title from the start.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,11 +57,23 @@ fun AdaptivePageScaffold(
     title: String,
     listState: LazyListState,
     action: PageAction? = null,
+    back: PageBack? = null,
     content: @Composable (PaddingValues) -> Unit
 ) {
     if (!LocalIsIos.current) {
         Scaffold(
-            topBar = { TopAppBar(title = { Text(title) }) },
+            topBar = {
+                TopAppBar(
+                    title = { Text(title) },
+                    navigationIcon = {
+                        if (back != null) {
+                            IconButton(onClick = back.onClick) {
+                                Icon(AnchorIcons.ArrowBack, contentDescription = back.label)
+                            }
+                        }
+                    }
+                )
+            },
             floatingActionButton = {
                 if (action != null) {
                     FloatingActionButton(onClick = action.onClick) {
@@ -75,7 +93,7 @@ fun AdaptivePageScaffold(
         }
     }
     Scaffold(
-        topBar = { IosNavigationBar(title = title, showTitle = collapsed) },
+        topBar = { IosNavigationBar(title = title, showTitle = back != null || collapsed, back = back) },
         floatingActionButton = {
             if (action != null) {
                 IosFloatingButton(icon = action.icon, label = action.label, onClick = action.onClick)
@@ -87,7 +105,7 @@ fun AdaptivePageScaffold(
 }
 
 @Composable
-private fun IosNavigationBar(title: String, showTitle: Boolean) {
+private fun IosNavigationBar(title: String, showTitle: Boolean, back: PageBack? = null) {
     val titleAlpha by animateFloatAsState(if (showTitle) 1f else 0f)
     Box(
         modifier = Modifier
@@ -95,8 +113,21 @@ private fun IosNavigationBar(title: String, showTitle: Boolean) {
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
             .height(52.dp)
-            .padding(horizontal = IosMetrics.RowHorizontalPadding)
+            .padding(horizontal = if (back != null) 8.dp else IosMetrics.RowHorizontalPadding)
     ) {
+        if (back != null) {
+            val tint = MaterialTheme.colorScheme.primary
+            AnchorTextButton(
+                onClick = back.onClick,
+                contentPadding = PaddingValues(horizontal = 8.dp),
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                // The disclosure chevron, mirrored to point back.
+                Chevron(modifier = Modifier.graphicsLayer(scaleX = -1f), color = tint)
+                Spacer(Modifier.width(6.dp))
+                Text(back.label, style = MaterialTheme.typography.bodyLarge, color = tint, maxLines = 1)
+            }
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
@@ -104,7 +135,7 @@ private fun IosNavigationBar(title: String, showTitle: Boolean) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(horizontal = 56.dp)
+                .padding(horizontal = if (back != null) 104.dp else 56.dp)
                 .alpha(titleAlpha)
         )
     }

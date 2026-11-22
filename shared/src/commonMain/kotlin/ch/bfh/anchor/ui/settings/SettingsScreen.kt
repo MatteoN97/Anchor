@@ -1,28 +1,32 @@
 package ch.bfh.anchor.ui.settings
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.ui.Alignment
-import ch.bfh.anchor.ui.adaptive.AdaptiveSwitch
-import ch.bfh.anchor.ui.adaptive.AnchorCardButton
-import ch.bfh.anchor.ui.theme.ThemeMode
-import ch.bfh.anchor.ui.theme.dynamicColorAvailable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.AppLanguage
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.CrisisLines
 import ch.bfh.anchor.model.HelpContact
 import ch.bfh.anchor.model.effectiveCrisisLine
+import ch.bfh.anchor.notifications.MoodReminderController
+import ch.bfh.anchor.notifications.NoMoodReminderController
 import ch.bfh.anchor.platform.rememberDeviceRegion
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
@@ -31,245 +35,178 @@ import ch.bfh.anchor.ui.adaptive.AdaptiveActionRow
 import ch.bfh.anchor.ui.adaptive.AdaptiveListRow
 import ch.bfh.anchor.ui.adaptive.AdaptivePageScaffold
 import ch.bfh.anchor.ui.adaptive.AdaptiveSheet
+import ch.bfh.anchor.ui.adaptive.AdaptiveSwitch
 import ch.bfh.anchor.ui.adaptive.AdaptiveTextField
+import ch.bfh.anchor.ui.adaptive.AnchorCardButton
 import ch.bfh.anchor.ui.adaptive.Checkmark
+import ch.bfh.anchor.ui.adaptive.PageBack
 import ch.bfh.anchor.ui.adaptive.adaptiveSection
 import ch.bfh.anchor.ui.adaptive.largeTitle
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.ui.theme.LocalIsIos
+import ch.bfh.anchor.ui.theme.ThemeMode
+import ch.bfh.anchor.ui.theme.dynamicColorAvailable
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Which edit sheet is open. */
-private enum class EditTarget { Name, CrisisLine, TrustedContact }
+/**
+ * A settings topic with a page of its own, opened from the main Settings list as in the iOS
+ * Settings app. [route] is its part of the navigation route.
+ */
+enum class SettingsPage(val route: String, val titleRes: StringResource) {
+    Language("language", Res.string.settings_language_title),
+    Appearance("appearance", Res.string.settings_appearance_title),
+    MoodReminders("reminders", Res.string.settings_mood_reminders_title),
+    Breathing("breathing", Res.string.settings_crisis_breathing_label),
+    Contacts("contacts", Res.string.settings_contacts_title),
+    SampleData("samples", Res.string.settings_sample_title);
 
+    companion object {
+        fun fromRoute(route: String?) = entries.firstOrNull { it.route == route }
+    }
+}
+
+/** The main Settings list: the name, then one row per topic with its current value. */
 @Composable
 fun SettingsScreen(
     settingsManager: SettingsManager,
-    onLanguageChange: (AppLanguage) -> Unit = settingsManager::setAppLanguage,
-    onAddSampleMoods: () -> Unit = {},
-    onRemoveSampleMoods: () -> Unit = {}
+    reminderController: MoodReminderController = NoMoodReminderController,
+    onOpenPage: (SettingsPage) -> Unit
 ) {
     val language by settingsManager.appLanguage.collectAsState()
     val userName by settingsManager.userName.collectAsState()
     val themeMode by settingsManager.themeMode.collectAsState()
-    val dynamicColor by settingsManager.dynamicColor.collectAsState()
-    var crisisPattern by remember { mutableStateOf(settingsManager.crisisBreathingPattern) }
-    var customLine by remember { mutableStateOf(settingsManager.customCrisisLine) }
-    var trusted by remember { mutableStateOf(settingsManager.trustedContact) }
-    var editing by remember { mutableStateOf<EditTarget?>(null) }
+    var editingName by remember { mutableStateOf(false) }
+    // Read when this page is shown: it leaves composition while a topic page is open, so these
+    // are fresh again on the way back.
+    val remindersOn = remember { reminderController.supported && settingsManager.moodRemindersEnabled }
+    val pattern = remember { settingsManager.crisisBreathingPattern }
 
-    val isIos = LocalIsIos.current
     val listState = rememberLazyListState()
-    val region = rememberDeviceRegion()
-    val regionalLine = CrisisLines.forRegion(region)
-    val effectiveLine = effectiveCrisisLine(customLine, region)
-
     // Resolved here: the LazyColumn builder below is not a composable scope.
     val title = stringResource(Res.string.settings_title)
-    val profileTitle = stringResource(Res.string.settings_profile_title)
-    val nameHelper = stringResource(Res.string.settings_name_helper_updated)
     val nameLabel = stringResource(Res.string.settings_name_field_label)
+    val nameHelper = stringResource(Res.string.settings_name_helper_updated)
     val notSet = stringResource(Res.string.settings_name_not_set)
-    val appearanceTitle = stringResource(Res.string.settings_appearance_title)
-    val themeLabels = mapOf(
-        ThemeMode.System to stringResource(Res.string.settings_theme_system),
-        ThemeMode.Light to stringResource(Res.string.settings_theme_light),
-        ThemeMode.Dark to stringResource(Res.string.settings_theme_dark)
+    val titles = SettingsPage.entries.associateWith { stringResource(it.titleRes) }
+    val values = mapOf(
+        SettingsPage.Language to
+            if (language == AppLanguage.System) stringResource(Res.string.settings_language_system) else language.nativeName,
+        SettingsPage.Appearance to stringResource(themeLabelRes(themeMode)),
+        SettingsPage.MoodReminders to stringResource(if (remindersOn) Res.string.settings_value_on else Res.string.settings_value_off),
+        SettingsPage.Breathing to stringResource(pattern.nameRes)
     )
-    val dynamicTitle = stringResource(Res.string.settings_dynamic_color)
-    val dynamicSubtitle = stringResource(Res.string.settings_dynamic_color_subtitle)
-    val breathingTitle = stringResource(Res.string.settings_crisis_breathing_label)
-    val breathingHelper = stringResource(Res.string.settings_crisis_breathing_helper)
-    val contactsTitle = stringResource(Res.string.settings_contacts_title)
-    val contactsHelper = stringResource(Res.string.settings_contacts_helper)
-    val crisisLineLabel = stringResource(Res.string.settings_crisis_line_label)
-    val trustedLabel = stringResource(Res.string.settings_trusted_label)
-    val trustedNotSet = stringResource(Res.string.settings_trusted_not_set)
-    val useAutomatic = stringResource(Res.string.settings_crisis_line_reset)
-    val remove = stringResource(Res.string.settings_contact_remove)
-    val lineSource = when {
-        customLine != null -> stringResource(Res.string.settings_crisis_line_custom)
-        regionalLine != null -> stringResource(Res.string.settings_crisis_line_auto, stringResource(regionalLine.countryName))
-        else -> stringResource(Res.string.settings_crisis_line_auto_fallback, stringResource(CrisisLines.fallback.countryName))
+
+    fun androidx.compose.foundation.lazy.LazyListScope.topics(pages: List<SettingsPage>) {
+        adaptiveSection(items = pages, separatorInset = TopicSeparatorInset) { page ->
+            TopicRow(
+                icon = page.icon,
+                iconColor = page.iconColor,
+                title = titles.getValue(page),
+                value = values[page],
+                onClick = { onOpenPage(page) }
+            )
+        }
     }
-    val languageTitle = stringResource(Res.string.settings_language_title)
-    val languageHelper = stringResource(Res.string.settings_language_helper)
-    val languageNames = AppLanguage.entries.associateWith {
-        if (it == AppLanguage.System) stringResource(Res.string.settings_language_system) else it.nativeName
-    }
-    val sampleTitle = stringResource(Res.string.settings_sample_title)
-    val sampleFooter = stringResource(Res.string.settings_sample_footer)
-    val sampleAdd = stringResource(Res.string.settings_sample_add)
-    val sampleRemove = stringResource(Res.string.settings_sample_remove)
-    val patternNames = BreathingPattern.entries.associateWith { stringResource(it.nameRes) }
-    val patternDescriptions = BreathingPattern.entries.associateWith { stringResource(it.descriptionRes) }
 
     AdaptivePageScaffold(title = title, listState = listState) { padding ->
-        LazyColumn(
-            state = listState,
-            contentPadding = padding,
-            modifier = Modifier.fillMaxSize()
-        ) {
+        LazyColumn(state = listState, contentPadding = padding, modifier = Modifier.fillMaxSize()) {
             largeTitle(title)
-
             adaptiveSection(
-                header = profileTitle,
                 footer = nameHelper,
+                separatorInset = TopicSeparatorInset,
                 rows = listOf<@Composable () -> Unit>({
-                    ValueRow(
-                        label = nameLabel,
+                    TopicRow(
+                        icon = AnchorIcons.Person,
+                        iconColor = Color(0xFF8E8E93),
+                        title = nameLabel,
                         value = userName.ifBlank { notSet },
-                        editLabel = stringResource(Res.string.settings_edit_name),
-                        onClick = { editing = EditTarget.Name }
+                        onClick = { editingName = true }
                     )
                 })
             )
+            topics(listOf(SettingsPage.Language, SettingsPage.Appearance))
+            topics(listOf(SettingsPage.MoodReminders, SettingsPage.Breathing, SettingsPage.Contacts))
+            topics(listOf(SettingsPage.SampleData))
+            item { Spacer(Modifier.height(16.dp)) }
+        }
+    }
 
-            adaptiveSection(
-                items = AppLanguage.entries,
-                header = languageTitle,
-                footer = languageHelper
-            ) { option ->
-                ChoiceRow(
-                    name = languageNames.getValue(option),
-                    description = null,
-                    selected = option == language,
-                    onSelect = { if (option != language) onLanguageChange(option) }
-                )
+    if (editingName) {
+        NameSheet(
+            initial = userName,
+            onDismiss = { editingName = false },
+            onSave = {
+                settingsManager.setUserName(it)
+                editingName = false
             }
+        )
+    }
+}
 
-            adaptiveSection(
-                header = appearanceTitle,
-                rows = buildList<@Composable () -> Unit> {
-                    add {
-                        ThemePicker(
-                            selected = themeMode,
-                            labels = themeLabels,
-                            onSelect = settingsManager::setThemeMode
-                        )
-                    }
-                    // Material You exists on Android 12+ only, and the iOS look ignores it.
-                    if (dynamicColorAvailable && !isIos) {
-                        add {
-                            AdaptiveListRow(
-                                headline = { Text(dynamicTitle) },
-                                supporting = { Text(dynamicSubtitle) },
-                                trailing = {
-                                    AdaptiveSwitch(
-                                        checked = dynamicColor,
-                                        onCheckedChange = settingsManager::setDynamicColor
-                                    )
-                                },
-                                modifier = Modifier.toggleable(
-                                    value = dynamicColor,
-                                    role = Role.Switch,
-                                    onValueChange = settingsManager::setDynamicColor
-                                )
-                            )
-                        }
-                    }
-                }
-            )
+/** One topic's page, with a way back to the main Settings list. */
+@Composable
+fun SettingsPageScreen(
+    page: SettingsPage,
+    settingsManager: SettingsManager,
+    reminderController: MoodReminderController = NoMoodReminderController,
+    onLanguageChange: (AppLanguage) -> Unit = settingsManager::setAppLanguage,
+    onAddSampleMoods: () -> Unit = {},
+    onRemoveSampleMoods: () -> Unit = {},
+    onBack: () -> Unit
+) {
+    val listState = rememberLazyListState()
+    val title = stringResource(page.titleRes)
+    val back = PageBack(stringResource(Res.string.settings_title), onBack)
+    // Sheets of the Contacts page: they sit outside the list.
+    var editing by remember { mutableStateOf<EditTarget?>(null) }
+    val contacts = rememberContactsState(settingsManager)
 
-            adaptiveSection(
-                items = BreathingPattern.entries,
-                header = breathingTitle,
-                footer = breathingHelper
-            ) { pattern ->
-                ChoiceRow(
-                    name = patternNames.getValue(pattern),
-                    description = patternDescriptions.getValue(pattern),
-                    selected = pattern == crisisPattern,
-                    onSelect = {
-                        settingsManager.crisisBreathingPattern = pattern
-                        crisisPattern = pattern
-                    }
-                )
-            }
+    // Every section is resolved here: the LazyColumn builder below is not a composable scope.
+    val content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit = when (page) {
+        SettingsPage.Language -> languageContent(settingsManager, onLanguageChange)
+        SettingsPage.Appearance -> appearanceContent(settingsManager)
+        SettingsPage.MoodReminders -> {
+            val state = rememberMoodReminderState(settingsManager, reminderController)
+            val texts = moodReminderTexts(state)
+            ({ moodReminderSection(state, texts, showHeader = false) })
+        }
+        SettingsPage.Breathing -> breathingContent(settingsManager)
+        SettingsPage.Contacts -> contactsContent(contacts) { editing = it }
+        SettingsPage.SampleData -> sampleContent(onAddSampleMoods, onRemoveSampleMoods)
+    }
 
-            adaptiveSection(
-                header = contactsTitle,
-                footer = contactsHelper,
-                rows = buildList<@Composable () -> Unit> {
-                    add {
-                        ContactRow(
-                            label = crisisLineLabel,
-                            contact = effectiveLine,
-                            emptyText = "",
-                            caption = lineSource,
-                            onClick = { editing = EditTarget.CrisisLine }
-                        )
-                    }
-                    if (customLine != null) {
-                        add {
-                            AdaptiveActionRow(useAutomatic, onClick = {
-                                settingsManager.customCrisisLine = null
-                                customLine = null
-                            })
-                        }
-                    }
-                    add {
-                        ContactRow(
-                            label = trustedLabel,
-                            contact = trusted,
-                            emptyText = trustedNotSet,
-                            caption = null,
-                            onClick = { editing = EditTarget.TrustedContact }
-                        )
-                    }
-                    if (trusted != null) {
-                        add {
-                            AdaptiveActionRow(remove, color = MaterialTheme.colorScheme.error, onClick = {
-                                settingsManager.trustedContact = null
-                                trusted = null
-                            })
-                        }
-                    }
-                }
-            )
-
-            // For demos and testing the mood chart; every sample is marked and removable.
-            adaptiveSection(
-                header = sampleTitle,
-                footer = sampleFooter,
-                rows = listOf<@Composable () -> Unit>(
-                    { AdaptiveActionRow(sampleAdd, onClick = onAddSampleMoods) },
-                    { AdaptiveActionRow(sampleRemove, color = MaterialTheme.colorScheme.error, onClick = onRemoveSampleMoods) }
-                )
-            )
-
-            item { Spacer(Modifier.height(if (isIos) 8.dp else 16.dp)) }
+    AdaptivePageScaffold(title = title, listState = listState, back = back) { padding ->
+        LazyColumn(
+            state = listState,
+            contentPadding = PaddingValues(
+                top = padding.calculateTopPadding() + if (LocalIsIos.current) 8.dp else 0.dp,
+                bottom = padding.calculateBottomPadding() + 16.dp
+            ),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            content()
         }
     }
 
     when (editing) {
-        EditTarget.Name -> NameSheet(
-            initial = userName,
-            onDismiss = { editing = null },
-            onSave = {
-                settingsManager.setUserName(it)
-                editing = null
-            }
-        )
         EditTarget.CrisisLine -> ContactSheet(
-            title = crisisLineLabel,
-            initial = customLine ?: effectiveLine,
+            title = stringResource(Res.string.settings_crisis_line_label),
+            initial = contacts.customLine ?: contacts.effectiveLine,
             namePlaceholder = stringResource(Res.string.settings_crisis_line_name_placeholder),
             onDismiss = { editing = null },
             onSave = {
-                settingsManager.customCrisisLine = it
-                customLine = settingsManager.customCrisisLine
+                contacts.saveCustomLine(it)
                 editing = null
             }
         )
         EditTarget.TrustedContact -> ContactSheet(
-            title = trustedLabel,
-            initial = trusted,
+            title = stringResource(Res.string.settings_trusted_label),
+            initial = contacts.trusted,
             namePlaceholder = stringResource(Res.string.settings_trusted_name_placeholder),
             onDismiss = { editing = null },
             onSave = {
-                settingsManager.trustedContact = it
-                trusted = settingsManager.trustedContact
+                contacts.saveTrusted(it)
                 editing = null
             }
         )
@@ -277,20 +214,251 @@ fun SettingsScreen(
     }
 }
 
-/** iOS: "Name ............ Matteo >". Android: label over value, with an edit button. */
+// ── Topic pages ──────────────────────────────────────────────────────────────
+
 @Composable
-private fun ValueRow(label: String, value: String, editLabel: String, onClick: () -> Unit) {
+private fun languageContent(
+    settingsManager: SettingsManager,
+    onLanguageChange: (AppLanguage) -> Unit
+): androidx.compose.foundation.lazy.LazyListScope.() -> Unit {
+    val language by settingsManager.appLanguage.collectAsState()
+    val helper = stringResource(Res.string.settings_language_helper)
+    val names = AppLanguage.entries.associateWith {
+        if (it == AppLanguage.System) stringResource(Res.string.settings_language_system) else it.nativeName
+    }
+    return {
+        adaptiveSection(items = AppLanguage.entries, footer = helper) { option ->
+            ChoiceRow(
+                name = names.getValue(option),
+                description = null,
+                selected = option == language,
+                onSelect = { if (option != language) onLanguageChange(option) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun appearanceContent(settingsManager: SettingsManager): androidx.compose.foundation.lazy.LazyListScope.() -> Unit {
+    val isIos = LocalIsIos.current
+    val themeMode by settingsManager.themeMode.collectAsState()
+    val dynamicColor by settingsManager.dynamicColor.collectAsState()
+    val themeLabels = ThemeMode.entries.associateWith { stringResource(themeLabelRes(it)) }
+    val dynamicTitle = stringResource(Res.string.settings_dynamic_color)
+    val dynamicSubtitle = stringResource(Res.string.settings_dynamic_color_subtitle)
+    return {
+        adaptiveSection(
+            rows = buildList<@Composable () -> Unit> {
+                add { ThemePicker(selected = themeMode, labels = themeLabels, onSelect = settingsManager::setThemeMode) }
+                // Material You exists on Android 12+ only, and the iOS look ignores it.
+                if (dynamicColorAvailable && !isIos) {
+                    add {
+                        AdaptiveListRow(
+                            headline = { Text(dynamicTitle) },
+                            supporting = { Text(dynamicSubtitle) },
+                            trailing = {
+                                AdaptiveSwitch(checked = dynamicColor, onCheckedChange = settingsManager::setDynamicColor)
+                            },
+                            modifier = Modifier.toggleable(
+                                value = dynamicColor,
+                                role = Role.Switch,
+                                onValueChange = settingsManager::setDynamicColor
+                            )
+                        )
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun breathingContent(settingsManager: SettingsManager): androidx.compose.foundation.lazy.LazyListScope.() -> Unit {
+    var crisisPattern by remember { mutableStateOf(settingsManager.crisisBreathingPattern) }
+    val helper = stringResource(Res.string.settings_crisis_breathing_helper)
+    val names = BreathingPattern.entries.associateWith { stringResource(it.nameRes) }
+    val descriptions = BreathingPattern.entries.associateWith { stringResource(it.descriptionRes) }
+    return {
+        adaptiveSection(items = BreathingPattern.entries, footer = helper) { pattern ->
+            ChoiceRow(
+                name = names.getValue(pattern),
+                description = descriptions.getValue(pattern),
+                selected = pattern == crisisPattern,
+                onSelect = {
+                    settingsManager.crisisBreathingPattern = pattern
+                    crisisPattern = pattern
+                }
+            )
+        }
+    }
+}
+
+/** Which contact sheet is open. */
+private enum class EditTarget { CrisisLine, TrustedContact }
+
+/** The crisis line and trusted contact, as saved and as shown. */
+private class ContactsState(private val settings: SettingsManager, val region: String?) {
+    var customLine by mutableStateOf(settings.customCrisisLine)
+        private set
+    var trusted by mutableStateOf(settings.trustedContact)
+        private set
+    val regionalLine get() = CrisisLines.forRegion(region)
+    val effectiveLine get() = effectiveCrisisLine(customLine, region)
+
+    fun saveCustomLine(contact: HelpContact?) {
+        settings.customCrisisLine = contact
+        customLine = settings.customCrisisLine
+    }
+
+    fun saveTrusted(contact: HelpContact?) {
+        settings.trustedContact = contact
+        trusted = settings.trustedContact
+    }
+}
+
+@Composable
+private fun rememberContactsState(settings: SettingsManager): ContactsState {
+    val region = rememberDeviceRegion()
+    return remember(settings, region) { ContactsState(settings, region) }
+}
+
+@Composable
+private fun contactsContent(
+    contacts: ContactsState,
+    onEdit: (EditTarget) -> Unit
+): androidx.compose.foundation.lazy.LazyListScope.() -> Unit {
+    val helper = stringResource(Res.string.settings_contacts_helper)
+    val crisisLineLabel = stringResource(Res.string.settings_crisis_line_label)
+    val trustedLabel = stringResource(Res.string.settings_trusted_label)
+    val trustedNotSet = stringResource(Res.string.settings_trusted_not_set)
+    val useAutomatic = stringResource(Res.string.settings_crisis_line_reset)
+    val remove = stringResource(Res.string.settings_contact_remove)
+    val regionalLine = contacts.regionalLine
+    val lineSource = when {
+        contacts.customLine != null -> stringResource(Res.string.settings_crisis_line_custom)
+        regionalLine != null -> stringResource(Res.string.settings_crisis_line_auto, stringResource(regionalLine.countryName))
+        else -> stringResource(Res.string.settings_crisis_line_auto_fallback, stringResource(CrisisLines.fallback.countryName))
+    }
+    return {
+        adaptiveSection(
+            footer = helper,
+            rows = buildList<@Composable () -> Unit> {
+                add {
+                    ContactRow(
+                        label = crisisLineLabel,
+                        contact = contacts.effectiveLine,
+                        emptyText = "",
+                        caption = lineSource,
+                        onClick = { onEdit(EditTarget.CrisisLine) }
+                    )
+                }
+                if (contacts.customLine != null) {
+                    add { AdaptiveActionRow(useAutomatic, onClick = { contacts.saveCustomLine(null) }) }
+                }
+                add {
+                    ContactRow(
+                        label = trustedLabel,
+                        contact = contacts.trusted,
+                        emptyText = trustedNotSet,
+                        caption = null,
+                        onClick = { onEdit(EditTarget.TrustedContact) }
+                    )
+                }
+                if (contacts.trusted != null) {
+                    add {
+                        AdaptiveActionRow(remove, color = MaterialTheme.colorScheme.error, onClick = { contacts.saveTrusted(null) })
+                    }
+                }
+            }
+        )
+    }
+}
+
+/** For demos and testing the mood chart; every sample is marked and removable. */
+@Composable
+private fun sampleContent(onAdd: () -> Unit, onRemove: () -> Unit): androidx.compose.foundation.lazy.LazyListScope.() -> Unit {
+    val footer = stringResource(Res.string.settings_sample_footer)
+    val add = stringResource(Res.string.settings_sample_add)
+    val remove = stringResource(Res.string.settings_sample_remove)
+    return {
+        adaptiveSection(
+            footer = footer,
+            rows = listOf<@Composable () -> Unit>(
+                { AdaptiveActionRow(add, onClick = onAdd) },
+                { AdaptiveActionRow(remove, color = MaterialTheme.colorScheme.error, onClick = onRemove) }
+            )
+        )
+    }
+}
+
+// ── Rows ─────────────────────────────────────────────────────────────────────
+
+/** Where a separator starts in the main list: under the title, past the icon. */
+private val TopicSeparatorInset = 58.dp
+
+private val SettingsPage.icon: ImageVector
+    get() = when (this) {
+        SettingsPage.Language -> AnchorIcons.Language
+        SettingsPage.Appearance -> AnchorIcons.Palette
+        SettingsPage.MoodReminders -> AnchorIcons.Notifications
+        SettingsPage.Breathing -> AnchorIcons.Air
+        SettingsPage.Contacts -> AnchorIcons.Call
+        SettingsPage.SampleData -> AnchorIcons.Insights
+    }
+
+/** The colour of the icon tile on iOS, as in the Settings app. */
+private val SettingsPage.iconColor: Color
+    get() = when (this) {
+        SettingsPage.Language -> Color(0xFF007AFF)
+        SettingsPage.Appearance -> Color(0xFF5856D6)
+        SettingsPage.MoodReminders -> Color(0xFFFF3B30)
+        SettingsPage.Breathing -> Color(0xFF32ADE6)
+        SettingsPage.Contacts -> Color(0xFF34C759)
+        SettingsPage.SampleData -> Color(0xFFFF9500)
+    }
+
+private fun themeLabelRes(mode: ThemeMode) = when (mode) {
+    ThemeMode.System -> Res.string.settings_theme_system
+    ThemeMode.Light -> Res.string.settings_theme_light
+    ThemeMode.Dark -> Res.string.settings_theme_dark
+}
+
+/**
+ * iOS: a white icon on a coloured tile, the title, the current value in grey and a chevron.
+ * Android: a tinted icon, the title with the value under it.
+ */
+@Composable
+private fun TopicRow(icon: ImageVector, iconColor: Color, title: String, value: String?, onClick: () -> Unit) {
     val isIos = LocalIsIos.current
     AdaptiveListRow(
-        headline = { Text(label) },
-        supporting = if (isIos) null else ({ Text(value) }),
-        trailing = {
+        leading = {
             if (isIos) {
-                Text(value, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .size(30.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .background(iconColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(19.dp))
+                }
             } else {
-                Icon(AnchorIcons.Edit, contentDescription = editLabel, tint = MaterialTheme.colorScheme.primary)
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         },
+        headline = { Text(title) },
+        supporting = if (isIos || value == null) null else ({ Text(value) }),
+        trailing = if (isIos && value != null) ({
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 160.dp)
+            )
+        }) else null,
         onClick = onClick,
         showChevron = true
     )
