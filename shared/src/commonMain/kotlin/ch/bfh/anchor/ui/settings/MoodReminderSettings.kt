@@ -133,9 +133,9 @@ fun moodReminderTexts(state: MoodReminderState): MoodReminderTexts {
  * Mood check-in reminders: a switch to turn them on, a test notification, and the daily window
  * and frequency as pickers.
  */
-fun LazyListScope.moodReminderSection(state: MoodReminderState, texts: MoodReminderTexts) {
+fun LazyListScope.moodReminderSection(state: MoodReminderState, texts: MoodReminderTexts, showHeader: Boolean = true) {
     adaptiveSection(
-        header = texts.title,
+        header = texts.title.takeIf { showHeader },
         footer = texts.footer,
         rows = buildList<@Composable () -> Unit> {
             add {

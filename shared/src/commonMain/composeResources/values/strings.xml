@@ -327,4 +327,6 @@
     <string name="mood_start_label">Start</string>
     <string name="mood_end_label">End</string>
     <string name="settings_mood_reminders_title">Mood reminders</string>
+    <string name="settings_value_on">On</string>
+    <string name="settings_value_off">Off</string>
 </resources>

@@ -321,4 +321,6 @@
     <string name="mood_start_label">Inizio</string>
     <string name="mood_end_label">Fine</string>
     <string name="settings_mood_reminders_title">Promemoria dell\'umore</string>
+    <string name="settings_value_on">Attivi</string>
+    <string name="settings_value_off">Disattivati</string>
 </resources>

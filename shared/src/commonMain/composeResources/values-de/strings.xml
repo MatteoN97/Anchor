@@ -321,4 +321,6 @@
     <string name="mood_start_label">Beginn</string>
     <string name="mood_end_label">Ende</string>
     <string name="settings_mood_reminders_title">Stimmungs-Erinnerungen</string>
+    <string name="settings_value_on">Ein</string>
+    <string name="settings_value_off">Aus</string>
 </resources>

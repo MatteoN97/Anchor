@@ -1,12 +1,15 @@
 package ch.bfh.anchor
 
+import kotlinx.coroutines.flow.first
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -64,6 +67,8 @@ import ch.bfh.anchor.ui.home.HomeScreen
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.ui.journal.JournalScreen
 import ch.bfh.anchor.ui.mood.MoodTrackerScreen
+import ch.bfh.anchor.ui.settings.SettingsPage
+import ch.bfh.anchor.ui.settings.SettingsPageScreen
 import ch.bfh.anchor.ui.settings.SettingsScreen
 import ch.bfh.anchor.ui.theme.AnchorTheme
 import ch.bfh.anchor.ui.theme.LocalIsIos
@@ -75,6 +80,8 @@ import org.jetbrains.compose.resources.stringResource
 private const val ROUTE_CRISIS = "crisis"
 private const val ROUTE_BREATHING = "breathing"
 private const val ROUTE_MOOD = "mood"
+/** A topic page of Settings, e.g. "settings/language". */
+private const val ROUTE_SETTINGS_PAGE = "settings/{page}"
 private const val ROUTE_NOTE = "note?id={id}"
 private fun noteRoute(id: String?) = if (id == null) "note" else "note?id=$id"
 
@@ -132,14 +139,25 @@ fun AnchorApp(
     val currentRoute = navBackStackEntry?.destination?.route
     val isIos = LocalIsIos.current
 
+    // These effects can run before the NavHost has set its graph (at launch, or right after a
+    // language change rebuilt the app), and navigating then throws. Waiting for the first back
+    // stack entry waits for the graph.
     LaunchedEffect(Unit) {
-        if (startInSettings) navController.navigateToTab(AnchorTab.Settings)
+        // Back on the Language page the change was made on.
+        if (startInSettings) {
+            navController.currentBackStackEntryFlow.first()
+            navController.navigateToTab(AnchorTab.Settings)
+            navController.navigate("settings/${SettingsPage.Language.route}")
+        }
     }
 
     // A tapped mood reminder opens the tracker.
     LaunchedEffect(openMoodRequest) {
-        if (openMoodRequest > 0 && navController.currentDestination?.route != ROUTE_MOOD) {
-            navController.navigate(ROUTE_MOOD) { launchSingleTop = true }
+        if (openMoodRequest > 0) {
+            navController.currentBackStackEntryFlow.first()
+            if (navController.currentDestination?.route != ROUTE_MOOD) {
+                navController.navigate(ROUTE_MOOD) { launchSingleTop = true }
+            }
         }
     }
 
@@ -224,9 +242,20 @@ fun AnchorApp(
                 SettingsScreen(
                     settingsManager = settingsManager,
                     reminderController = reminderController,
+                    onOpenPage = { page -> navController.navigate("settings/${page.route}") }
+                )
+            }
+            pushedComposable(ROUTE_SETTINGS_PAGE, isIos) { entry ->
+                val page = SettingsPage.fromRoute(entry.savedStateHandle.get<String>("page"))
+                    ?: return@pushedComposable
+                SettingsPageScreen(
+                    page = page,
+                    settingsManager = settingsManager,
+                    reminderController = reminderController,
                     onLanguageChange = onLanguageChange,
                     onAddSampleMoods = vm::addSampleMoods,
-                    onRemoveSampleMoods = vm::removeSampleMoods
+                    onRemoveSampleMoods = vm::removeSampleMoods,
+                    onBack = dropUnlessResumed { navController.popBackStack() }
                 )
             }
         }
@@ -257,6 +286,30 @@ private fun NavGraphBuilder.modalComposable(
 }
 
 /**
+ * A page pushed within a tab. On iOS it slides in from the right over the page it came from,
+ * which moves a little to the left, and leaves the same way back, as in a navigation stack;
+ * on Android it uses the NavHost defaults.
+ */
+private fun NavGraphBuilder.pushedComposable(
+    route: String,
+    isIos: Boolean,
+    content: @Composable (NavBackStackEntry) -> Unit
+) {
+    if (!isIos) {
+        composable(route) { content(it) }
+        return
+    }
+    val slide = tween<IntOffset>(durationMillis = 350, easing = FastOutSlowInEasing)
+    composable(
+        route,
+        enterTransition = { slideInHorizontally(slide) { it } },
+        exitTransition = { slideOutHorizontally(slide) { -it / 3 } },
+        popEnterTransition = { slideInHorizontally(slide) { -it / 3 } },
+        popExitTransition = { slideOutHorizontally(slide) { it } }
+    ) { content(it) }
+}
+
+/**
  * The four tabs, in bar order. Routes live here so the graph and the bar cannot drift apart.
  */
 private enum class AnchorTab(
@@ -276,13 +329,21 @@ private fun AnchorBottomBar(currentRoute: String?, navController: NavHostControl
     AdaptiveTabBar(
         tabs = tabs,
         // The mood tracker is opened from Home, so Home stays highlighted while it is open.
-        selectedIndex = if (currentRoute == ROUTE_MOOD) AnchorTab.Home.ordinal
-        else AnchorTab.entries.indexOfFirst { it.route == currentRoute },
+        // Likewise Settings for its topic pages.
+        selectedIndex = when (currentRoute) {
+            ROUTE_MOOD -> AnchorTab.Home.ordinal
+            ROUTE_SETTINGS_PAGE -> AnchorTab.Settings.ordinal
+            else -> AnchorTab.entries.indexOfFirst { it.route == currentRoute }
+        },
         onSelect = { index ->
             val tab = AnchorTab.entries[index]
             // Home acts as Back from the tracker: drop it rather than saving it for later.
             if (currentRoute == ROUTE_MOOD && tab == AnchorTab.Home &&
                 navController.popBackStack(AnchorTab.Home.route, inclusive = false)
+            ) return@AdaptiveTabBar
+            // Settings again, from one of its pages, goes back to the main list, as on iOS.
+            if (currentRoute == ROUTE_SETTINGS_PAGE && tab == AnchorTab.Settings &&
+                navController.popBackStack(AnchorTab.Settings.route, inclusive = false)
             ) return@AdaptiveTabBar
             navController.navigateToTab(tab)
         }

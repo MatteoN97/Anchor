@@ -321,4 +321,6 @@
     <string name="mood_start_label">Début</string>
     <string name="mood_end_label">Fin</string>
     <string name="settings_mood_reminders_title">Rappels d\'humeur</string>
+    <string name="settings_value_on">Activés</string>
+    <string name="settings_value_off">Désactivés</string>
 </resources>
