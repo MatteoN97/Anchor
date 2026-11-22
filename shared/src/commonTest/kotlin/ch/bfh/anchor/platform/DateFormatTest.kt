@@ -46,4 +46,13 @@ class DateFormatTest {
         assertEquals("Do., 5. März · 09:07", formatNoteDateTime(march5, "de"))
         assertEquals("gio 5 mar · 09:07", formatNoteDateTime(march5, "it"))
     }
+
+    @Test
+    fun theDayViewCoversTheLocalCalendarDay() {
+        val (start, end) = localDayBounds(march5)
+        val zone = TimeZone.currentSystemDefault()
+        assertEquals(LocalDateTime(2026, 3, 5, 0, 0).toInstant(zone).toEpochMilliseconds(), start)
+        assertEquals(LocalDateTime(2026, 3, 6, 0, 0).toInstant(zone).toEpochMilliseconds(), end)
+        assertEquals("09:07", formatTimeOfDay(march5))
+    }
 }

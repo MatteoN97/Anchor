@@ -216,7 +216,14 @@
     <string name="mood_low">Low</string>
     <string name="mood_not_great">Not great</string>
     <string name="mood_question">How are you feeling?</string>
-    <string name="mood_saved">Saved. That's all you need to do.</string>
+    <string name="mood_saved_at">Saved at %1$s. That's all you need to do.</string>
+    <plurals name="mood_today_count">
+        <item quantity="one">%1$d check-in today</item>
+        <item quantity="other">%1$d check-ins today</item>
+    </plurals>
+    <string name="mood_period_today">Today</string>
+    <string name="mood_chart_empty_today">No check-ins today yet.</string>
+    <string name="mood_view_entries_today">View today's entries</string>
     <string name="mood_close_panel">Close panel</string>
     <string name="mood_tab_history">Mood over time</string>
     <string name="mood_tab_notifications">Notifications</string>
@@ -242,9 +249,7 @@
     <string name="mood_source_crisis">After support</string>
     <string name="mood_source_app">In app</string>
     <string name="mood_chart_hint">Each dot is one check-in. Tap a dot to see when it happened.</string>
-    <string name="mood_chart_24h_ago">24 hours ago</string>
     <string name="mood_chart_now">Now</string>
-    <string name="mood_chart_empty_24h">No check-ins in the last 24 hours.</string>
     <string name="mood_chart_count">%1$d in this view · %2$d total</string>
     <plurals name="mood_view_entries">
         <item quantity="one">View entries · %1$d day</item>

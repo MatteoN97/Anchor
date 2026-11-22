@@ -43,6 +43,32 @@ import ch.bfh.anchor.ui.adaptive.adaptiveSection
 import ch.bfh.anchor.ui.theme.LocalIsIos
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 import kotlin.math.roundToInt
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
+import ch.bfh.anchor.platform.formatTimeOfDay
+import ch.bfh.anchor.platform.localDayBounds
+import kotlinx.coroutines.launch
 
 /** Only one bottom tab can be open. The default (null) is the quick check-in landing page. */
 private enum class MoodPanel { HISTORY, NOTIFICATIONS }
@@ -65,6 +91,9 @@ fun MoodTrackerScreen(
     val isIos = LocalIsIos.current
     val entries by vm.moods.collectAsState()
     var lastSelected by remember { mutableStateOf<Int?>(null) }
+    // When the last tap was stored. Each tap is a new check-in, so this changes even when the
+    // same face is tapped again, and the confirmation below animates every time.
+    var lastSavedAt by remember { mutableStateOf<Long?>(null) }
     var activePanel by remember { mutableStateOf<MoodPanel?>(null) }
     var showFullHistory by remember { mutableStateOf(false) }
     // The graph and expanded entry list share a single selected time range.
@@ -129,6 +158,11 @@ fun MoodTrackerScreen(
         }
     }
 
+    // How far the open panel has been pulled down, in px. 0 = fully open.
+    val scope = rememberCoroutineScope()
+    var panelOffset by remember { mutableFloatStateOf(0f) }
+    var panelHeightPx by remember { mutableFloatStateOf(0f) }
+
     fun closePanel() {
         activePanel = null
         showFullHistory = false
@@ -136,8 +170,55 @@ fun MoodTrackerScreen(
         notificationInfoExpanded = false
     }
 
+    /** Slides the panel down out of sight, then closes it. */
+    fun dismissPanel(velocity: Float = 0f) {
+        if (activePanel == null) return
+        scope.launch {
+            animate(panelOffset, panelHeightPx.coerceAtLeast(panelOffset + 1f), velocity, tween(200)) { value, _ ->
+                panelOffset = value
+            }
+            closePanel()
+        }
+    }
+
+    /** After a drag: close if pulled far or flung down, otherwise spring back open. */
+    suspend fun settlePanel(velocity: Float) {
+        if (panelOffset <= 0f) return
+        if (panelOffset > panelHeightPx * 0.3f || velocity > 1200f) dismissPanel(velocity)
+        else animate(panelOffset, 0f, velocity, spring()) { value, _ -> panelOffset = value }
+    }
+
+    // Lets the panel content scroll as usual and hands the rest of a downward drag to the panel:
+    // at the top of the list, pulling down moves the whole sheet, as a system sheet does.
+    val panelScroll = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < 0f && panelOffset > 0f) {
+                    val used = maxOf(available.y, -panelOffset)
+                    panelOffset += used
+                    return Offset(0f, used)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (available.y > 0f && source == NestedScrollSource.UserInput) {
+                    panelOffset += available.y
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (panelOffset <= 0f) return Velocity.Zero
+                settlePanel(available.y)
+                return available
+            }
+        }
+    }
+
     fun togglePanel(panel: MoodPanel) {
-        if (activePanel == panel) closePanel()
+        if (activePanel == panel) dismissPanel()
         else {
             activePanel = panel
             if (panel == MoodPanel.HISTORY) historyPeriodDays = 1
@@ -160,7 +241,14 @@ fun MoodTrackerScreen(
     )
 
     val backLabel = stringResource(if (activePanel == null) Res.string.common_back else Res.string.common_close)
-    val onBackPressed = { if (activePanel == null) onBack() else closePanel() }
+    val onBackPressed = { if (activePanel == null) onBack() else dismissPanel() }
+
+    // System back (Android gesture, iOS edge swipe) closes an open panel before leaving the screen.
+    NavigationBackHandler(
+        state = rememberNavigationEventState(currentInfo = NavigationEventInfo.None),
+        isBackEnabled = activePanel != null,
+        onBackCompleted = { dismissPanel() }
+    )
 
     Scaffold(
         topBar = {
@@ -203,16 +291,46 @@ fun MoodTrackerScreen(
                     MoodChoices(
                         selectedScore = lastSelected,
                         onScoreSelected = { score ->
-                            vm.addMood(score) { lastSelected = score }
+                            vm.addMood(score) {
+                                lastSelected = score
+                                lastSavedAt = nowMillis()
+                            }
                         }
                     )
-                    if (lastSelected != null) {
-                        Text(
-                            stringResource(Res.string.mood_saved),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            textAlign = TextAlign.Center
-                        )
+                    // Re-enters on every save, so a second tap on the same face is answered too.
+                    // Space reserved up front so the faces do not jump up when it first appears.
+                    AnimatedContent(
+                        targetState = lastSavedAt,
+                        modifier = Modifier.heightIn(min = 44.dp),
+                        transitionSpec = {
+                            (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 3 })
+                                .togetherWith(fadeOut(tween(120)))
+                        }
+                    ) { savedAt ->
+                        if (savedAt != null) {
+                            val (dayStart, dayEnd) = remember(savedAt) { localDayBounds(savedAt) }
+                            val today = entries.count { it.recordedAt in dayStart until dayEnd }
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    stringResource(Res.string.mood_saved_at, formatTimeOfDay(savedAt)),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    textAlign = TextAlign.Center
+                                )
+                                if (today > 0) {
+                                    Text(
+                                        pluralStringResource(Res.plurals.mood_today_count, today, today),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -228,10 +346,20 @@ fun MoodTrackerScreen(
             } else {
                 // A dismissible layer over the landing page: tapping anywhere OUTSIDE
                 // the raised panel closes it without changing the selected mood.
+                val maxOffset = constraints.maxHeight.toFloat()
+                // Slide up when a panel opens (not when switching between the two panels).
+                LaunchedEffect(Unit) {
+                    panelOffset = maxOffset
+                    animate(maxOffset, 0f, animationSpec = spring(stiffness = 500f, dampingRatio = 0.9f)) { value, _ ->
+                        panelOffset = value
+                    }
+                }
+                val openFraction = if (panelHeightPx > 0f)
+                    (1f - panelOffset / panelHeightPx).coerceIn(0f, 1f) else 0f
                 Box(
                     modifier = Modifier.fillMaxSize()
-                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.26f))
-                        .clickable(onClickLabel = stringResource(Res.string.mood_close_panel)) { closePanel() }
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.26f * openFraction))
+                        .clickable(onClickLabel = stringResource(Res.string.mood_close_panel)) { dismissPanel() }
                 )
 
                 val maximumPanelHeight = (maxHeight - 80.dp).coerceAtLeast(180.dp)
@@ -246,6 +374,8 @@ fun MoodTrackerScreen(
                 // takes the grey grouped background of a sheet, so its sections stand out.
                 Surface(
                     modifier = Modifier.align(Alignment.BottomCenter)
+                        .offset { IntOffset(0, panelOffset.roundToInt()) }
+                        .onSizeChanged { panelHeightPx = it.height.toFloat() }
                         .fillMaxWidth().height(panelHeight),
                     shape = RoundedCornerShape(
                         topStart = if (isIos) 28.dp else 24.dp,
@@ -255,13 +385,25 @@ fun MoodTrackerScreen(
                     tonalElevation = if (isIos) 0.dp else 5.dp,
                     shadowElevation = 7.dp
                 ) {
-                    Column {
-                        // The very same two tab-style buttons move to the TOP when a
+                    Column(Modifier.nestedScroll(panelScroll)) {
+                        // The grabber and the tabs are the sheet's handle: drag them down to
+                        // close. The very same two tab-style buttons move to the TOP when a
                         // section opens. Tap the selected tab again to close it.
-                        MoodPanelTabs(
-                            selected = activePanel,
-                            onSelect = ::togglePanel
-                        )
+                        Column(
+                            Modifier.draggable(
+                                state = rememberDraggableState { delta ->
+                                    panelOffset = (panelOffset + delta).coerceAtLeast(0f)
+                                },
+                                orientation = Orientation.Vertical,
+                                onDragStopped = { velocity -> settlePanel(velocity) }
+                            )
+                        ) {
+                            SheetGrabber()
+                            MoodPanelTabs(
+                                selected = activePanel,
+                                onSelect = ::togglePanel
+                            )
+                        }
                         if (!isIos) HorizontalDivider()
 
                         // The history toggle belongs *below the graph* in the scrolling
@@ -315,6 +457,7 @@ fun MoodTrackerScreen(
                                                     ) {
                                                         Text(
                                                             if (showFullHistory) stringResource(Res.string.mood_hide_entries)
+                                                            else if (historyPeriodDays == 1) stringResource(Res.string.mood_view_entries_today)
                                                             else pluralStringResource(Res.plurals.mood_view_entries, historyPeriodDays, historyPeriodDays)
                                                         )
                                                     }
@@ -715,6 +858,20 @@ private fun IosMoodHistoryRow(entry: MoodEntry) {
 }
 
 // ── Shared ───────────────────────────────────────────────────────────────────
+
+/** The pill at the top of a sheet that says it can be dragged. */
+@Composable
+private fun SheetGrabber() {
+    val isIos = LocalIsIos.current
+    Box(Modifier.fillMaxWidth().padding(top = if (isIos) 6.dp else 10.dp), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier
+                .size(width = if (isIos) 36.dp else 32.dp, height = if (isIos) 5.dp else 4.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.run { if (isIos) outline else onSurfaceVariant.copy(alpha = 0.4f) })
+        )
+    }
+}
 
 /**
  * Android: two filter chips. iOS: on the landing page, two cards to open a panel; inside an open

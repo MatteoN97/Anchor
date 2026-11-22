@@ -216,7 +216,14 @@
     <string name="mood_low">Gedrückt</string>
     <string name="mood_not_great">Nicht gut</string>
     <string name="mood_question">Wie fühlst du dich?</string>
-    <string name="mood_saved">Gespeichert. Mehr musst du nicht tun.</string>
+    <string name="mood_saved_at">Um %1$s gespeichert. Mehr musst du nicht tun.</string>
+    <plurals name="mood_today_count">
+        <item quantity="one">%1$d Eintrag heute</item>
+        <item quantity="other">%1$d Einträge heute</item>
+    </plurals>
+    <string name="mood_period_today">Heute</string>
+    <string name="mood_chart_empty_today">Heute noch keine Einträge.</string>
+    <string name="mood_view_entries_today">Einträge von heute anzeigen</string>
     <string name="mood_close_panel">Bereich schliessen</string>
     <string name="mood_tab_history">Stimmungsverlauf</string>
     <string name="mood_tab_notifications">Mitteilungen</string>
@@ -242,9 +249,7 @@
     <string name="mood_source_crisis">Nach Unterstützung</string>
     <string name="mood_source_app">In der App</string>
     <string name="mood_chart_hint">Jeder Punkt ist ein Eintrag. Tippe auf einen Punkt, um zu sehen, wann er erfasst wurde.</string>
-    <string name="mood_chart_24h_ago">Vor 24 Stunden</string>
     <string name="mood_chart_now">Jetzt</string>
-    <string name="mood_chart_empty_24h">Keine Einträge in den letzten 24 Stunden.</string>
     <string name="mood_chart_count">%1$d in dieser Ansicht · %2$d insgesamt</string>
     <plurals name="mood_view_entries">
         <item quantity="one">Einträge anzeigen · %1$d Tag</item>
