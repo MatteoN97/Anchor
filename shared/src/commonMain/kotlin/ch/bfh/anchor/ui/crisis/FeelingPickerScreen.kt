@@ -1,83 +1,105 @@
 package ch.bfh.anchor.ui.crisis
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import ch.bfh.anchor.ui.adaptive.AnchorCardButton
-import ch.bfh.anchor.ui.adaptive.Chevron
-import ch.bfh.anchor.ui.icons.AnchorIcons
-import ch.bfh.anchor.ui.theme.LocalIsIos
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ch.bfh.anchor.model.Feeling
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.crisis_feeling_subtitle
 import ch.bfh.anchor.resources.crisis_feeling_title
+import ch.bfh.anchor.ui.adaptive.AnchorCardButton
+import ch.bfh.anchor.ui.components.calmCardColor
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * Five large tiles, two per row (the last one full width), so the choice can be made with a thumb
+ * without reading a list.
+ */
 @Composable
 fun FeelingPickerScreen(onSelected: (Feeling) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(1f))
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = stringResource(Res.string.crisis_feeling_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(Res.string.crisis_feeling_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = stringResource(Res.string.crisis_feeling_title),
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.semantics { heading() }
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(Res.string.crisis_feeling_subtitle),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(32.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Feeling.entries.forEach { feeling ->
-                AnchorCardButton(
-                    onClick = { onSelected(feeling) },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.medium
+            Feeling.entries.chunked(2).forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(text = feeling.emoji, style = MaterialTheme.typography.titleLarge)
-                        Text(
-                            text = stringResource(feeling.labelRes),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.weight(1f)
+                    row.forEach { feeling ->
+                        FeelingTile(
+                            feeling = feeling,
+                            onClick = { onSelected(feeling) },
+                            modifier = Modifier.weight(1f).fillMaxHeight()
                         )
-                        if (LocalIsIos.current) {
-                            Chevron()
-                        } else {
-                            Icon(
-                                imageVector = AnchorIcons.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
                     }
                 }
             }
         }
+        Spacer(Modifier.height(24.dp))
+    }
+}
 
-        Spacer(modifier = Modifier.weight(1f))
+@Composable
+private fun FeelingTile(feeling: Feeling, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    AnchorCardButton(
+        onClick = onClick,
+        modifier = modifier,
+        color = calmCardColor(),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 22.dp, horizontal = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = feeling.emoji, fontSize = 30.sp)
+            }
+            Text(
+                text = stringResource(feeling.labelRes),
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }

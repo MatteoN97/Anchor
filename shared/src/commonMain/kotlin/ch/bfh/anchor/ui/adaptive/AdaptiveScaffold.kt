@@ -154,13 +154,18 @@ data class TabItem(val label: String, val icon: ImageVector)
 @Composable
 fun AdaptiveTabBar(tabs: List<TabItem>, selectedIndex: Int, onSelect: (Int) -> Unit) {
     if (!LocalIsIos.current) {
-        NavigationBar {
+        NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
             tabs.forEachIndexed { index, tab ->
                 NavigationBarItem(
                     selected = index == selectedIndex,
                     onClick = { onSelect(index) },
                     icon = { Icon(tab.icon, contentDescription = tab.label) },
-                    label = { Text(tab.label) }
+                    label = { Text(tab.label) },
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.primary
+                    )
                 )
             }
         }
@@ -169,7 +174,9 @@ fun AdaptiveTabBar(tabs: List<TabItem>, selectedIndex: Int, onSelect: (Int) -> U
 
     val colors = MaterialTheme.colorScheme
     // The bar floats just above the home indicator rather than below the full safe area.
-    val bottomInset = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
+    // Home indicator only: with safeDrawing (which includes the keyboard) the bar jumped up behind
+    // the sheet scrim whenever a keyboard opened.
+    val bottomInset = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -247,7 +254,7 @@ fun AdaptiveSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = if (isIos) colors.background else BottomSheetDefaults.ContainerColor,
+        containerColor = colors.background,
         shape = if (isIos) MaterialTheme.shapes.extraLarge.copy(
             bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
             bottomEnd = androidx.compose.foundation.shape.CornerSize(0.dp)
@@ -284,8 +291,17 @@ fun AdaptiveSheet(
                 modifier = Modifier.weight(1.4f)
             )
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                AnchorTextButton(onClick = onConfirm, enabled = confirmEnabled, emphasized = true) {
-                    Text(confirmLabel)
+                if (isIos) {
+                    AnchorTextButton(onClick = onConfirm, enabled = confirmEnabled, emphasized = true) {
+                        Text(confirmLabel)
+                    }
+                } else {
+                    AnchorButton(
+                        onClick = onConfirm,
+                        enabled = confirmEnabled,
+                        shape = CircleShape,
+                        modifier = Modifier.padding(end = 8.dp).height(40.dp)
+                    ) { Text(confirmLabel) }
                 }
             }
         }

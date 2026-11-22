@@ -5,7 +5,6 @@
     <string name="tab_journal">Tagebuch</string>
     <string name="tab_settings">Einstellungen</string>
     <string name="home_tagline">Du bist nicht allein.</string>
-    <string name="home_greeting_with_name">Hallo %1$s, du bist nicht allein.</string>
     <string name="home_sos_button">Ich brauche jetzt Hilfe</string>
     <string name="home_overwhelmed">Fühlst du dich überfordert?</string>
     <string name="toolkit_title">Meine Werkzeuge</string>
@@ -267,4 +266,34 @@
         <item quantity="one">Keine Einträge am letzten Tag.</item>
         <item quantity="other">Keine Einträge in den letzten %1$d Tagen.</item>
     </plurals>
+
+    <!-- Redesign -->
+    <string name="home_greeting_morning">Guten Morgen</string>
+    <string name="home_greeting_afternoon">Guten Tag</string>
+    <string name="home_greeting_evening">Guten Abend</string>
+    <string name="home_greeting_morning_name">Guten Morgen, %1$s</string>
+    <string name="home_greeting_afternoon_name">Guten Tag, %1$s</string>
+    <string name="home_greeting_evening_name">Guten Abend, %1$s</string>
+    <string name="home_section_now">Für jetzt</string>
+    <string name="home_section_space">Dein Bereich</string>
+    <string name="home_sos_subtitle">Anchor begleitet dich, Schritt für Schritt.</string>
+    <string name="journal_editor_details">Details</string>
+    <plurals name="journal_editor_words">
+        <item quantity="one">%1$d Wort</item>
+        <item quantity="other">%1$d Wörter</item>
+    </plurals>
+    <string name="journal_discard_new_title">Diese Notiz verwerfen?</string>
+    <string name="journal_discard_edit_title">Änderungen verwerfen?</string>
+    <string name="journal_discard_message">Was du hier geschrieben hast, ist noch nicht gespeichert.</string>
+    <string name="journal_discard_confirm">Verwerfen</string>
+    <string name="journal_keep_writing">Weiterschreiben</string>
+    <string name="journal_flag_short">Nächste Sitzung</string>
+    <string name="settings_appearance_title">Darstellung</string>
+    <string name="settings_theme_label">Design</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Hell</string>
+    <string name="settings_theme_dark">Dunkel</string>
+    <string name="settings_dynamic_color">Hintergrundfarben</string>
+    <string name="settings_dynamic_color_subtitle">Material-You-Farben des Telefons statt der ruhigen Farbpalette von Anchor verwenden.</string>
+    <string name="crisis_step_progress">Schritt %1$d von %2$d</string>
 </resources>

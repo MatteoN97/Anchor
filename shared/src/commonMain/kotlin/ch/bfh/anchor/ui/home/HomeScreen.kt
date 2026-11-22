@@ -1,27 +1,40 @@
 package ch.bfh.anchor.ui.home
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.graphics.luminance
+import ch.bfh.anchor.ui.theme.AnchorPalette
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import ch.bfh.anchor.resources.Res
-import ch.bfh.anchor.resources.*
-import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringResource
+import ch.bfh.anchor.platform.currentHour
 import ch.bfh.anchor.platform.daysSince
+import ch.bfh.anchor.platform.formatLongDay
+import ch.bfh.anchor.platform.nowMillis
+import ch.bfh.anchor.resources.*
+import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.settings.SettingsManager
 import ch.bfh.anchor.ui.adaptive.AnchorButton
 import ch.bfh.anchor.ui.adaptive.AnchorCardButton
-import ch.bfh.anchor.ui.adaptive.Chevron
+import ch.bfh.anchor.ui.components.IconBadge
+import ch.bfh.anchor.ui.components.calmBackdrop
+import ch.bfh.anchor.ui.components.calmCardColor
 import ch.bfh.anchor.ui.icons.AnchorIcons
-import ch.bfh.anchor.ui.theme.LocalIsIos
 import ch.bfh.anchor.ui.theme.AnchorTheme
 import ch.bfh.anchor.viewmodel.AnchorViewModel
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun HomeScreen(
@@ -52,7 +65,8 @@ fun HomeScreen(
     }
 
     HomeScreenContent(
-        userName = userName,
+        greeting = greeting(userName),
+        dateLine = formatLongDay(nowMillis(), Locale.current.language),
         toolsCount = tools.size,
         notesCount = notes.size,
         crisisCount = crisisCheckIns.size,
@@ -63,9 +77,25 @@ fun HomeScreen(
     )
 }
 
+/** "Good evening, Matteo", or without the name when none is set. */
+@Composable
+private fun greeting(userName: String): String {
+    val hour = remember { currentHour() }
+    val named = userName.isNotBlank()
+    return when (hour) {
+        in 5..11 -> if (named) stringResource(Res.string.home_greeting_morning_name, userName)
+        else stringResource(Res.string.home_greeting_morning)
+        in 12..17 -> if (named) stringResource(Res.string.home_greeting_afternoon_name, userName)
+        else stringResource(Res.string.home_greeting_afternoon)
+        else -> if (named) stringResource(Res.string.home_greeting_evening_name, userName)
+        else stringResource(Res.string.home_greeting_evening)
+    }
+}
+
 @Composable
 private fun HomeScreenContent(
-    userName: String,
+    greeting: String,
+    dateLine: String,
     toolsCount: Int,
     notesCount: Int,
     crisisCount: Int,
@@ -74,206 +104,264 @@ private fun HomeScreenContent(
     onBreathingClick: () -> Unit,
     onMoodClick: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+    val colors = MaterialTheme.colorScheme
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .calmBackdrop(strength = 0.9f, reach = 0.5f)
+            .verticalScroll(rememberScrollState())
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .padding(horizontal = 20.dp)
+    ) {
+        Spacer(Modifier.height(28.dp))
+
+        // Header
+        Text(
+            text = dateLine.uppercase(),
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.primary
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = greeting,
+            style = MaterialTheme.typography.headlineLarge,
+            color = colors.onBackground,
+            modifier = Modifier.semantics { heading() }
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = stringResource(Res.string.home_tagline),
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.onSurfaceVariant
+        )
+
+        Spacer(Modifier.height(28.dp))
+
+        // Your space
+        SectionLabel(stringResource(Res.string.home_section_space))
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Spacer(modifier = Modifier.weight(1f))
+            StatTile(
+                icon = AnchorIcons.Favorite,
+                value = toolsCount,
+                label = stringResource(Res.string.home_stat_tools),
+                tint = colors.primary,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            )
+            StatTile(
+                icon = AnchorIcons.SelfImprovement,
+                value = crisisCount,
+                label = stringResource(Res.string.home_stat_sessions),
+                tint = colors.secondary,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            )
+            StatTile(
+                icon = AnchorIcons.EditNote,
+                value = notesCount,
+                label = stringResource(Res.string.home_stat_notes),
+                tint = colors.tertiary,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            )
+        }
+        if (lastCrisisText != null) {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = lastCrisisText,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp)
+            )
+        }
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+        Spacer(Modifier.height(28.dp))
+
+        // For right now
+        SectionLabel(stringResource(Res.string.home_section_now))
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ActionTile(
+                icon = AnchorIcons.Air,
+                title = stringResource(Res.string.home_breathing_title),
+                subtitle = stringResource(Res.string.home_breathing_subtitle),
+                containerColor = colors.primaryContainer,
+                contentColor = colors.onPrimaryContainer,
+                onClick = onBreathingClick,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            )
+            ActionTile(
+                icon = AnchorIcons.Insights,
+                title = stringResource(Res.string.home_mood_title),
+                subtitle = stringResource(Res.string.home_mood_subtitle),
+                containerColor = colors.secondaryContainer.takeIfOpaque()
+                    ?: if (colors.background.luminance() > 0.5f) AnchorPalette.Lavender90 else AnchorPalette.Lavender30,
+                contentColor = if (colors.secondaryContainer.takeIfOpaque() != null) colors.onSecondaryContainer
+                else colors.onBackground,
+                onClick = onMoodClick,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            )
+        }
+
+        Spacer(Modifier.height(28.dp))
+
+        SosCard(onSosClick = onSosClick)
+
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+/**
+ * On iOS secondaryContainer is a translucent system fill meant for controls; a tile needs a solid
+ * colour, so fall back in that case.
+ */
+private fun Color.takeIfOpaque(): Color? = takeIf { it.alpha >= 0.99f }
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .padding(start = 4.dp, bottom = 10.dp)
+            .semantics { heading() }
+    )
+}
+
+@Composable
+private fun StatTile(
+    icon: ImageVector,
+    value: Int,
+    label: String,
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = calmCardColor(),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            IconBadge(
+                icon = icon,
+                containerColor = tint.copy(alpha = 0.14f),
+                contentColor = tint,
+                size = 34.dp,
+                iconSize = 18.dp
+            )
+            Column {
                 Text(
-                    text = stringResource(Res.string.app_name),
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.SemiBold
+                    text = value.toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = if (userName.isNotBlank()) {
-                        stringResource(Res.string.home_greeting_with_name, userName)
-                    } else {
-                        stringResource(Res.string.home_tagline)
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                StatCard(
-                    label = stringResource(Res.string.home_stat_tools),
-                    value = toolsCount,
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    label = stringResource(Res.string.home_stat_sessions),
-                    value = crisisCount,
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    label = stringResource(Res.string.home_stat_notes),
-                    value = notesCount,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            if (lastCrisisText != null) {
-                Spacer(modifier = Modifier.height(12.dp))
+@Composable
+private fun ActionTile(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    containerColor: Color,
+    contentColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AnchorCardButton(
+        onClick = onClick,
+        modifier = modifier,
+        color = containerColor,
+        contentColor = contentColor,
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            IconBadge(
+                icon = icon,
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+                contentColor = contentColor
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(text = title, style = MaterialTheme.typography.titleMedium, color = contentColor)
                 Text(
-                    text = lastCrisisText,
+                    text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = contentColor.copy(alpha = 0.75f)
                 )
             }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            BreathingCard(onClick = onBreathingClick)
-            Spacer(modifier = Modifier.height(12.dp))
-            MoodCard(onClick = onMoodClick)
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.home_overwhelmed),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+/**
+ * The way into the crisis flow. Warm rather than alarming, but the strongest colour on the page
+ * and a full-width target, so it is found without looking for it.
+ */
+@Composable
+private fun SosCard(onSosClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = colors.errorContainer,
+        contentColor = colors.onErrorContainer,
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconBadge(
+                    icon = AnchorIcons.SelfImprovement,
+                    containerColor = colors.error.copy(alpha = 0.14f),
+                    contentColor = colors.onErrorContainer
                 )
-                AnchorButton(
-                    onClick = onSosClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                    shape = MaterialTheme.shapes.large
-                ) {
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(Res.string.home_sos_button),
+                        text = stringResource(Res.string.home_overwhelmed),
                         style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = stringResource(Res.string.home_sos_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onErrorContainer.copy(alpha = 0.8f)
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun BreathingCard(onClick: () -> Unit) {
-    AnchorCardButton(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        color = if (LocalIsIos.current) MaterialTheme.colorScheme.surfaceVariant
-        else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+            AnchorButton(
+                onClick = onSosClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(58.dp),
+                containerColor = colors.error,
+                contentColor = colors.onError,
+                shape = CircleShape
             ) {
                 Text(
-                    text = stringResource(Res.string.home_breathing_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = stringResource(Res.string.home_breathing_subtitle),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = stringResource(Res.string.home_sos_button),
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
-            if (LocalIsIos.current) {
-                Chevron()
-            } else {
-                Icon(
-                    imageVector = AnchorIcons.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-}
-
-/** Neutral entry: deliberately do not show the last mood on the Home screen. */
-@Composable
-private fun MoodCard(onClick: () -> Unit) {
-    AnchorCardButton(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = MaterialTheme.shapes.large
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(Res.string.home_mood_title), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(Res.string.home_mood_subtitle), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (LocalIsIos.current) {
-                Chevron()
-            } else {
-                Icon(AnchorIcons.KeyboardArrowRight, contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatCard(label: String, value: Int, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            // On iOS surfaceVariant is a white cell whose text is the primary label colour.
-            contentColor = if (LocalIsIos.current) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = value.toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
@@ -283,7 +371,8 @@ private fun StatCard(label: String, value: Int, modifier: Modifier = Modifier) {
 private fun HomeScreenPreview() {
     AnchorTheme {
         HomeScreenContent(
-            userName = "Matteo",
+            greeting = "Good evening, Matteo",
+            dateLine = "Saturday, 21 November",
             toolsCount = 4,
             notesCount = 12,
             crisisCount = 2,

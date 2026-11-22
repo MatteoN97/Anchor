@@ -5,7 +5,6 @@
     <string name="tab_journal">Journal</string>
     <string name="tab_settings">Réglages</string>
     <string name="home_tagline">Tu n'es pas seul·e.</string>
-    <string name="home_greeting_with_name">Salut %1$s, tu n'es pas seul·e.</string>
     <string name="home_sos_button">J'ai besoin d'aide maintenant</string>
     <string name="home_overwhelmed">Tu te sens submergé·e ?</string>
     <string name="toolkit_title">Ma boîte à outils</string>
@@ -267,4 +266,34 @@
         <item quantity="one">Aucun point le dernier jour.</item>
         <item quantity="other">Aucun point ces %1$d derniers jours.</item>
     </plurals>
+
+    <!-- Redesign -->
+    <string name="home_greeting_morning">Bonjour</string>
+    <string name="home_greeting_afternoon">Bon après-midi</string>
+    <string name="home_greeting_evening">Bonsoir</string>
+    <string name="home_greeting_morning_name">Bonjour, %1$s</string>
+    <string name="home_greeting_afternoon_name">Bon après-midi, %1$s</string>
+    <string name="home_greeting_evening_name">Bonsoir, %1$s</string>
+    <string name="home_section_now">Pour maintenant</string>
+    <string name="home_section_space">Ton espace</string>
+    <string name="home_sos_subtitle">Anchor te guide, un petit pas à la fois.</string>
+    <string name="journal_editor_details">Détails</string>
+    <plurals name="journal_editor_words">
+        <item quantity="one">%1$d mot</item>
+        <item quantity="other">%1$d mots</item>
+    </plurals>
+    <string name="journal_discard_new_title">Supprimer cette note ?</string>
+    <string name="journal_discard_edit_title">Annuler tes modifications ?</string>
+    <string name="journal_discard_message">Ce que tu as écrit ici n'est pas encore enregistré.</string>
+    <string name="journal_discard_confirm">Supprimer</string>
+    <string name="journal_keep_writing">Continuer d'écrire</string>
+    <string name="journal_flag_short">Prochaine séance</string>
+    <string name="settings_appearance_title">Apparence</string>
+    <string name="settings_theme_label">Thème</string>
+    <string name="settings_theme_system">Système</string>
+    <string name="settings_theme_light">Clair</string>
+    <string name="settings_theme_dark">Sombre</string>
+    <string name="settings_dynamic_color">Couleurs du fond d'écran</string>
+    <string name="settings_dynamic_color_subtitle">Utilise les couleurs Material You du téléphone au lieu de la palette apaisante d'Anchor.</string>
+    <string name="crisis_step_progress">Étape %1$d sur %2$d</string>
 </resources>

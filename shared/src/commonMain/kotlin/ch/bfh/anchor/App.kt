@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -27,7 +29,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.IntOffset
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import ch.bfh.anchor.ui.journal.NoteEditorScreen
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -68,6 +75,8 @@ import org.jetbrains.compose.resources.stringResource
 private const val ROUTE_CRISIS = "crisis"
 private const val ROUTE_BREATHING = "breathing"
 private const val ROUTE_MOOD = "mood"
+private const val ROUTE_NOTE = "note?id={id}"
+private fun noteRoute(id: String?) = if (id == null) "note" else "note?id=$id"
 
 /**
  * [reminderController] schedules mood reminders natively (Android only so far; iOS passes the
@@ -81,14 +90,17 @@ fun App(
     openMoodRequest: Int = 0
 ) {
     val language by settingsManager.appLanguage.collectAsState()
+    val themeMode by settingsManager.themeMode.collectAsState()
+    val dynamicColor by settingsManager.dynamicColor.collectAsState()
     // Set when the language is changed from Settings, so the rebuilt app reopens there.
     var reopenSettings by remember { mutableStateOf(false) }
 
     CompositionLocalProvider(LocalAppLocale provides language.code) {
         // Strings are looked up once per screen; rebuilding everything under a new key makes
-        // every one of them load again in the new language.
+        // every one of them load again in the new language. The theme is not part of the key:
+        // changing it recolours in place, without rebuilding.
         key(language) {
-            AnchorTheme {
+            AnchorTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
                 val vm: AnchorViewModel = viewModel { AnchorViewModel(database) }
                 AnchorApp(
                     vm = vm,
@@ -134,7 +146,7 @@ fun AnchorApp(
     // The crisis flow and the breathing practice are destinations of their own and own the whole
     // screen, so the bottom bar is gone while either is open: nothing to tap through, and the
     // system back button leaves them.
-    val showBottomBar = currentRoute !in setOf(ROUTE_CRISIS, ROUTE_BREATHING)
+    val showBottomBar = currentRoute !in setOf(ROUTE_CRISIS, ROUTE_BREATHING, ROUTE_NOTE)
 
     Scaffold(
         bottomBar = {
@@ -144,7 +156,10 @@ fun AnchorApp(
         },
         // Each screen draws its own top bar or status-bar padding, so its background can run up
         // behind the status bar. The bottom and sides are handled here.
-        contentWindowInsets = WindowInsets.safeDrawing.only(
+        // System bars and cutout only, not the keyboard: safeDrawing includes the IME, so every
+        // frame of the keyboard animation re-measured the whole page behind a text field. Screens
+        // that type (the note editor) pad for the keyboard themselves; sheets do it on their own.
+        contentWindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout).only(
             WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
         )
     ) { padding ->
@@ -192,7 +207,21 @@ fun AnchorApp(
                 BreathingPracticeScreen(onDismiss = dropUnlessResumed { navController.popBackStack() })
             }
             composable(AnchorTab.Toolkit.route) { ToolkitScreen(viewModel = vm) }
-            composable(AnchorTab.Journal.route) { JournalScreen(viewModel = vm) }
+            composable(AnchorTab.Journal.route) {
+                JournalScreen(viewModel = vm, onOpenNote = { id -> navController.navigate(noteRoute(id)) })
+            }
+            // Full-screen writing: no tab bar, slides up like a modal on iOS.
+            modalComposable(
+                ROUTE_NOTE,
+                isIos,
+                arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true })
+            ) { entry ->
+                NoteEditorScreen(
+                    vm = vm,
+                    noteId = entry.savedStateHandle.get<String>("id"),
+                    onClose = dropUnlessResumed { navController.popBackStack() }
+                )
+            }
             composable(AnchorTab.Settings.route) {
                 SettingsScreen(settingsManager = settingsManager, onLanguageChange = onLanguageChange)
             }
@@ -207,18 +236,20 @@ fun AnchorApp(
 private fun NavGraphBuilder.modalComposable(
     route: String,
     isIos: Boolean,
-    content: @Composable () -> Unit
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable (NavBackStackEntry) -> Unit
 ) {
     if (!isIos) {
-        composable(route) { content() }
+        composable(route, arguments = arguments) { content(it) }
         return
     }
     val slide = tween<IntOffset>(durationMillis = 400, easing = FastOutSlowInEasing)
     composable(
         route,
+        arguments = arguments,
         enterTransition = { slideInVertically(slide) { it } },
         popExitTransition = { slideOutVertically(slide) { it } }
-    ) { content() }
+    ) { content(it) }
 }
 
 /**

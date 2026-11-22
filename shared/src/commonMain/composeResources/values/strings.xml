@@ -5,7 +5,6 @@
     <string name="tab_journal">Journal</string>
     <string name="tab_settings">Settings</string>
     <string name="home_tagline">You're not alone.</string>
-    <string name="home_greeting_with_name">Hi %1$s, you're not alone.</string>
     <string name="home_sos_button">I need help now</string>
     <string name="home_overwhelmed">Feeling overwhelmed?</string>
     <string name="toolkit_title">My toolkit</string>
@@ -267,4 +266,40 @@
         <item quantity="one">No check-ins in the last %1$d day.</item>
         <item quantity="other">No check-ins in the last %1$d days.</item>
     </plurals>
+
+    <!-- Redesign: Home -->
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_greeting_morning_name">Good morning, %1$s</string>
+    <string name="home_greeting_afternoon_name">Good afternoon, %1$s</string>
+    <string name="home_greeting_evening_name">Good evening, %1$s</string>
+    <string name="home_section_now">For right now</string>
+    <string name="home_section_space">Your space</string>
+    <string name="home_sos_subtitle">Anchor will guide you, one small step at a time.</string>
+
+    <!-- Redesign: note editor -->
+    <string name="journal_editor_details">Details</string>
+    <plurals name="journal_editor_words">
+        <item quantity="one">%1$d word</item>
+        <item quantity="other">%1$d words</item>
+    </plurals>
+    <string name="journal_discard_new_title">Discard this note?</string>
+    <string name="journal_discard_edit_title">Discard your changes?</string>
+    <string name="journal_discard_message">What you wrote here hasn't been saved yet.</string>
+    <string name="journal_discard_confirm">Discard</string>
+    <string name="journal_keep_writing">Keep writing</string>
+    <string name="journal_flag_short">Next session</string>
+
+    <!-- Redesign: appearance -->
+    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_theme_label">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Wallpaper colours</string>
+    <string name="settings_dynamic_color_subtitle">Use your phone's Material You colours instead of Anchor's calm palette.</string>
+
+    <!-- Redesign: crisis flow -->
+    <string name="crisis_step_progress">Step %1$d of %2$d</string>
 </resources>

@@ -2,7 +2,6 @@ package ch.bfh.anchor.ui.crisis
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import ch.bfh.anchor.ui.icons.AnchorIcons
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -14,7 +13,15 @@ import org.jetbrains.compose.resources.stringResource
 import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.Feeling
 import ch.bfh.anchor.model.HelpContact
-import ch.bfh.anchor.ui.adaptive.AnchorIconButton
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
+import ch.bfh.anchor.ui.components.CloseButton
+import ch.bfh.anchor.ui.components.StepDots
+import ch.bfh.anchor.ui.components.calmBackdrop
 import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.ui.breathing.BreathingExercise
 import ch.bfh.anchor.viewmodel.AnchorViewModel
@@ -33,14 +40,46 @@ fun CrisisScreen(
     var step by rememberSaveable { mutableStateOf(CrisisStep.FeelingPicker) }
     var selectedFeeling by rememberSaveable { mutableStateOf<Feeling?>(null) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    // Breathing is skipped for some feelings, so the flow has three or four steps.
+    val steps = if (selectedFeeling?.skipBreathing == true) {
+        listOf(CrisisStep.FeelingPicker, CrisisStep.Suggestions, CrisisStep.CheckIn)
+    } else CrisisStep.entries
+    val stepIndex = steps.indexOf(step).coerceAtLeast(0)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .calmBackdrop(strength = 0.8f, reach = 0.6f)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
     ) {
-        Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    when (step) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 24.dp, end = 8.dp, top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StepDots(
+                    count = steps.size,
+                    current = stepIndex,
+                    description = stringResource(Res.string.crisis_step_progress, stepIndex + 1, steps.size)
+                )
+                Spacer(Modifier.weight(1f))
+                CloseButton(onClick = onDismiss)
+            }
+
+            // Steps fade and drift in rather than snapping, which reads as calmer.
+            AnimatedContent(
+                targetState = step,
+                transitionSpec = {
+                    (fadeIn(tween(350, delayMillis = 90)) + slideInVertically(tween(350)) { it / 12 }) togetherWith
+                        fadeOut(tween(150))
+                },
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                label = "crisis-step"
+            ) { current ->
+                Box(Modifier.fillMaxSize()) {
+                    when (current) {
                         CrisisStep.FeelingPicker -> FeelingPickerScreen(
                             onSelected = { feeling ->
                                 selectedFeeling = feeling
@@ -82,36 +121,17 @@ fun CrisisScreen(
                         )
                     }
                 }
-
-                // Always within reach, whatever step the flow is on. Its own strip rather than an
-                // overlay, so it never covers a step's Continue, Skip or Done button.
-                CallForHelpButton(
-                    crisisLine = crisisLine,
-                    trustedContact = trustedContact,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(top = 8.dp, bottom = 16.dp)
-                )
             }
 
-            AnchorIconButton(
-                onClick = onDismiss,
+            // Always within reach, whatever step the flow is on. Its own strip rather than an
+            // overlay, so it never covers a step's Continue, Skip or Done button.
+            CallForHelpButton(
+                crisisLine = crisisLine,
+                trustedContact = trustedContact,
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-            ) {
-                Surface(
-                    shape = MaterialTheme.shapes.extraLarge,
-                    color = MaterialTheme.colorScheme.surfaceVariant
-                ) {
-                    Icon(
-                        imageVector = AnchorIcons.Close,
-                        contentDescription = stringResource(Res.string.common_dismiss),
-                        modifier = Modifier.padding(8.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+                    .align(Alignment.CenterHorizontally)
+                    .padding(top = 8.dp, bottom = 16.dp)
+            )
         }
     }
 }

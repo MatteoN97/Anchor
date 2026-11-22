@@ -5,11 +5,21 @@ import ch.bfh.anchor.model.CopingTool
 import ch.bfh.anchor.model.ToolCategory
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
-import ch.bfh.anchor.ui.adaptive.AdaptivePicker
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ch.bfh.anchor.ui.adaptive.AdaptiveFilterChip
 import ch.bfh.anchor.ui.adaptive.AdaptiveSheet
 import ch.bfh.anchor.ui.adaptive.AdaptiveTextField
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AddToolSheet(
     onDismiss: () -> Unit,
@@ -40,12 +50,28 @@ fun AddToolSheet(
             singleLine = true
         )
 
-        AdaptivePicker(
-            label = stringResource(Res.string.toolkit_category_label),
-            options = labels.values.toList(),
-            selected = labels[category] ?: category,
-            onSelect = { label -> category = labels.entries.first { it.value == label }.key }
-        )
+        // Six short options: chips show them all at once, a dropdown hid them behind a tap.
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = stringResource(Res.string.toolkit_category_label),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Selects and stores the stable key; only the label is translated.
+                ToolCategory.entries.forEach { option ->
+                    AdaptiveFilterChip(
+                        selected = option.key == category,
+                        onClick = { category = option.key },
+                        label = labels.getValue(option.key)
+                    )
+                }
+            }
+        }
 
         AdaptiveTextField(
             value = description,

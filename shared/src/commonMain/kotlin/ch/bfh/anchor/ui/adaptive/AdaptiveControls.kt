@@ -261,7 +261,14 @@ fun AdaptiveTextField(
             singleLine = singleLine,
             minLines = minLines,
             maxLines = maxLines,
-            keyboardOptions = keyboardOptions
+            keyboardOptions = keyboardOptions,
+            // Soft filled field with a hairline that turns sage on focus.
+            shape = MaterialTheme.shapes.small,
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = ch.bfh.anchor.ui.components.calmCardColor(),
+                focusedContainerColor = ch.bfh.anchor.ui.components.calmCardColor(),
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            )
         )
         return
     }
@@ -333,7 +340,9 @@ fun AdaptiveFilterChip(selected: Boolean, onClick: () -> Unit, label: String, mo
         return
     }
     val colors = MaterialTheme.colorScheme
-    val background by animateColorAsState(if (selected) colors.primary else colors.surfaceVariant)
+    // Unselected: the translucent system fill, which shows on the grey page *and* on a white card
+    // (surfaceVariant, the white cell colour, vanished inside the note editor's Details card).
+    val background by animateColorAsState(if (selected) colors.primary else colors.secondaryContainer)
     val foreground by animateColorAsState(if (selected) colors.onPrimary else colors.onSurface)
     Text(
         text = label,

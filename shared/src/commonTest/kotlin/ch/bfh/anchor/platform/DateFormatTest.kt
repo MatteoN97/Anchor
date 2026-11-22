@@ -28,4 +28,22 @@ class DateFormatTest {
         assertEquals("Mar 5, 09:07", formatMoodDateTime(march5, "en"))
         assertEquals("5. März, 09:07", formatMoodDateTime(march5, "de"))
     }
+
+    // 5 March 2026 is a Thursday.
+    @Test
+    fun homeHeaderNamesTheWeekdayInEachLanguage() {
+        assertEquals("Thursday, 5 March", formatLongDay(march5, "en"))
+        assertEquals("jeudi 5 mars", formatLongDay(march5, "fr"))
+        assertEquals("Donnerstag, 5. März", formatLongDay(march5, "de"))
+        assertEquals("giovedì 5 marzo", formatLongDay(march5, "it"))
+        assertEquals("Thursday, 5 March", formatLongDay(march5, "es"))
+    }
+
+    @Test
+    fun noteEditorDateLineHasWeekdayAndTime() {
+        assertEquals("Thu, Mar 5 · 09:07", formatNoteDateTime(march5, "en"))
+        assertEquals("jeu. 5 mars · 09:07", formatNoteDateTime(march5, "fr"))
+        assertEquals("Do., 5. März · 09:07", formatNoteDateTime(march5, "de"))
+        assertEquals("gio 5 mar · 09:07", formatNoteDateTime(march5, "it"))
+    }
 }

@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -103,8 +105,7 @@ fun BreathingExercise(
 
         Text(
             text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center
         )
 
@@ -132,22 +133,32 @@ fun BreathingExercise(
                     style = stroke
                 )
             }
+            val inner = MaterialTheme.colorScheme.primaryContainer
+            // iOS secondaryContainer is a translucent control fill; use the palette's lavender there.
+            val innerEnd = MaterialTheme.colorScheme.secondaryContainer.takeIf { it.alpha > 0.99f }
+                ?: MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f).compositeOver(inner)
             Box(
                 modifier = Modifier
-                    .size(200.dp)
+                    .size(210.dp)
                     .scale(scale.value)
-                    .background(primary.copy(alpha = 0.1f), CircleShape)
+                    .background(
+                        Brush.radialGradient(listOf(primary.copy(alpha = 0.16f), primary.copy(alpha = 0.02f))),
+                        CircleShape
+                    )
             )
             Box(
                 modifier = Modifier
                     .size(150.dp)
                     .scale(scale.value)
-                    .background(primary.copy(alpha = 0.2f), CircleShape)
+                    .background(
+                        Brush.linearGradient(listOf(inner, innerEnd)),
+                        CircleShape
+                    )
             )
             Text(
                 text = stringResource(phase.labelRes),
                 style = MaterialTheme.typography.titleMedium,
-                color = primary,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
         }
