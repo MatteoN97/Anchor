@@ -28,15 +28,34 @@ class AnchorViewModel(db: AnchorDatabase) : ViewModel() {
     private val moodDao = db.moodEntryDao()
 
     // Tools
-    val tools = toolDao.getAll().stateIn(
+    val tools = toolDao.getActive().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
 
+    // Archived coping strategies remain on-device and can be restored without losing edits.
+    // Home and crisis flows intentionally consume only the active tools flow above.
+    val inactiveTools = toolDao.getInactive().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    fun setToolActive(tool: CopingTool, active: Boolean) {
+        viewModelScope.launch { toolDao.update(tool.copy(isActive = active)) }
+    }
+
     fun addTool(name: String, category: String, description: String) {
         viewModelScope.launch {
             toolDao.insert(CopingTool(name = name, category = category, description = description))
+        }
+    }
+
+    /** Save a guided suggestion as a normal editable coping tool, with a stable cross-locale ID. */
+    fun addGuidedTool(id: String, name: String, category: String, description: String) {
+        viewModelScope.launch {
+            toolDao.insertIfAbsent(CopingTool(id = id, name = name, category = category, description = description))
         }
     }
 

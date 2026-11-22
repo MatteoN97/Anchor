@@ -1,5 +1,6 @@
 package ch.bfh.anchor.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import ch.bfh.anchor.platform.randomId
@@ -9,5 +10,6 @@ data class CopingTool(
     @PrimaryKey val id: String = randomId(),
     val name: String,
     val category: String,
-    val description: String
+    val description: String,
+    @ColumnInfo(defaultValue = "1") val isActive: Boolean = true
 )
