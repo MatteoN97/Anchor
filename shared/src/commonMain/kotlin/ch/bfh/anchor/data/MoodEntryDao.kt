@@ -22,4 +22,10 @@ interface MoodEntryDao {
 
     @Query("UPDATE mood_entries SET score = :score WHERE id = :id")
     suspend fun updateScore(id: String, score: Int)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(entries: List<MoodEntry>)
+
+    @Query("DELETE FROM mood_entries WHERE source = :source")
+    suspend fun deleteAllFrom(source: String)
 }

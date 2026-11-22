@@ -221,7 +221,12 @@
     <string name="mood_already_saved">Déjà enregistré à %1$s.</string>
     <string name="mood_updated">Modifié : « %1$s ».</string>
     <string name="mood_next_check_in">Prochaine saisie à partir de %1$s. D'ici là, touche un autre visage pour la modifier.</string>
-    <string name="mood_once_per_hour">Une saisie par heure, quand tu veux.</string>
+    <string name="mood_check_in_rule">Une saisie toutes les 5 minutes, quand tu veux.</string>
+    <string name="mood_source_sample">Exemple</string>
+    <string name="settings_sample_title">Données d'exemple</string>
+    <string name="settings_sample_add">Ajouter des humeurs d'exemple</string>
+    <string name="settings_sample_remove">Supprimer les données d'exemple</string>
+    <string name="settings_sample_footer">Pour essayer le graphique de l'humeur : ajoute deux semaines de saisies inventées, marquées « Exemple ». Les ajouter à nouveau les remplace. Supprime-les avant d'utiliser Anchor pour de vrai.</string>
     <string name="mood_period_today">Aujourd'hui</string>
     <string name="mood_chart_empty_today">Aucune saisie aujourd'hui pour l'instant.</string>
     <string name="mood_view_entries_today">Voir les saisies du jour</string>

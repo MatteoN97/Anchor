@@ -221,7 +221,12 @@
     <string name="mood_already_saved">Già salvato alle %1$s.</string>
     <string name="mood_updated">Cambiato in “%1$s”.</string>
     <string name="mood_next_check_in">Prossima registrazione dalle %1$s. Fino ad allora puoi toccare un'altra faccina per cambiarla.</string>
-    <string name="mood_once_per_hour">Puoi registrare il tuo umore una volta all'ora, quando vuoi.</string>
+    <string name="mood_check_in_rule">Puoi registrare il tuo umore ogni 5 minuti, quando vuoi.</string>
+    <string name="mood_source_sample">Esempio</string>
+    <string name="settings_sample_title">Dati di esempio</string>
+    <string name="settings_sample_add">Aggiungi dati di esempio sull'umore</string>
+    <string name="settings_sample_remove">Rimuovi i dati di esempio</string>
+    <string name="settings_sample_footer">Per provare il grafico dell'umore: aggiunge due settimane di registrazioni inventate, segnate come “Esempio”. Aggiungerle di nuovo le sostituisce. Rimuovile prima di usare Anchor davvero.</string>
     <string name="mood_period_today">Oggi</string>
     <string name="mood_chart_empty_today">Ancora nessuna registrazione oggi.</string>
     <string name="mood_view_entries_today">Vedi le registrazioni di oggi</string>

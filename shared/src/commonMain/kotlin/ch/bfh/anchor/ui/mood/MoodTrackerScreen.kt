@@ -58,6 +58,8 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -102,15 +104,16 @@ fun MoodTrackerScreen(
     // The result arrives a moment before the database flow does; use it meanwhile.
     val blocking = MoodCheckIn.blocking(entries, clock)
         ?: lastResult?.entry?.takeIf { clock < MoodCheckIn.nextAllowedAt(it) }
+    // Ticks every 30 s (the "now" line of today's chart moves) and exactly when a blocking
+    // check-in expires, so the faces unlock on time.
     LaunchedEffect(blocking?.id) {
-        val entry = blocking ?: return@LaunchedEffect
         while (true) {
-            val left = MoodCheckIn.nextAllowedAt(entry) - nowMillis()
-            if (left <= 0) { clock = nowMillis(); break }
-            delay(minOf(left, 30_000L))
+            val left = blocking?.let { MoodCheckIn.nextAllowedAt(it) - nowMillis() }
+            delay(if (left != null && left > 0) minOf(left, 30_000L) else 30_000L)
             clock = nowMillis()
         }
     }
+    val today = remember(entries, clock) { moodEntriesInPeriod(entries, 1, clock) }
     var activePanel by remember { mutableStateOf<MoodPanel?>(null) }
     var showFullHistory by remember { mutableStateOf(false) }
     // The graph and expanded entry list share a single selected time range.
@@ -285,20 +288,29 @@ fun MoodTrackerScreen(
         BoxWithConstraints(
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
-            // The quick check-in stays centered on the landing page and remains visible
-            // behind a panel, so tapping outside a panel returns to the same place.
+            // Landing page: today's chart on top, the check-in under it, so a tap shows up as a
+            // new dot right away. It stays visible behind a panel, so tapping outside a panel
+            // returns to the same place.
             Box(
                 modifier = Modifier.fillMaxSize().padding(
-                    start = 20.dp, end = 20.dp,
                     bottom = if (activePanel == null) 65.dp else 0.dp
-                ),
-                contentAlignment = Alignment.Center
+                )
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(22.dp)
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            stringResource(Res.string.mood_period_today),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        MoodTimelineCard(visible = today, periodDays = 1, now = clock, chartHeight = 170.dp)
+                    }
                     Text(
                         stringResource(Res.string.mood_question),
                         style = MaterialTheme.typography.headlineSmall,
@@ -870,7 +882,7 @@ private fun CheckInStatus(entry: MoodEntry?, result: MoodCheckInResult?, now: Lo
     ) {
         if (entry == null) {
             Text(
-                stringResource(Res.string.mood_once_per_hour),
+                stringResource(Res.string.mood_check_in_rule),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center

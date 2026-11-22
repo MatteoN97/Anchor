@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.MoodEntry
 import ch.bfh.anchor.model.MoodScale
@@ -41,6 +42,7 @@ internal fun moodSourceLabel(source: String): StringResource = when (source) {
     MoodEntry.SOURCE_TEST_NOTIFICATION -> Res.string.mood_source_test
     MoodEntry.SOURCE_NOTIFICATION -> Res.string.mood_source_reminder
     MoodEntry.SOURCE_CRISIS -> Res.string.mood_source_crisis
+    MoodEntry.SOURCE_SAMPLE -> Res.string.mood_source_sample
     else -> Res.string.mood_source_app
 }
 
@@ -88,11 +90,58 @@ internal fun MoodHistoryChart(
     now: Long,
     onPeriodDaysChange: (Int) -> Unit
 ) {
-    var selectedId by remember { mutableStateOf<String?>(null) }
-    val (start, end) = remember(periodDays, now) { moodPeriodBounds(periodDays, now) }
     val visible = remember(entries, periodDays, now) {
         moodEntriesInPeriod(entries, periodDays, now)
     }
+    val isIos = LocalIsIos.current
+
+    val periods = listOf(1, 7, 30)
+    val periodLabels = periods.map {
+        if (it == 1) stringResource(Res.string.mood_period_today)
+        else pluralStringResource(Res.plurals.mood_period_days, it, it)
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // iOS: a segmented control across the width, as Health and Screen Time use for ranges.
+        if (isIos) AdaptiveSegmentedControl(
+            options = periodLabels,
+            selectedIndex = periods.indexOf(periodDays).coerceAtLeast(0),
+            onSelect = { onPeriodDaysChange(periods[it]) }
+        ) else Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End)
+        ) {
+            periods.forEachIndexed { index, days ->
+                FilterChip(selected = periodDays == days, onClick = {
+                    onPeriodDaysChange(days)
+                }, label = { Text(periodLabels[index]) })
+            }
+        }
+        Text(stringResource(Res.string.mood_chart_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        MoodTimelineCard(visible = visible, periodDays = periodDays, now = now)
+        Text(stringResource(Res.string.mood_chart_count, visible.size, entries.size),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/**
+ * The chart itself in its card: one dot per check-in over [periodDays] ending at [now] (today's
+ * hours for one day), the tapped (or latest) check-in described underneath. [visible] must
+ * already be limited to the period, see [moodEntriesInPeriod].
+ */
+@Composable
+internal fun MoodTimelineCard(
+    visible: List<MoodEntry>,
+    periodDays: Int,
+    now: Long,
+    chartHeight: Dp = ChartHeight
+) {
+    var selectedId by remember(periodDays) { mutableStateOf<String?>(null) }
+    val (start, end) = remember(periodDays, now) { moodPeriodBounds(periodDays, now) }
     val selected = visible.firstOrNull { it.id == selectedId } ?: visible.lastOrNull()
     val isIos = LocalIsIos.current
     val dayView = periodDays == 1
@@ -105,165 +154,135 @@ internal fun MoodHistoryChart(
     val axisLabelStyle = MaterialTheme.typography.labelSmall.copy(color = axisLabelColor)
     val textMeasurer = rememberTextMeasurer()
     val bottomBand = if (dayView) HourLabelBand else 0.dp
-    val canvasHeight = ChartHeight + bottomBand
+    val canvasHeight = chartHeight + bottomBand
 
-    val periods = listOf(1, 7, 30)
-    val periodLabels = periods.map {
-        if (it == 1) stringResource(Res.string.mood_period_today)
-        else pluralStringResource(Res.plurals.mood_period_days, it, it)
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // iOS: a segmented control across the width, as Health and Screen Time use for ranges.
-        if (isIos) AdaptiveSegmentedControl(
-            options = periodLabels,
-            selectedIndex = periods.indexOf(periodDays).coerceAtLeast(0),
-            onSelect = { selectedId = null; onPeriodDaysChange(periods[it]) }
-        ) else Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End)
-        ) {
-            periods.forEachIndexed { index, days ->
-                FilterChip(selected = periodDays == days, onClick = {
-                    selectedId = null; onPeriodDaysChange(days)
-                }, label = { Text(periodLabels[index]) })
+    ChartCard(isIos) {
+        Column(modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Column(
+                    modifier = Modifier.width(78.dp).height(canvasHeight)
+                        .padding(top = PlotMargin - 8.dp, bottom = PlotMargin - 8.dp + bottomBand),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    listOf(5, 3, 1).forEach { score ->
+                        Text("$score  " + stringResource(MoodScale.labelRes(score)),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = axisLabelColor, maxLines = 1)
+                    }
+                }
+                Canvas(
+                    modifier = Modifier.weight(1f).height(canvasHeight)
+                        .pointerInput(visible, start, end, dayView) {
+                            detectTapGestures { tap ->
+                                if (visible.isEmpty()) return@detectTapGestures
+                                val g = ChartGeometry(size.width.toFloat(), size.height.toFloat(),
+                                    PlotMargin.toPx(), bottomBand.toPx(), start, end)
+                                val nearest = visible.minByOrNull { (g.point(it) - tap).getDistance() }
+                                if (nearest != null &&
+                                    (g.point(nearest) - tap).getDistance() <= 28.dp.toPx()) {
+                                    selectedId = nearest.id
+                                }
+                            }
+                        }
+                ) {
+                    val g = ChartGeometry(size.width, size.height,
+                        PlotMargin.toPx(), bottomBand.toPx(), start, end)
+                    val hairline = 1.dp.toPx()
+                    for (score in 1..5) {
+                        drawLine(gridColor, Offset(g.left, g.y(score)), Offset(g.right, g.y(score)),
+                            strokeWidth = hairline)
+                    }
+                    if (dayView) {
+                        // Every six hours a faint vertical line, labelled underneath.
+                        for (hour in 0..24 step 6) {
+                            val x = g.x(start + hour * HOUR_MILLIS).coerceAtMost(g.right)
+                            drawLine(gridColor.copy(alpha = gridColor.alpha * 0.5f),
+                                Offset(x, g.top), Offset(x, g.bottom), strokeWidth = hairline)
+                            val label = textMeasurer.measure(
+                                (if (hour < 10) "0$hour" else "$hour") + ":00", axisLabelStyle)
+                            val labelX = (x - label.size.width / 2f)
+                                .coerceIn(0f, size.width - label.size.width)
+                            drawText(label, topLeft = Offset(labelX, g.bottom + PlotMargin.toPx() - 4.dp.toPx()))
+                        }
+                        // Where the day is now: nothing to the right of it can have happened yet.
+                        if (now in start until end) {
+                            val nowX = g.x(now)
+                            drawLine(selectedColor.copy(alpha = 0.55f), Offset(nowX, g.top), Offset(nowX, g.bottom),
+                                strokeWidth = 1.5.dp.toPx(),
+                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())))
+                        }
+                    }
+                    if (visible.size > 1) {
+                        val line = Path().apply {
+                            visible.forEachIndexed { index, entry ->
+                                val p = g.point(entry)
+                                if (index == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y)
+                            }
+                        }
+                        // A soft wash under the line so the shape of the day reads at a glance.
+                        val area = Path().apply {
+                            addPath(line)
+                            lineTo(g.point(visible.last()).x, g.bottom)
+                            lineTo(g.point(visible.first()).x, g.bottom)
+                            close()
+                        }
+                        drawPath(area, Brush.verticalGradient(
+                            listOf(pointColor.copy(alpha = 0.22f), pointColor.copy(alpha = 0f)),
+                            startY = g.top, endY = g.bottom
+                        ))
+                        drawPath(line, pointColor, style = Stroke(
+                            width = 2.dp.toPx(), cap = StrokeCap.Round,
+                            join = StrokeJoin.Round
+                        ))
+                    }
+                    visible.forEach { entry ->
+                        val p = g.point(entry)
+                        val isSelected = entry.id == selected?.id
+                        if (isSelected) {
+                            drawCircle(selectedColor.copy(alpha = 0.2f),
+                                radius = 10.dp.toPx(), center = p)
+                        }
+                        drawCircle(backgroundColor, radius = 6.dp.toPx(), center = p)
+                        drawCircle(if (isSelected) selectedColor else pointColor,
+                            radius = if (isSelected) 5.5.dp.toPx() else 4.dp.toPx(), center = p)
+                    }
+                }
             }
-        }
-        Text(stringResource(Res.string.mood_chart_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-        ChartCard(isIos) {
-            Column(modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(verticalAlignment = Alignment.Top) {
-                    Column(
-                        modifier = Modifier.width(78.dp).height(canvasHeight)
-                            .padding(top = PlotMargin - 8.dp, bottom = PlotMargin - 8.dp + bottomBand),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        listOf(5, 3, 1).forEach { score ->
-                            Text("$score  " + stringResource(MoodScale.labelRes(score)),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = axisLabelColor, maxLines = 1)
-                        }
-                    }
-                    Canvas(
-                        modifier = Modifier.weight(1f).height(canvasHeight)
-                            .pointerInput(visible, start, end, dayView) {
-                                detectTapGestures { tap ->
-                                    if (visible.isEmpty()) return@detectTapGestures
-                                    val g = ChartGeometry(size.width.toFloat(), size.height.toFloat(),
-                                        PlotMargin.toPx(), bottomBand.toPx(), start, end)
-                                    val nearest = visible.minByOrNull { (g.point(it) - tap).getDistance() }
-                                    if (nearest != null &&
-                                        (g.point(nearest) - tap).getDistance() <= 28.dp.toPx()) {
-                                        selectedId = nearest.id
-                                    }
-                                }
-                            }
-                    ) {
-                        val g = ChartGeometry(size.width, size.height,
-                            PlotMargin.toPx(), bottomBand.toPx(), start, end)
-                        val hairline = 1.dp.toPx()
-                        for (score in 1..5) {
-                            drawLine(gridColor, Offset(g.left, g.y(score)), Offset(g.right, g.y(score)),
-                                strokeWidth = hairline)
-                        }
-                        if (dayView) {
-                            // Every six hours a faint vertical line, labelled underneath.
-                            for (hour in 0..24 step 6) {
-                                val x = g.x(start + hour * HOUR_MILLIS).coerceAtMost(g.right)
-                                drawLine(gridColor.copy(alpha = gridColor.alpha * 0.5f),
-                                    Offset(x, g.top), Offset(x, g.bottom), strokeWidth = hairline)
-                                val label = textMeasurer.measure(
-                                    (if (hour < 10) "0$hour" else "$hour") + ":00", axisLabelStyle)
-                                val labelX = (x - label.size.width / 2f)
-                                    .coerceIn(0f, size.width - label.size.width)
-                                drawText(label, topLeft = Offset(labelX, g.bottom + PlotMargin.toPx() - 4.dp.toPx()))
-                            }
-                            // Where the day is now: nothing to the right of it can have happened yet.
-                            if (now in start until end) {
-                                val nowX = g.x(now)
-                                drawLine(selectedColor.copy(alpha = 0.55f), Offset(nowX, g.top), Offset(nowX, g.bottom),
-                                    strokeWidth = 1.5.dp.toPx(),
-                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())))
-                            }
-                        }
-                        if (visible.size > 1) {
-                            val line = Path().apply {
-                                visible.forEachIndexed { index, entry ->
-                                    val p = g.point(entry)
-                                    if (index == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y)
-                                }
-                            }
-                            // A soft wash under the line so the shape of the day reads at a glance.
-                            val area = Path().apply {
-                                addPath(line)
-                                lineTo(g.point(visible.last()).x, g.bottom)
-                                lineTo(g.point(visible.first()).x, g.bottom)
-                                close()
-                            }
-                            drawPath(area, Brush.verticalGradient(
-                                listOf(pointColor.copy(alpha = 0.22f), pointColor.copy(alpha = 0f)),
-                                startY = g.top, endY = g.bottom
-                            ))
-                            drawPath(line, pointColor, style = Stroke(
-                                width = 2.dp.toPx(), cap = StrokeCap.Round,
-                                join = StrokeJoin.Round
-                            ))
-                        }
-                        visible.forEach { entry ->
-                            val p = g.point(entry)
-                            val isSelected = entry.id == selected?.id
-                            if (isSelected) {
-                                drawCircle(selectedColor.copy(alpha = 0.2f),
-                                    radius = 10.dp.toPx(), center = p)
-                            }
-                            drawCircle(backgroundColor, radius = 6.dp.toPx(), center = p)
-                            drawCircle(if (isSelected) selectedColor else pointColor,
-                                radius = if (isSelected) 5.5.dp.toPx() else 4.dp.toPx(), center = p)
-                        }
-                    }
+            if (!dayView) {
+                Row(modifier = Modifier.fillMaxWidth().padding(start = 78.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(pluralStringResource(Res.plurals.mood_chart_days_ago, periodDays, periodDays),
+                        style = MaterialTheme.typography.labelSmall, color = axisLabelColor)
+                    Text(stringResource(Res.string.mood_chart_now),
+                        style = MaterialTheme.typography.labelSmall, color = axisLabelColor)
                 }
-                if (!dayView) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(start = 78.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(pluralStringResource(Res.plurals.mood_chart_days_ago, periodDays, periodDays),
-                            style = MaterialTheme.typography.labelSmall, color = axisLabelColor)
-                        Text(stringResource(Res.string.mood_chart_now),
-                            style = MaterialTheme.typography.labelSmall, color = axisLabelColor)
-                    }
-                }
-                if (visible.isEmpty()) {
-                    Text(if (dayView) stringResource(Res.string.mood_chart_empty_today)
-                         else pluralStringResource(Res.plurals.mood_chart_empty_days, periodDays, periodDays),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    selected?.let { entry ->
-                        Row(verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text(MoodScale.emoji(entry.score), style = MaterialTheme.typography.headlineSmall)
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(stringResource(MoodScale.labelRes(entry.score)), style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold)
-                                Text(formatMoodDateTime(entry.recordedAt, Locale.current.language),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            val sourceLabel = stringResource(moodSourceLabel(entry.source))
-                            Text(sourceLabel, style = MaterialTheme.typography.labelSmall,
+            }
+            if (visible.isEmpty()) {
+                Text(if (dayView) stringResource(Res.string.mood_chart_empty_today)
+                     else pluralStringResource(Res.plurals.mood_chart_empty_days, periodDays, periodDays),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                selected?.let { entry ->
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(MoodScale.emoji(entry.score), style = MaterialTheme.typography.headlineSmall)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(MoodScale.labelRes(entry.score)), style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold)
+                            Text(formatMoodDateTime(entry.recordedAt, Locale.current.language),
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
+                        val sourceLabel = stringResource(moodSourceLabel(entry.source))
+                        Text(sourceLabel, style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
         }
-        Text(stringResource(Res.string.mood_chart_count, visible.size, entries.size),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

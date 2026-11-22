@@ -221,7 +221,12 @@
     <string name="mood_already_saved">Already saved at %1$s.</string>
     <string name="mood_updated">Changed to “%1$s”.</string>
     <string name="mood_next_check_in">Next check-in from %1$s. Until then, tap another face to change this one.</string>
-    <string name="mood_once_per_hour">One check-in per hour, whenever you like.</string>
+    <string name="mood_check_in_rule">One check-in every 5 minutes, whenever you like.</string>
+    <string name="mood_source_sample">Sample</string>
+    <string name="settings_sample_title">Sample data</string>
+    <string name="settings_sample_add">Add sample mood data</string>
+    <string name="settings_sample_remove">Remove sample mood data</string>
+    <string name="settings_sample_footer">For trying out the mood chart: adds two weeks of made-up check-ins, marked “Sample”. Adding again replaces them. Remove them before using Anchor for real.</string>
     <string name="mood_period_today">Today</string>
     <string name="mood_chart_empty_today">No check-ins today yet.</string>
     <string name="mood_view_entries_today">View today's entries</string>

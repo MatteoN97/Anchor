@@ -28,16 +28,19 @@ data class MoodEntry(
         const val SOURCE_NOTIFICATION = "NOTIFICATION"
         const val SOURCE_TEST_NOTIFICATION = "TEST_NOTIFICATION"
         const val SOURCE_CRISIS = "CRISIS"
+        /** Made-up check-ins to try the chart with; removable from Settings in one go. */
+        const val SOURCE_SAMPLE = "SAMPLE"
     }
 }
 
 /**
- * One in-app check-in per hour: ten taps in a row made the chart unreadable. Within the hour a
- * tap on another face corrects the check-in instead of adding one, so a mis-tap is not locked in.
+ * One in-app check-in every five minutes: ten taps in a row made the chart unreadable. Within
+ * that time a tap on another face corrects the check-in instead of adding one, so a mis-tap is
+ * not locked in.
  * Reminder answers and crisis check-ins are not limited: they are rarer and must never be lost.
  */
 object MoodCheckIn {
-    const val INTERVAL_MILLIS = 3_600_000L
+    const val INTERVAL_MILLIS = 5 * 60_000L
 
     /** The latest in-app check-in that still blocks a new one at [now], or null if one is allowed. */
     fun blocking(entries: List<MoodEntry>, now: Long): MoodEntry? =

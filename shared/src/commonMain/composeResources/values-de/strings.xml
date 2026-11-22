@@ -221,7 +221,12 @@
     <string name="mood_already_saved">Schon um %1$s gespeichert.</string>
     <string name="mood_updated">Geändert zu „%1$s“.</string>
     <string name="mood_next_check_in">Nächster Eintrag ab %1$s. Bis dahin kannst du ein anderes Gesicht antippen, um ihn zu ändern.</string>
-    <string name="mood_once_per_hour">Ein Eintrag pro Stunde, wann immer du willst.</string>
+    <string name="mood_check_in_rule">Ein Eintrag alle 5 Minuten, wann immer du willst.</string>
+    <string name="mood_source_sample">Beispiel</string>
+    <string name="settings_sample_title">Beispieldaten</string>
+    <string name="settings_sample_add">Beispiel-Stimmungsdaten hinzufügen</string>
+    <string name="settings_sample_remove">Beispieldaten entfernen</string>
+    <string name="settings_sample_footer">Zum Ausprobieren der Stimmungskurve: fügt zwei Wochen erfundener Einträge hinzu, markiert als „Beispiel“. Erneutes Hinzufügen ersetzt sie. Entferne sie, bevor du Anchor wirklich nutzt.</string>
     <string name="mood_period_today">Heute</string>
     <string name="mood_chart_empty_today">Heute noch keine Einträge.</string>
     <string name="mood_view_entries_today">Einträge von heute anzeigen</string>
