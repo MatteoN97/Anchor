@@ -227,11 +227,13 @@
     <string name="settings_sample_add">Add sample mood data</string>
     <string name="settings_sample_remove">Remove sample mood data</string>
     <string name="settings_sample_footer">For trying out the mood chart: adds two weeks of made-up check-ins, marked “Sample”. Adding again replaces them. Remove them before using Anchor for real.</string>
+    <string name="mood_period_six_hours">6 hours</string>
+    <string name="mood_chart_empty_six_hours">No check-ins in the last 6 hours.</string>
+    <string name="mood_view_entries_six_hours">View entries · 6 hours</string>
     <string name="mood_period_today">Today</string>
     <string name="mood_chart_empty_today">No check-ins today yet.</string>
     <string name="mood_view_entries_today">View today's entries</string>
     <string name="mood_close_panel">Close panel</string>
-    <string name="mood_tab_history">Mood over time</string>
     <string name="mood_tab_notifications">Notifications</string>
     <string name="mood_hide_entries">Hide entries</string>
     <string name="mood_history_empty">Your history will appear after your first check-in.</string>

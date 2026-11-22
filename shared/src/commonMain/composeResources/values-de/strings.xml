@@ -227,11 +227,13 @@
     <string name="settings_sample_add">Beispiel-Stimmungsdaten hinzufügen</string>
     <string name="settings_sample_remove">Beispieldaten entfernen</string>
     <string name="settings_sample_footer">Zum Ausprobieren der Stimmungskurve: fügt zwei Wochen erfundener Einträge hinzu, markiert als „Beispiel“. Erneutes Hinzufügen ersetzt sie. Entferne sie, bevor du Anchor wirklich nutzt.</string>
+    <string name="mood_period_six_hours">6 Stunden</string>
+    <string name="mood_chart_empty_six_hours">Keine Einträge in den letzten 6 Stunden.</string>
+    <string name="mood_view_entries_six_hours">Einträge anzeigen · 6 Stunden</string>
     <string name="mood_period_today">Heute</string>
     <string name="mood_chart_empty_today">Heute noch keine Einträge.</string>
     <string name="mood_view_entries_today">Einträge von heute anzeigen</string>
     <string name="mood_close_panel">Bereich schliessen</string>
-    <string name="mood_tab_history">Stimmungsverlauf</string>
     <string name="mood_tab_notifications">Mitteilungen</string>
     <string name="mood_hide_entries">Einträge ausblenden</string>
     <string name="mood_history_empty">Dein Verlauf erscheint nach deinem ersten Eintrag.</string>
