@@ -50,7 +50,7 @@
     <string name="settings_edit_name">Modifica nome</string>
     <string name="settings_name_helper_updated">Il tuo nome serve a personalizzare il saluto nella schermata iniziale.</string>
     <string name="settings_crisis_breathing_label">Tipo di respirazione</string>
-    <string name="settings_crisis_breathing_helper">Usato per la fase di respirazione quando tocchi «Ho bisogno di aiuto ora». Scegli quello che hai praticato di più.</string>
+    <string name="settings_crisis_breathing_helper">Usato da «Fai un respiro» e per la fase di respirazione quando tocchi «Ho bisogno di aiuto ora». Scegli quello che hai praticato di più.</string>
     <string name="settings_contacts_title">Chi chiamare</string>
     <string name="settings_contacts_helper">Proposto alla fine della modalità crisi se stai ancora male. Anchor apre il tastierino del telefono; non chiama mai da solo.</string>
     <string name="settings_crisis_line_label">Linea di ascolto</string>
@@ -70,8 +70,6 @@
     <string name="breath_phase_hold">Trattieni</string>
     <string name="breath_phase_exhale">Espira</string>
     <string name="breathing_title">Fai un respiro</string>
-    <string name="breathing_choose_subtitle">Scegli un ritmo. Esercitarti quando sei calmo/a ti aiuta a ricordartene quando le cose si fanno difficili.</string>
-    <string name="breathing_start">Inizia</string>
     <string name="breathing_pattern_calm_name">Respirazione calmante</string>
     <string name="breathing_pattern_calm_description">Inspira per 4, espira per 6. Un'espirazione più lunga aiuta il corpo a calmarsi.</string>
     <string name="breathing_pattern_box_name">Respirazione quadrata</string>

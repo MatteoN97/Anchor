@@ -50,7 +50,7 @@
     <string name="settings_edit_name">Modifier le prénom</string>
     <string name="settings_name_helper_updated">Ton prénom sert à personnaliser le message d'accueil.</string>
     <string name="settings_crisis_breathing_label">Type de respiration</string>
-    <string name="settings_crisis_breathing_helper">Utilisée pour l'étape de respiration quand tu touches « J'ai besoin d'aide maintenant ». Choisis celle que tu as le plus pratiquée.</string>
+    <string name="settings_crisis_breathing_helper">Utilisée par « Prends une respiration » et pour l\'étape de respiration quand tu touches « J\'ai besoin d\'aide maintenant ». Choisis celle que tu as le plus pratiquée.</string>
     <string name="settings_contacts_title">Qui appeler</string>
     <string name="settings_contacts_helper">Proposé à la fin du mode crise si tu ne te sens toujours pas bien. Anchor ouvre le clavier téléphonique ; il n'appelle jamais tout seul.</string>
     <string name="settings_crisis_line_label">Ligne d'écoute</string>
@@ -70,8 +70,6 @@
     <string name="breath_phase_hold">Retiens</string>
     <string name="breath_phase_exhale">Expire</string>
     <string name="breathing_title">Prends une respiration</string>
-    <string name="breathing_choose_subtitle">Choisis un rythme. T'exercer quand tu es calme t'aidera à y penser quand les choses deviennent difficiles.</string>
-    <string name="breathing_start">Commencer</string>
     <string name="breathing_pattern_calm_name">Respiration apaisante</string>
     <string name="breathing_pattern_calm_description">Inspire sur 4, expire sur 6. Une expiration plus longue aide ton corps à se détendre.</string>
     <string name="breathing_pattern_box_name">Respiration carrée</string>
