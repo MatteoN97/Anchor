@@ -37,9 +37,7 @@ import ch.bfh.anchor.settings.SettingsManager
 import ch.bfh.anchor.ui.adaptive.AdaptiveActionRow
 import ch.bfh.anchor.ui.adaptive.AdaptiveListRow
 import ch.bfh.anchor.ui.adaptive.AdaptivePicker
-import ch.bfh.anchor.ui.adaptive.AdaptiveSegmentedControl
 import ch.bfh.anchor.ui.adaptive.AdaptiveSwitch
-import ch.bfh.anchor.ui.adaptive.AnchorCardButton
 import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.ui.adaptive.Chevron
 import ch.bfh.anchor.ui.adaptive.adaptiveSection
@@ -58,8 +56,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -74,8 +71,8 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import ch.bfh.anchor.platform.formatTimeOfDay
 import kotlinx.coroutines.launch
 
-/** Only one bottom tab can be open. The default (null) is the quick check-in landing page. */
-private enum class MoodPanel { HISTORY, NOTIFICATIONS }
+/** The sheet over the landing page; the history and check-in live on the page itself. */
+private enum class MoodPanel { NOTIFICATIONS }
 
 /** Half-hour slots of the reminder window; slot 48 is the end of the day. */
 private const val LAST_SLOT = 48
@@ -113,14 +110,12 @@ fun MoodTrackerScreen(
             clock = nowMillis()
         }
     }
-    val today = remember(entries, clock) { moodEntriesInPeriod(entries, 1, clock) }
     var activePanel by remember { mutableStateOf<MoodPanel?>(null) }
     var showFullHistory by remember { mutableStateOf(false) }
     // The graph and expanded entry list share a single selected time range.
     var historyPeriodDays by remember { mutableIntStateOf(1) }
-    val historyNow = remember(entries, historyPeriodDays, activePanel) { nowMillis() }
-    val matchingHistory = remember(entries, historyPeriodDays, historyNow) {
-        moodEntriesInPeriod(entries, historyPeriodDays, historyNow).asReversed()
+    val matchingHistory = remember(entries, historyPeriodDays, clock) {
+        moodEntriesInPeriod(entries, historyPeriodDays, clock).asReversed()
     }
 
     var remindersEnabled by remember { mutableStateOf(settingsManager.moodRemindersEnabled) }
@@ -185,7 +180,6 @@ fun MoodTrackerScreen(
 
     fun closePanel() {
         activePanel = null
-        showFullHistory = false
         frequencyMenuExpanded = false
         notificationInfoExpanded = false
     }
@@ -241,8 +235,6 @@ fun MoodTrackerScreen(
         if (activePanel == panel) dismissPanel()
         else {
             activePanel = panel
-            if (panel == MoodPanel.HISTORY) historyPeriodDays = 1
-            showFullHistory = false
             frequencyMenuExpanded = false
             notificationInfoExpanded = false
         }
@@ -262,6 +254,7 @@ fun MoodTrackerScreen(
 
     val backLabel = stringResource(if (activePanel == null) Res.string.common_back else Res.string.common_close)
     val onBackPressed = { if (activePanel == null) onBack() else dismissPanel() }
+    val notificationsLabel = stringResource(Res.string.mood_tab_notifications)
 
     // System back (Android gesture, iOS edge swipe) closes an open panel before leaving the screen.
     NavigationBackHandler(
@@ -273,12 +266,23 @@ fun MoodTrackerScreen(
     Scaffold(
         topBar = {
             if (isIos) {
-                IosBackBar(label = backLabel, showChevron = activePanel == null, onClick = onBackPressed)
+                IosBackBar(label = backLabel, showChevron = activePanel == null, onClick = onBackPressed) {
+                    if (activePanel == null) {
+                        AnchorTextButton(onClick = { togglePanel(MoodPanel.NOTIFICATIONS) }) {
+                            Text(notificationsLabel, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
             } else {
                 TopAppBar(
                     title = {},
                     navigationIcon = {
                         TextButton(onClick = onBackPressed) { Text(backLabel) }
+                    },
+                    actions = {
+                        if (activePanel == null) {
+                            TextButton(onClick = { togglePanel(MoodPanel.NOTIFICATIONS) }) { Text(notificationsLabel) }
+                        }
                     }
                 )
             }
@@ -288,70 +292,105 @@ fun MoodTrackerScreen(
         BoxWithConstraints(
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
-            // Landing page: today's chart on top, the check-in under it, so a tap shows up as a
-            // new dot right away. It stays visible behind a panel, so tapping outside a panel
-            // returns to the same place.
-            Box(
-                modifier = Modifier.fillMaxSize().padding(
-                    bottom = if (activePanel == null) 65.dp else 0.dp
-                )
+            // Landing page: the mood chart (Today / 7 / 30 days) on top, the check-in under it,
+            // so a tap shows up as a new dot right away, then the entries of the chosen period.
+            // It stays visible behind the notifications sheet.
+            // iOS sections bring their own side margins; other items get them here.
+            val itemInset = Modifier.padding(horizontal = if (isIos) 16.dp else 20.dp)
+            val landingState = rememberLazyListState()
+            LazyColumn(
+                state = landingState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(18.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            stringResource(Res.string.mood_period_today),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                item(key = "chart") {
+                    Box(itemInset) {
+                        MoodHistoryChart(
+                            entries = entries,
+                            periodDays = historyPeriodDays,
+                            now = clock,
+                            onPeriodDaysChange = { historyPeriodDays = it }
                         )
-                        MoodTimelineCard(visible = today, periodDays = 1, now = clock, chartHeight = 170.dp)
                     }
-                    Text(
-                        stringResource(Res.string.mood_question),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center
-                    )
-                    MoodChoices(
-                        selectedScore = blocking?.score,
-                        onScoreSelected = { score ->
-                            vm.recordMood(score) { result ->
-                                clock = nowMillis()
-                                lastResult = result
-                                taps++
+                }
+                item(key = "check_in") {
+                    Column(
+                        modifier = itemInset.fillMaxWidth().padding(top = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                    ) {
+                        Text(
+                            stringResource(Res.string.mood_question),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center
+                        )
+                        MoodChoices(
+                            selectedScore = blocking?.score,
+                            onScoreSelected = { score ->
+                                vm.recordMood(score) { result ->
+                                    clock = nowMillis()
+                                    lastResult = result
+                                    taps++
+                                }
+                            }
+                        )
+                        // Space reserved up front so the faces do not jump when the text changes.
+                        AnimatedContent(
+                            targetState = Triple(blocking, lastResult, taps),
+                            contentKey = { (entry, _, tapCount) -> "${entry?.id}-$tapCount" },
+                            modifier = Modifier.heightIn(min = 76.dp),
+                            transitionSpec = {
+                                (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 4 })
+                                    .togetherWith(fadeOut(tween(120)))
+                            }
+                        ) { (entry, result, _) ->
+                            // A result from an earlier window no longer describes the current check-in.
+                            CheckInStatus(entry = entry, result = result?.takeIf { it.entry.id == entry?.id }, now = clock)
+                        }
+                    }
+                }
+                item(key = "entries_toggle") {
+                    Column(itemInset) {
+                        if (!isIos) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            AnchorTextButton(onClick = { showFullHistory = !showFullHistory }) {
+                                Text(
+                                    if (showFullHistory) stringResource(Res.string.mood_hide_entries)
+                                    else if (historyPeriodDays == 1) stringResource(Res.string.mood_view_entries_today)
+                                    else pluralStringResource(Res.plurals.mood_view_entries, historyPeriodDays, historyPeriodDays)
+                                )
                             }
                         }
-                    )
-                    // Space reserved up front so the faces do not jump when the text changes.
-                    AnimatedContent(
-                        targetState = Triple(blocking, lastResult, taps),
-                        contentKey = { (entry, _, tapCount) -> "${entry?.id}-$tapCount" },
-                        modifier = Modifier.heightIn(min = 76.dp),
-                        transitionSpec = {
-                            (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 4 })
-                                .togetherWith(fadeOut(tween(120)))
+                    }
+                }
+                if (showFullHistory) {
+                    if (matchingHistory.isEmpty()) {
+                        item(key = "entries_empty") {
+                            Text(
+                                if (entries.isEmpty()) stringResource(Res.string.mood_history_empty)
+                                else stringResource(Res.string.mood_period_empty),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = itemInset
+                            )
                         }
-                    ) { (entry, result, _) ->
-                        // A result from an earlier hour no longer describes the current check-in.
-                        CheckInStatus(entry = entry, result = result?.takeIf { it.entry.id == entry?.id }, now = clock)
+                    } else if (isIos) {
+                        adaptiveSection(items = matchingHistory, key = { it.id }, separatorInset = 56.dp) { entry ->
+                            IosMoodHistoryRow(entry)
+                        }
+                    } else {
+                        items(matchingHistory, key = { it.id }) { entry ->
+                            Box(itemInset) { MoodHistoryRow(entry) }
+                        }
                     }
                 }
             }
 
-            if (activePanel == null) {
-                // Both sections are collapsed by default. The only controls below the
-                // centered check-in are these two equal-width tabs.
-                MoodPanelTabs(
-                    selected = null,
-                    onSelect = ::togglePanel,
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                )
-            } else {
+            if (activePanel != null) {
                 // A dismissible layer over the landing page: tapping anywhere OUTSIDE
                 // the raised panel closes it without changing the selected mood.
                 val maxOffset = constraints.maxHeight.toFloat()
@@ -371,12 +410,7 @@ fun MoodTrackerScreen(
                 )
 
                 val maximumPanelHeight = (maxHeight - 80.dp).coerceAtLeast(180.dp)
-                val desiredPanelHeight = when (activePanel) {
-                    MoodPanel.HISTORY -> 590.dp
-                    MoodPanel.NOTIFICATIONS -> 510.dp
-                    null -> 275.dp
-                }
-                val panelHeight = minOf(maximumPanelHeight, desiredPanelHeight)
+                val panelHeight = minOf(maximumPanelHeight, 510.dp)
 
                 // A bottom sheet: the open panel grows upward from the bottom edge. On iOS it
                 // takes the grey grouped background of a sheet, so its sections stand out.
@@ -394,9 +428,7 @@ fun MoodTrackerScreen(
                     shadowElevation = 7.dp
                 ) {
                     Column(Modifier.nestedScroll(panelScroll)) {
-                        // The grabber and the tabs are the sheet's handle: drag them down to
-                        // close. The very same two tab-style buttons move to the TOP when a
-                        // section opens. Tap the selected tab again to close it.
+                        // The grabber and the title are the sheet's handle: drag them down to close.
                         Column(
                             Modifier.draggable(
                                 state = rememberDraggableState { delta ->
@@ -407,25 +439,16 @@ fun MoodTrackerScreen(
                             )
                         ) {
                             SheetGrabber()
-                            MoodPanelTabs(
-                                selected = activePanel,
-                                onSelect = ::togglePanel
+                            Text(
+                                notificationsLabel,
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 12.dp)
                             )
                         }
                         if (!isIos) HorizontalDivider()
 
-                        // The history toggle belongs *below the graph* in the scrolling
-                        // content. A stickyHeader keeps it reachable once it reaches the top.
-                        // Expanding the entries preserves your position; collapsing returns
-                        // to the graph, instead of leaving you deep in the old list.
                         val panelListState = remember(activePanel) { LazyListState() }
-                        LaunchedEffect(activePanel, showFullHistory, historyPeriodDays) {
-                            if (activePanel == MoodPanel.HISTORY && !showFullHistory) {
-                                panelListState.scrollToItem(0)
-                            }
-                        }
-                        // iOS sections bring their own side margins; other items get them here.
-                        val itemInset = Modifier.padding(horizontal = if (isIos) 16.dp else 0.dp)
                         LazyColumn(
                             state = panelListState,
                             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -438,69 +461,6 @@ fun MoodTrackerScreen(
                             verticalArrangement = Arrangement.spacedBy(if (isIos) 0.dp else 12.dp)
                         ) {
                             when (activePanel) {
-                                MoodPanel.HISTORY -> {
-                                    item {
-                                        Box(itemInset) {
-                                            MoodHistoryChart(
-                                                entries = entries,
-                                                periodDays = historyPeriodDays,
-                                                now = historyNow,
-                                                onPeriodDaysChange = { historyPeriodDays = it }
-                                            )
-                                        }
-                                    }
-                                    stickyHeader(key = "history_entries_toggle") {
-                                        Surface(
-                                            color = MaterialTheme.colorScheme.run { if (isIos) background else surface },
-                                            tonalElevation = if (showFullHistory && !isIos) 2.dp else 0.dp
-                                        ) {
-                                            Column(itemInset) {
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.End,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    AnchorTextButton(
-                                                        onClick = { showFullHistory = !showFullHistory }
-                                                    ) {
-                                                        Text(
-                                                            if (showFullHistory) stringResource(Res.string.mood_hide_entries)
-                                                            else if (historyPeriodDays == 1) stringResource(Res.string.mood_view_entries_today)
-                                                            else pluralStringResource(Res.plurals.mood_view_entries, historyPeriodDays, historyPeriodDays)
-                                                        )
-                                                    }
-                                                }
-                                                if (!isIos) {
-                                                    HorizontalDivider(
-                                                        color = MaterialTheme.colorScheme.outlineVariant
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (showFullHistory) {
-                                        if (matchingHistory.isEmpty()) {
-                                            item {
-                                                Text(
-                                                    if (entries.isEmpty()) stringResource(Res.string.mood_history_empty)
-                                                    else stringResource(Res.string.mood_period_empty),
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    modifier = itemInset
-                                                )
-                                            }
-                                        } else if (isIos) {
-                                            adaptiveSection(items = matchingHistory, key = { it.id }, separatorInset = 56.dp) { entry ->
-                                                IosMoodHistoryRow(entry)
-                                            }
-                                        } else {
-                                            items(matchingHistory, key = { it.id }) { entry ->
-                                                MoodHistoryRow(entry)
-                                            }
-                                        }
-                                    }
-                                }
-
                                 MoodPanel.NOTIFICATIONS -> if (isIos) {
                                     iosNotificationSections(
                                         text = iosText,
@@ -724,7 +684,12 @@ fun MoodTrackerScreen(
 
 /** The navigation bar of a pushed iOS screen: a tinted "‹ Back" at the leading edge. */
 @Composable
-private fun IosBackBar(label: String, showChevron: Boolean, onClick: () -> Unit) {
+private fun IosBackBar(
+    label: String,
+    showChevron: Boolean,
+    onClick: () -> Unit,
+    trailing: @Composable () -> Unit = {}
+) {
     val tint = MaterialTheme.colorScheme.primary
     Row(
         modifier = Modifier
@@ -743,6 +708,8 @@ private fun IosBackBar(label: String, showChevron: Boolean, onClick: () -> Unit)
             }
             Text(label, style = MaterialTheme.typography.bodyLarge, color = tint)
         }
+        Spacer(Modifier.weight(1f))
+        trailing()
     }
 }
 
@@ -926,71 +893,6 @@ private fun SheetGrabber() {
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.run { if (isIos) outline else onSurfaceVariant.copy(alpha = 0.4f) })
         )
-    }
-}
-
-/**
- * Android: two filter chips. iOS: on the landing page, two cards to open a panel; inside an open
- * panel, a segmented control to switch between them.
- */
-@Composable
-private fun MoodPanelTabs(
-    selected: MoodPanel?,
-    onSelect: (MoodPanel) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val labels = mapOf(
-        MoodPanel.HISTORY to stringResource(Res.string.mood_tab_history),
-        MoodPanel.NOTIFICATIONS to stringResource(Res.string.mood_tab_notifications)
-    )
-    val isIos = LocalIsIos.current
-
-    if (isIos && selected != null) {
-        AdaptiveSegmentedControl(
-            options = labels.values.toList(),
-            selectedIndex = selected.ordinal,
-            onSelect = { onSelect(MoodPanel.entries[it]) },
-            modifier = modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
-        )
-        return
-    }
-
-    Row(
-        modifier = modifier.fillMaxWidth()
-            .padding(horizontal = if (isIos) 16.dp else 20.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        MoodPanel.entries.forEach { panel ->
-            if (isIos) {
-                AnchorCardButton(
-                    onClick = { onSelect(panel) },
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text(
-                        labels.getValue(panel),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp, horizontal = 8.dp)
-                    )
-                }
-            } else {
-                FilterChip(
-                    modifier = Modifier.weight(1f),
-                    selected = selected == panel,
-                    onClick = { onSelect(panel) },
-                    label = {
-                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            Text(labels.getValue(panel), maxLines = 1)
-                        }
-                    }
-                )
-            }
-        }
     }
 }
 

@@ -231,7 +231,6 @@
     <string name="mood_chart_empty_today">Heute noch keine Einträge.</string>
     <string name="mood_view_entries_today">Einträge von heute anzeigen</string>
     <string name="mood_close_panel">Bereich schliessen</string>
-    <string name="mood_tab_history">Stimmungsverlauf</string>
     <string name="mood_tab_notifications">Mitteilungen</string>
     <string name="mood_hide_entries">Einträge ausblenden</string>
     <string name="mood_history_empty">Dein Verlauf erscheint nach deinem ersten Eintrag.</string>

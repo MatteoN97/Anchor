@@ -231,7 +231,6 @@
     <string name="mood_chart_empty_today">No check-ins today yet.</string>
     <string name="mood_view_entries_today">View today's entries</string>
     <string name="mood_close_panel">Close panel</string>
-    <string name="mood_tab_history">Mood over time</string>
     <string name="mood_tab_notifications">Notifications</string>
     <string name="mood_hide_entries">Hide entries</string>
     <string name="mood_history_empty">Your history will appear after your first check-in.</string>

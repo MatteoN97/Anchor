@@ -231,7 +231,6 @@
     <string name="mood_chart_empty_today">Aucune saisie aujourd'hui pour l'instant.</string>
     <string name="mood_view_entries_today">Voir les saisies du jour</string>
     <string name="mood_close_panel">Fermer le panneau</string>
-    <string name="mood_tab_history">Humeur dans le temps</string>
     <string name="mood_tab_notifications">Notifications</string>
     <string name="mood_hide_entries">Masquer les entrées</string>
     <string name="mood_history_empty">Ton historique apparaîtra après ton premier point.</string>
