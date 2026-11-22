@@ -6,6 +6,8 @@ import ch.bfh.anchor.data.AnchorDatabase
 import ch.bfh.anchor.model.CopingTool
 import ch.bfh.anchor.model.CrisisCheckIn
 import ch.bfh.anchor.model.Feeling
+import ch.bfh.anchor.model.MoodCheckIn
+import ch.bfh.anchor.model.MoodCheckInResult
 import ch.bfh.anchor.model.MoodEntry
 import ch.bfh.anchor.model.MoodScale
 import ch.bfh.anchor.model.SessionQuestion
@@ -13,6 +15,9 @@ import ch.bfh.anchor.model.TherapyNote
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import ch.bfh.anchor.platform.nowMillis
 
 class AnchorViewModel(db: AnchorDatabase) : ViewModel() {
     private val toolDao = db.copingToolDao()
@@ -95,11 +100,32 @@ class AnchorViewModel(db: AnchorDatabase) : ViewModel() {
         initialValue = emptyList()
     )
 
-    fun addMood(score: Int, onSaved: () -> Unit = {}) {
+    // Serialises taps: two quick taps must not both see "no check-in this hour" and both insert.
+    private val moodCheckInLock = Mutex()
+
+    /**
+     * Records an in-app check-in, at most one per hour (see [MoodCheckIn]). Within the hour a
+     * different score replaces the current one; the same score changes nothing.
+     */
+    fun recordMood(score: Int, onResult: (MoodCheckInResult) -> Unit = {}) {
         require(score in 1..5)
         viewModelScope.launch {
-            moodDao.insert(MoodEntry(score = score))
-            onSaved()
+            val result = moodCheckInLock.withLock {
+                val now = nowMillis()
+                val current = moodDao.latest(MoodEntry.SOURCE_APP)
+                    ?.takeIf { now < MoodCheckIn.nextAllowedAt(it) }
+                when {
+                    current == null -> MoodEntry(recordedAt = now, score = score)
+                        .also { moodDao.insert(it) }
+                        .let { MoodCheckInResult.Saved(it) }
+                    current.score == score -> MoodCheckInResult.Unchanged(current)
+                    else -> {
+                        moodDao.updateScore(current.id, score)
+                        MoodCheckInResult.Updated(current.copy(score = score))
+                    }
+                }
+            }
+            onResult(result)
         }
     }
 

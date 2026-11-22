@@ -24,7 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ch.bfh.anchor.model.MoodCheckIn
+import ch.bfh.anchor.model.MoodCheckInResult
 import ch.bfh.anchor.model.MoodEntry
+import kotlinx.coroutines.delay
 import ch.bfh.anchor.model.MoodReminderSchedule
 import ch.bfh.anchor.model.MoodScale
 import ch.bfh.anchor.notifications.MoodReminderController
@@ -67,7 +70,6 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import ch.bfh.anchor.platform.formatTimeOfDay
-import ch.bfh.anchor.platform.localDayBounds
 import kotlinx.coroutines.launch
 
 /** Only one bottom tab can be open. The default (null) is the quick check-in landing page. */
@@ -90,10 +92,25 @@ fun MoodTrackerScreen(
 ) {
     val isIos = LocalIsIos.current
     val entries by vm.moods.collectAsState()
-    var lastSelected by remember { mutableStateOf<Int?>(null) }
-    // When the last tap was stored. Each tap is a new check-in, so this changes even when the
-    // same face is tapped again, and the confirmation below animates every time.
-    var lastSavedAt by remember { mutableStateOf<Long?>(null) }
+    // The clock the hourly limit is judged by. Ticks while a check-in is blocking, so the faces
+    // unlock on their own when the hour is over.
+    var clock by remember { mutableLongStateOf(nowMillis()) }
+    // What the last tap did, and how many taps so far: the message animates on every tap, also
+    // when two taps give the same result.
+    var lastResult by remember { mutableStateOf<MoodCheckInResult?>(null) }
+    var taps by remember { mutableIntStateOf(0) }
+    // The result arrives a moment before the database flow does; use it meanwhile.
+    val blocking = MoodCheckIn.blocking(entries, clock)
+        ?: lastResult?.entry?.takeIf { clock < MoodCheckIn.nextAllowedAt(it) }
+    LaunchedEffect(blocking?.id) {
+        val entry = blocking ?: return@LaunchedEffect
+        while (true) {
+            val left = MoodCheckIn.nextAllowedAt(entry) - nowMillis()
+            if (left <= 0) { clock = nowMillis(); break }
+            delay(minOf(left, 30_000L))
+            clock = nowMillis()
+        }
+    }
     var activePanel by remember { mutableStateOf<MoodPanel?>(null) }
     var showFullHistory by remember { mutableStateOf(false) }
     // The graph and expanded entry list share a single selected time range.
@@ -289,48 +306,27 @@ fun MoodTrackerScreen(
                         textAlign = TextAlign.Center
                     )
                     MoodChoices(
-                        selectedScore = lastSelected,
+                        selectedScore = blocking?.score,
                         onScoreSelected = { score ->
-                            vm.addMood(score) {
-                                lastSelected = score
-                                lastSavedAt = nowMillis()
+                            vm.recordMood(score) { result ->
+                                clock = nowMillis()
+                                lastResult = result
+                                taps++
                             }
                         }
                     )
-                    // Re-enters on every save, so a second tap on the same face is answered too.
-                    // Space reserved up front so the faces do not jump up when it first appears.
+                    // Space reserved up front so the faces do not jump when the text changes.
                     AnimatedContent(
-                        targetState = lastSavedAt,
-                        modifier = Modifier.heightIn(min = 44.dp),
+                        targetState = Triple(blocking, lastResult, taps),
+                        contentKey = { (entry, _, tapCount) -> "${entry?.id}-$tapCount" },
+                        modifier = Modifier.heightIn(min = 76.dp),
                         transitionSpec = {
-                            (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 3 })
+                            (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 4 })
                                 .togetherWith(fadeOut(tween(120)))
                         }
-                    ) { savedAt ->
-                        if (savedAt != null) {
-                            val (dayStart, dayEnd) = remember(savedAt) { localDayBounds(savedAt) }
-                            val today = entries.count { it.recordedAt in dayStart until dayEnd }
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    stringResource(Res.string.mood_saved_at, formatTimeOfDay(savedAt)),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    textAlign = TextAlign.Center
-                                )
-                                if (today > 0) {
-                                    Text(
-                                        pluralStringResource(Res.plurals.mood_today_count, today, today),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
-                        }
+                    ) { (entry, result, _) ->
+                        // A result from an earlier hour no longer describes the current check-in.
+                        CheckInStatus(entry = entry, result = result?.takeIf { it.entry.id == entry?.id }, now = clock)
                     }
                 }
             }
@@ -858,6 +854,54 @@ private fun IosMoodHistoryRow(entry: MoodEntry) {
 }
 
 // ── Shared ───────────────────────────────────────────────────────────────────
+
+/**
+ * Under the faces: before a check-in, the once-an-hour rule; after one, when it was saved,
+ * when the next one is possible (with a thin bar filling up towards it) and that a tap on
+ * another face corrects it.
+ */
+@Composable
+private fun CheckInStatus(entry: MoodEntry?, result: MoodCheckInResult?, now: Long) {
+    val colors = MaterialTheme.colorScheme
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (entry == null) {
+            Text(
+                stringResource(Res.string.mood_once_per_hour),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            return@Column
+        }
+        val savedAt = formatTimeOfDay(entry.recordedAt)
+        val headline = when (result) {
+            is MoodCheckInResult.Saved -> stringResource(Res.string.mood_saved_at, savedAt)
+            is MoodCheckInResult.Updated -> stringResource(Res.string.mood_updated, stringResource(MoodScale.labelRes(entry.score)))
+            is MoodCheckInResult.Unchanged -> stringResource(Res.string.mood_already_saved, savedAt)
+            null -> stringResource(Res.string.mood_checked_in_at, savedAt)
+        }
+        Text(headline, style = MaterialTheme.typography.bodyMedium, color = colors.primary, textAlign = TextAlign.Center)
+        val next = MoodCheckIn.nextAllowedAt(entry)
+        LinearProgressIndicator(
+            progress = { ((now - entry.recordedAt).toFloat() / MoodCheckIn.INTERVAL_MILLIS).coerceIn(0.02f, 1f) },
+            modifier = Modifier.width(140.dp).height(4.dp),
+            color = colors.primary,
+            trackColor = colors.outlineVariant.copy(alpha = 0.5f),
+            gapSize = 0.dp,
+            drawStopIndicator = {}
+        )
+        Text(
+            stringResource(Res.string.mood_next_check_in, formatTimeOfDay(next)),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
 
 /** The pill at the top of a sheet that says it can be dragged. */
 @Composable

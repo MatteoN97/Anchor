@@ -217,10 +217,11 @@
     <string name="mood_not_great">Not great</string>
     <string name="mood_question">How are you feeling?</string>
     <string name="mood_saved_at">Saved at %1$s. That's all you need to do.</string>
-    <plurals name="mood_today_count">
-        <item quantity="one">%1$d check-in today</item>
-        <item quantity="other">%1$d check-ins today</item>
-    </plurals>
+    <string name="mood_checked_in_at">Checked in at %1$s.</string>
+    <string name="mood_already_saved">Already saved at %1$s.</string>
+    <string name="mood_updated">Changed to “%1$s”.</string>
+    <string name="mood_next_check_in">Next check-in from %1$s. Until then, tap another face to change this one.</string>
+    <string name="mood_once_per_hour">One check-in per hour, whenever you like.</string>
     <string name="mood_period_today">Today</string>
     <string name="mood_chart_empty_today">No check-ins today yet.</string>
     <string name="mood_view_entries_today">View today's entries</string>

@@ -217,10 +217,11 @@
     <string name="mood_not_great">Nicht gut</string>
     <string name="mood_question">Wie fühlst du dich?</string>
     <string name="mood_saved_at">Um %1$s gespeichert. Mehr musst du nicht tun.</string>
-    <plurals name="mood_today_count">
-        <item quantity="one">%1$d Eintrag heute</item>
-        <item quantity="other">%1$d Einträge heute</item>
-    </plurals>
+    <string name="mood_checked_in_at">Eingetragen um %1$s.</string>
+    <string name="mood_already_saved">Schon um %1$s gespeichert.</string>
+    <string name="mood_updated">Geändert zu „%1$s“.</string>
+    <string name="mood_next_check_in">Nächster Eintrag ab %1$s. Bis dahin kannst du ein anderes Gesicht antippen, um ihn zu ändern.</string>
+    <string name="mood_once_per_hour">Ein Eintrag pro Stunde, wann immer du willst.</string>
     <string name="mood_period_today">Heute</string>
     <string name="mood_chart_empty_today">Heute noch keine Einträge.</string>
     <string name="mood_view_entries_today">Einträge von heute anzeigen</string>

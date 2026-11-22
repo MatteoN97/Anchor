@@ -15,4 +15,11 @@ interface MoodEntryDao {
     /** Returns -1 when the prompt was already saved. A second tap cannot create a second row. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(entry: MoodEntry): Long
+
+    /** The most recent entry from [source], or null. */
+    @Query("SELECT * FROM mood_entries WHERE source = :source ORDER BY recordedAt DESC LIMIT 1")
+    suspend fun latest(source: String): MoodEntry?
+
+    @Query("UPDATE mood_entries SET score = :score WHERE id = :id")
+    suspend fun updateScore(id: String, score: Int)
 }
