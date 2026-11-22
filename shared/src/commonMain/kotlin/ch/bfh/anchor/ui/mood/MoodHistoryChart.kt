@@ -24,6 +24,10 @@ import androidx.compose.ui.unit.dp
 import ch.bfh.anchor.model.MoodEntry
 import ch.bfh.anchor.model.MoodScale
 import ch.bfh.anchor.platform.formatMoodDateTime
+import ch.bfh.anchor.ui.adaptive.AdaptiveSegmentedControl
+import ch.bfh.anchor.ui.theme.IosMetrics
+import ch.bfh.anchor.ui.theme.LocalIsIos
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 private const val DAY_MILLIS = 86_400_000L
 
@@ -55,13 +59,21 @@ internal fun MoodHistoryChart(
         moodEntriesInPeriod(entries, periodDays, now)
     }
     val selected = visible.firstOrNull { it.id == selectedId } ?: visible.lastOrNull()
+    val isIos = LocalIsIos.current
     val pointColor = MaterialTheme.colorScheme.primary
-    val backgroundColor = MaterialTheme.colorScheme.surface
+    // The ring around each dot matches the card it sits on.
+    val backgroundColor = MaterialTheme.colorScheme.run { if (isIos) surfaceVariant else surface }
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val selectedColor = MaterialTheme.colorScheme.tertiary
 
+    val periods = listOf(1, 7, 30)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
+        // iOS: a segmented control across the width, as Health and Screen Time use for ranges.
+        if (isIos) AdaptiveSegmentedControl(
+            options = periods.map { pluralStringResource(Res.plurals.mood_period_days, it, it) },
+            selectedIndex = periods.indexOf(periodDays).coerceAtLeast(0),
+            onSelect = { selectedId = null; onPeriodDaysChange(periods[it]) }
+        ) else Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End
@@ -82,7 +94,7 @@ internal fun MoodHistoryChart(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        ChartCard(isIos) {
             Column(modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -194,5 +206,23 @@ internal fun MoodHistoryChart(
         Text(stringResource(Res.string.mood_chart_count, visible.size, entries.size),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** Android: an outlined card. iOS: a plain white cell, like a grouped section. */
+@Composable
+private fun ChartCard(isIos: Boolean, content: @Composable ColumnScope.() -> Unit) {
+    if (isIos) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(IosMetrics.CardCorner),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            content = content
+        )
+    } else {
+        OutlinedCard(modifier = Modifier.fillMaxWidth(), content = content)
     }
 }

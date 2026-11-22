@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -30,11 +31,28 @@ import ch.bfh.anchor.notifications.MoodReminderController
 import ch.bfh.anchor.platform.formatMoodDateTime
 import ch.bfh.anchor.platform.nowMillis
 import ch.bfh.anchor.settings.SettingsManager
+import ch.bfh.anchor.ui.adaptive.AdaptiveActionRow
+import ch.bfh.anchor.ui.adaptive.AdaptiveListRow
+import ch.bfh.anchor.ui.adaptive.AdaptivePicker
+import ch.bfh.anchor.ui.adaptive.AdaptiveSegmentedControl
+import ch.bfh.anchor.ui.adaptive.AdaptiveSwitch
+import ch.bfh.anchor.ui.adaptive.AnchorCardButton
+import ch.bfh.anchor.ui.adaptive.AnchorTextButton
+import ch.bfh.anchor.ui.adaptive.Chevron
+import ch.bfh.anchor.ui.adaptive.adaptiveSection
+import ch.bfh.anchor.ui.theme.LocalIsIos
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 import kotlin.math.roundToInt
 
 /** Only one bottom tab can be open. The default (null) is the quick check-in landing page. */
 private enum class MoodPanel { HISTORY, NOTIFICATIONS }
+
+/** Half-hour slots of the reminder window; slot 48 is the end of the day. */
+private const val LAST_SLOT = 48
+
+private fun slotMinutes(slot: Int) = if (slot == LAST_SLOT) 1439 else slot * 30
+private fun slotLabel(slot: Int) =
+    if (slot == LAST_SLOT) "00:00" else MoodReminderSchedule.timeLabel(slot * 30)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -44,6 +62,7 @@ fun MoodTrackerScreen(
     reminderController: MoodReminderController,
     onBack: () -> Unit
 ) {
+    val isIos = LocalIsIos.current
     val entries by vm.moods.collectAsState()
     var lastSelected by remember { mutableStateOf<Int?>(null) }
     var activePanel by remember { mutableStateOf<MoodPanel?>(null) }
@@ -60,7 +79,7 @@ fun MoodTrackerScreen(
     var endSlot by remember {
         // The midnight at the far right is the END of the day, not a second reminder.
         mutableIntStateOf(
-            if (settingsManager.moodReminderEndMinutes >= 1439) 48
+            if (settingsManager.moodReminderEndMinutes >= 1439) LAST_SLOT
             else settingsManager.moodReminderEndMinutes / 30
         )
     }
@@ -70,21 +89,43 @@ fun MoodTrackerScreen(
     var permissionWarning by remember { mutableStateOf(false) }
     var testFeedback by remember { mutableStateOf<String?>(null) }
     // Resolved up front: they are set from click handlers, which cannot load resources.
-    val testSentText = stringResource(Res.string.mood_test_sent)
+    val testSentText = stringResource(if (isIos) Res.string.mood_test_sent_ios else Res.string.mood_test_sent)
     val whyNotificationsLabel = stringResource(Res.string.mood_why_notifications)
 
-    val startMinutes = startSlot * 30
-    val endMinutes = if (endSlot == 48) 1439 else endSlot * 30
-    val endLabel = if (endSlot == 48) "00:00" else MoodReminderSchedule.timeLabel(endMinutes)
+    val startMinutes = slotMinutes(startSlot)
+    val endMinutes = slotMinutes(endSlot)
+    val endLabel = slotLabel(endSlot)
 
+    // Reads the window from state when called, not from this composition: a picker changes a
+    // slot and saves in the same handler.
     fun persistAndReschedule() {
-        settingsManager.moodReminderStartMinutes = startMinutes
-        settingsManager.moodReminderEndMinutes = endMinutes
+        val start = slotMinutes(startSlot)
+        val end = slotMinutes(endSlot)
+        settingsManager.moodReminderStartMinutes = start
+        settingsManager.moodReminderEndMinutes = end
         settingsManager.moodReminderIntervalHours = intervalHours
         if (remindersEnabled) {
-            reminderController.configure(true, startMinutes, endMinutes, intervalHours) { success ->
+            reminderController.configure(true, start, end, intervalHours) { success ->
                 permissionWarning = !success
             }
+        }
+    }
+
+    fun setRemindersEnabled(enabled: Boolean) {
+        permissionWarning = false
+        testFeedback = null
+        reminderController.configure(enabled, startMinutes, endMinutes, intervalHours) { success ->
+            if (success) remindersEnabled = enabled
+            else permissionWarning = true
+        }
+    }
+
+    fun sendTest() {
+        testFeedback = null
+        permissionWarning = false
+        reminderController.sendTestNotification { success ->
+            if (success) testFeedback = testSentText
+            else permissionWarning = true
         }
     }
 
@@ -106,17 +147,35 @@ fun MoodTrackerScreen(
         }
     }
 
+    // Texts for the iOS sections, which are built outside composition.
+    val iosText = IosNotificationText(
+        remindersTitle = stringResource(Res.string.mood_reminders_title),
+        scheduleTitle = stringResource(Res.string.mood_schedule_title),
+        info = stringResource(Res.string.mood_notifications_info),
+        blocked = stringResource(Res.string.mood_notifications_blocked_ios),
+        scheduleHint = stringResource(
+            if (remindersEnabled) Res.string.mood_local_time_hint_ios else Res.string.mood_choose_times_hint
+        ),
+        unavailable = stringResource(Res.string.mood_notifications_unavailable)
+    )
+
+    val backLabel = stringResource(if (activePanel == null) Res.string.common_back else Res.string.common_close)
+    val onBackPressed = { if (activePanel == null) onBack() else closePanel() }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    TextButton(onClick = { if (activePanel == null) onBack() else closePanel() }) {
-                        Text(stringResource(if (activePanel == null) Res.string.common_back else Res.string.common_close))
+            if (isIos) {
+                IosBackBar(label = backLabel, showChevron = activePanel == null, onClick = onBackPressed)
+            } else {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = {
+                        TextButton(onClick = onBackPressed) { Text(backLabel) }
                     }
-                }
-            )
-        }
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         BoxWithConstraints(
             modifier = Modifier.fillMaxSize().padding(padding)
@@ -183,13 +242,17 @@ fun MoodTrackerScreen(
                 }
                 val panelHeight = minOf(maximumPanelHeight, desiredPanelHeight)
 
-                // A bottom sheet: the open panel grows upward from the bottom edge.
+                // A bottom sheet: the open panel grows upward from the bottom edge. On iOS it
+                // takes the grey grouped background of a sheet, so its sections stand out.
                 Surface(
                     modifier = Modifier.align(Alignment.BottomCenter)
                         .fillMaxWidth().height(panelHeight),
-                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 5.dp,
+                    shape = RoundedCornerShape(
+                        topStart = if (isIos) 28.dp else 24.dp,
+                        topEnd = if (isIos) 28.dp else 24.dp
+                    ),
+                    color = MaterialTheme.colorScheme.run { if (isIos) background else surface },
+                    tonalElevation = if (isIos) 0.dp else 5.dp,
                     shadowElevation = 7.dp
                 ) {
                     Column {
@@ -199,7 +262,7 @@ fun MoodTrackerScreen(
                             selected = activePanel,
                             onSelect = ::togglePanel
                         )
-                        HorizontalDivider()
+                        if (!isIos) HorizontalDivider()
 
                         // The history toggle belongs *below the graph* in the scrolling
                         // content. A stickyHeader keeps it reachable once it reaches the top.
@@ -211,36 +274,43 @@ fun MoodTrackerScreen(
                                 panelListState.scrollToItem(0)
                             }
                         }
+                        // iOS sections bring their own side margins; other items get them here.
+                        val itemInset = Modifier.padding(horizontal = if (isIos) 16.dp else 0.dp)
                         LazyColumn(
                             state = panelListState,
                             modifier = Modifier.fillMaxWidth().weight(1f),
                             contentPadding = PaddingValues(
-                                start = 20.dp, end = 20.dp, top = 14.dp, bottom = 24.dp
+                                start = if (isIos) 0.dp else 20.dp,
+                                end = if (isIos) 0.dp else 20.dp,
+                                top = if (isIos) 8.dp else 14.dp,
+                                bottom = 24.dp
                             ),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(if (isIos) 0.dp else 12.dp)
                         ) {
                             when (activePanel) {
                                 MoodPanel.HISTORY -> {
                                     item {
-                                        MoodHistoryChart(
-                                            entries = entries,
-                                            periodDays = historyPeriodDays,
-                                            now = historyNow,
-                                            onPeriodDaysChange = { historyPeriodDays = it }
-                                        )
+                                        Box(itemInset) {
+                                            MoodHistoryChart(
+                                                entries = entries,
+                                                periodDays = historyPeriodDays,
+                                                now = historyNow,
+                                                onPeriodDaysChange = { historyPeriodDays = it }
+                                            )
+                                        }
                                     }
                                     stickyHeader(key = "history_entries_toggle") {
                                         Surface(
-                                            color = MaterialTheme.colorScheme.surface,
-                                            tonalElevation = if (showFullHistory) 2.dp else 0.dp
+                                            color = MaterialTheme.colorScheme.run { if (isIos) background else surface },
+                                            tonalElevation = if (showFullHistory && !isIos) 2.dp else 0.dp
                                         ) {
-                                            Column {
+                                            Column(itemInset) {
                                                 Row(
                                                     modifier = Modifier.fillMaxWidth(),
                                                     horizontalArrangement = Arrangement.End,
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
-                                                    TextButton(
+                                                    AnchorTextButton(
                                                         onClick = { showFullHistory = !showFullHistory }
                                                     ) {
                                                         Text(
@@ -249,9 +319,11 @@ fun MoodTrackerScreen(
                                                         )
                                                     }
                                                 }
-                                                HorizontalDivider(
-                                                    color = MaterialTheme.colorScheme.outlineVariant
-                                                )
+                                                if (!isIos) {
+                                                    HorizontalDivider(
+                                                        color = MaterialTheme.colorScheme.outlineVariant
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -262,8 +334,13 @@ fun MoodTrackerScreen(
                                                     if (entries.isEmpty()) stringResource(Res.string.mood_history_empty)
                                                     else stringResource(Res.string.mood_period_empty),
                                                     style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = itemInset
                                                 )
+                                            }
+                                        } else if (isIos) {
+                                            adaptiveSection(items = matchingHistory, key = { it.id }, separatorInset = 56.dp) { entry ->
+                                                IosMoodHistoryRow(entry)
                                             }
                                         } else {
                                             items(matchingHistory, key = { it.id }) { entry ->
@@ -273,7 +350,33 @@ fun MoodTrackerScreen(
                                     }
                                 }
 
-                                MoodPanel.NOTIFICATIONS -> {
+                                MoodPanel.NOTIFICATIONS -> if (isIos) {
+                                    iosNotificationSections(
+                                        text = iosText,
+                                        supported = reminderController.supported,
+                                        remindersEnabled = remindersEnabled,
+                                        permissionWarning = permissionWarning,
+                                        testFeedback = testFeedback,
+                                        startSlot = startSlot,
+                                        endSlot = endSlot,
+                                        intervalHours = intervalHours,
+                                        onEnabledChange = ::setRemindersEnabled,
+                                        onSendTest = ::sendTest,
+                                        onStartChange = { slot ->
+                                            startSlot = slot
+                                            if (endSlot < slot) endSlot = slot
+                                            persistAndReschedule()
+                                        },
+                                        onEndChange = { slot ->
+                                            endSlot = slot
+                                            persistAndReschedule()
+                                        },
+                                        onIntervalChange = { hours ->
+                                            intervalHours = hours
+                                            persistAndReschedule()
+                                        }
+                                    )
+                                } else {
                                     item {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -322,16 +425,7 @@ fun MoodTrackerScreen(
                                             Checkbox(
                                                 enabled = reminderController.supported,
                                                 checked = remindersEnabled,
-                                                onCheckedChange = { enabled ->
-                                                    permissionWarning = false
-                                                    testFeedback = null
-                                                    reminderController.configure(
-                                                        enabled, startMinutes, endMinutes, intervalHours
-                                                    ) { success ->
-                                                        if (success) remindersEnabled = enabled
-                                                        else permissionWarning = true
-                                                    }
-                                                }
+                                                onCheckedChange = ::setRemindersEnabled
                                             )
                                         }
                                     }
@@ -341,17 +435,7 @@ fun MoodTrackerScreen(
                                         // offering a notification while reminders are disabled.
                                         item {
                                             OutlinedButton(
-                                                onClick = {
-                                                    testFeedback = null
-                                                    permissionWarning = false
-                                                    reminderController.sendTestNotification { success ->
-                                                        if (success) {
-                                                            testFeedback = testSentText
-                                                        } else {
-                                                            permissionWarning = true
-                                                        }
-                                                    }
-                                                },
+                                                onClick = ::sendTest,
                                                 enabled = remindersEnabled
                                             ) {
                                                 Text(stringResource(Res.string.mood_send_test))
@@ -399,12 +483,12 @@ fun MoodTrackerScreen(
                                                 RangeSlider(
                                                     value = startSlot.toFloat()..endSlot.toFloat(),
                                                     onValueChange = { range ->
-                                                        startSlot = range.start.roundToInt().coerceIn(0, 47)
+                                                        startSlot = range.start.roundToInt().coerceIn(0, LAST_SLOT - 1)
                                                         endSlot = range.endInclusive.roundToInt()
-                                                            .coerceIn(startSlot, 48)
+                                                            .coerceIn(startSlot, LAST_SLOT)
                                                     },
-                                                    valueRange = 0f..48f,
-                                                    steps = 47,
+                                                    valueRange = 0f..LAST_SLOT.toFloat(),
+                                                    steps = LAST_SLOT - 1,
                                                     onValueChangeFinished = { persistAndReschedule() },
                                                     modifier = Modifier.fillMaxWidth()
                                                 )
@@ -465,7 +549,7 @@ fun MoodTrackerScreen(
                                                 )
                                             }
                                         }
-                                    } else if (!reminderController.supported) {
+                                    } else {
                                         item {
                                             Text(
                                                 stringResource(Res.string.mood_notifications_unavailable),
@@ -474,7 +558,6 @@ fun MoodTrackerScreen(
                                             )
                                         }
                                     }
-
                                 }
                                 null -> Unit
                             }
@@ -486,38 +569,215 @@ fun MoodTrackerScreen(
     }
 }
 
+// ── iOS ──────────────────────────────────────────────────────────────────────
+
+/** The navigation bar of a pushed iOS screen: a tinted "‹ Back" at the leading edge. */
+@Composable
+private fun IosBackBar(label: String, showChevron: Boolean, onClick: () -> Unit) {
+    val tint = MaterialTheme.colorScheme.primary
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+            .height(44.dp)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AnchorTextButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 8.dp)) {
+            if (showChevron) {
+                // The disclosure chevron, mirrored to point back.
+                Chevron(modifier = Modifier.graphicsLayer(scaleX = -1f), color = tint)
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(label, style = MaterialTheme.typography.bodyLarge, color = tint)
+        }
+    }
+}
+
+/** Texts for [iosNotificationSections], looked up beforehand because list builders cannot. */
+private class IosNotificationText(
+    val remindersTitle: String,
+    val scheduleTitle: String,
+    val info: String,
+    val blocked: String,
+    val scheduleHint: String,
+    val unavailable: String
+)
+
+/**
+ * The Notifications panel as iOS Settings would lay it out: a switch to turn reminders on,
+ * then the reminder window and frequency as picker rows instead of Android's range slider.
+ */
+private fun androidx.compose.foundation.lazy.LazyListScope.iosNotificationSections(
+    text: IosNotificationText,
+    supported: Boolean,
+    remindersEnabled: Boolean,
+    permissionWarning: Boolean,
+    testFeedback: String?,
+    startSlot: Int,
+    endSlot: Int,
+    intervalHours: Int,
+    onEnabledChange: (Boolean) -> Unit,
+    onSendTest: () -> Unit,
+    onStartChange: (Int) -> Unit,
+    onEndChange: (Int) -> Unit,
+    onIntervalChange: (Int) -> Unit
+) {
+    val footer = listOfNotNull(if (permissionWarning) text.blocked else testFeedback, text.info)
+        .joinToString("\n\n")
+    adaptiveSection(
+        header = text.remindersTitle,
+        footer = if (supported) footer else text.unavailable,
+        rows = buildList<@Composable () -> Unit> {
+            add {
+                AdaptiveListRow(
+                    headline = { Text(stringResource(Res.string.mood_allow_notifications)) },
+                    supporting = {
+                        Text(
+                            stringResource(
+                                if (remindersEnabled) Res.string.mood_reminders_on else Res.string.mood_reminders_off
+                            )
+                        )
+                    },
+                    trailing = {
+                        if (supported) AdaptiveSwitch(checked = remindersEnabled, onCheckedChange = onEnabledChange)
+                    }
+                )
+            }
+            if (supported && remindersEnabled) {
+                add { AdaptiveActionRow(stringResource(Res.string.mood_send_test), onClick = onSendTest) }
+            }
+        }
+    )
+    if (!supported) return
+
+    adaptiveSection(
+        header = text.scheduleTitle,
+        footer = text.scheduleHint,
+        rows = listOf<@Composable () -> Unit>(
+            {
+                val slots = (0 until LAST_SLOT).toList()
+                AdaptivePicker(
+                    label = stringResource(Res.string.mood_start_label),
+                    options = slots.map(::slotLabel),
+                    selected = slotLabel(startSlot),
+                    onSelect = { label -> onStartChange(slots.first { slotLabel(it) == label }) },
+                    grouped = true
+                )
+            },
+            {
+                // Ends at or after the start; the last option is midnight, the end of the day.
+                // A window starting at midnight cannot also end there, or "00:00" would be listed twice.
+                val slots = (maxOf(startSlot, 1)..LAST_SLOT).toList()
+                AdaptivePicker(
+                    label = stringResource(Res.string.mood_end_label),
+                    options = slots.map(::slotLabel),
+                    selected = slotLabel(endSlot),
+                    onSelect = { label -> onEndChange(slots.first { slotLabel(it) == label }) },
+                    grouped = true
+                )
+            },
+            {
+                val labels = MoodReminderSchedule.intervalsInHours.associateWith {
+                    pluralStringResource(Res.plurals.mood_every_hours, it, it)
+                }
+                AdaptivePicker(
+                    label = stringResource(Res.string.mood_repeat),
+                    options = labels.values.toList(),
+                    selected = labels.getValue(intervalHours),
+                    onSelect = { label -> onIntervalChange(labels.entries.first { it.value == label }.key) },
+                    grouped = true
+                )
+            }
+        )
+    )
+}
+
+@Composable
+private fun IosMoodHistoryRow(entry: MoodEntry) {
+    AdaptiveListRow(
+        leading = {
+            Box(Modifier.width(36.dp), contentAlignment = Alignment.Center) {
+                Text(MoodScale.emoji(entry.score), fontSize = 24.sp)
+            }
+        },
+        headline = { Text(stringResource(MoodScale.labelRes(entry.score))) },
+        supporting = { Text(formatMoodDateTime(entry.recordedAt, Locale.current.language)) },
+        trailing = {
+            Text(
+                stringResource(moodSourceLabel(entry.source)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
+}
+
+// ── Shared ───────────────────────────────────────────────────────────────────
+
+/**
+ * Android: two filter chips. iOS: on the landing page, two cards to open a panel; inside an open
+ * panel, a segmented control to switch between them.
+ */
 @Composable
 private fun MoodPanelTabs(
     selected: MoodPanel?,
     onSelect: (MoodPanel) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val labels = mapOf(
+        MoodPanel.HISTORY to stringResource(Res.string.mood_tab_history),
+        MoodPanel.NOTIFICATIONS to stringResource(Res.string.mood_tab_notifications)
+    )
+    val isIos = LocalIsIos.current
+
+    if (isIos && selected != null) {
+        AdaptiveSegmentedControl(
+            options = labels.values.toList(),
+            selectedIndex = selected.ordinal,
+            onSelect = { onSelect(MoodPanel.entries[it]) },
+            modifier = modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
+        )
+        return
+    }
+
     Row(
         modifier = modifier.fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = if (isIos) 16.dp else 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        FilterChip(
-            modifier = Modifier.weight(1f),
-            selected = selected == MoodPanel.HISTORY,
-            onClick = { onSelect(MoodPanel.HISTORY) },
-            label = {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text(stringResource(Res.string.mood_tab_history), maxLines = 1)
+        MoodPanel.entries.forEach { panel ->
+            if (isIos) {
+                AnchorCardButton(
+                    onClick = { onSelect(panel) },
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(
+                        labels.getValue(panel),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp, horizontal = 8.dp)
+                    )
                 }
+            } else {
+                FilterChip(
+                    modifier = Modifier.weight(1f),
+                    selected = selected == panel,
+                    onClick = { onSelect(panel) },
+                    label = {
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            Text(labels.getValue(panel), maxLines = 1)
+                        }
+                    }
+                )
             }
-        )
-        FilterChip(
-            modifier = Modifier.weight(1f),
-            selected = selected == MoodPanel.NOTIFICATIONS,
-            onClick = { onSelect(MoodPanel.NOTIFICATIONS) },
-            label = {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text(stringResource(Res.string.mood_tab_notifications), maxLines = 1)
-                }
-            }
-        )
+        }
     }
 }
 

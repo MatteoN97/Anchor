@@ -302,4 +302,15 @@
 
     <!-- Redesign: crisis flow -->
     <string name="crisis_step_progress">Step %1$d of %2$d</string>
+
+    <!-- Mood tracker on iOS -->
+    <string name="mood_notification_title">A quick check-in</string>
+    <string name="mood_notification_body_ios">How are you feeling? Press and hold to choose a mood.</string>
+    <string name="mood_notifications_blocked_ios">Notifications are blocked. Allow them for Anchor in the Settings app.</string>
+    <string name="mood_local_time_hint_ios">Uses your phone's local time.</string>
+    <string name="mood_test_sent_ios">Test sent. Press and hold the notification to choose a mood.</string>
+    <string name="mood_reminders_title">Reminders</string>
+    <string name="mood_schedule_title">Schedule</string>
+    <string name="mood_start_label">Start</string>
+    <string name="mood_end_label">End</string>
 </resources>

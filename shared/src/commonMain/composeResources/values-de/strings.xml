@@ -296,4 +296,15 @@
     <string name="settings_dynamic_color">Hintergrundfarben</string>
     <string name="settings_dynamic_color_subtitle">Material-You-Farben des Telefons statt der ruhigen Farbpalette von Anchor verwenden.</string>
     <string name="crisis_step_progress">Schritt %1$d von %2$d</string>
+
+    <!-- Mood tracker on iOS -->
+    <string name="mood_notification_title">Ein kurzer Check-in</string>
+    <string name="mood_notification_body_ios">Wie fühlst du dich? Lange drücken, um eine Stimmung zu wählen.</string>
+    <string name="mood_notifications_blocked_ios">Mitteilungen sind blockiert. Erlaube sie für Anchor in der App Einstellungen.</string>
+    <string name="mood_local_time_hint_ios">Verwendet die Ortszeit deines Telefons.</string>
+    <string name="mood_test_sent_ios">Test gesendet. Drücke lange auf die Mitteilung, um eine Stimmung zu wählen.</string>
+    <string name="mood_reminders_title">Erinnerungen</string>
+    <string name="mood_schedule_title">Zeitplan</string>
+    <string name="mood_start_label">Beginn</string>
+    <string name="mood_end_label">Ende</string>
 </resources>

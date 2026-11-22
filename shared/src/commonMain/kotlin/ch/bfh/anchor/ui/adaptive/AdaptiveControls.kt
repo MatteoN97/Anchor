@@ -382,7 +382,8 @@ fun AdaptiveTag(text: String) {
 
 /**
  * Choose one of [options]. Android: an exposed dropdown field. iOS: a form row showing the value
- * in the tint colour that opens a menu, like a SwiftUI Picker in a Form.
+ * in the tint colour that opens a menu, like a SwiftUI Picker in a Form. With [grouped], the iOS
+ * row draws no cell of its own, for use as one row of an [adaptiveSection].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -391,7 +392,8 @@ fun AdaptivePicker(
     options: List<String>,
     selected: String,
     onSelect: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    grouped: Boolean = false
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -432,8 +434,10 @@ fun AdaptivePicker(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = IosMetrics.RowMinHeight)
-                .clip(RoundedCornerShape(IosMetrics.CardCorner))
-                .background(colors.surfaceVariant)
+                .then(
+                    if (grouped) Modifier
+                    else Modifier.clip(RoundedCornerShape(IosMetrics.CardCorner)).background(colors.surfaceVariant)
+                )
                 .clickable(role = Role.DropdownList) { expanded = true }
                 .padding(horizontal = IosMetrics.RowHorizontalPadding, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically
