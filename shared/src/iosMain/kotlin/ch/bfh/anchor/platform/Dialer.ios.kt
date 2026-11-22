@@ -9,7 +9,9 @@ import platform.UIKit.UIApplication
 actual fun rememberPhoneDialer(): (number: String) -> Unit = remember {
     { number ->
         NSURL.URLWithString("tel:${dialable(number)}")?.let { url ->
-            UIApplication.sharedApplication.openURL(url)
+            // The one-argument openURL(_:) is deprecated and no longer opens anything on recent
+            // iOS: tapping "Call" did nothing. iOS still asks before the call is placed.
+            UIApplication.sharedApplication.openURL(url, options = emptyMap<Any?, Any>(), completionHandler = null)
         }
     }
 }
