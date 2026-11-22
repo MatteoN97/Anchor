@@ -220,7 +220,10 @@ fun AnchorApp(
                 )
             }
             modalComposable(ROUTE_BREATHING, isIos) {
-                BreathingPracticeScreen(onDismiss = dropUnlessResumed { navController.popBackStack() })
+                BreathingPracticeScreen(
+                    pattern = settingsManager.crisisBreathingPattern,
+                    onDismiss = dropUnlessResumed { navController.popBackStack() }
+                )
             }
             composable(AnchorTab.Toolkit.route) { ToolkitScreen(viewModel = vm) }
             composable(AnchorTab.Journal.route) {
