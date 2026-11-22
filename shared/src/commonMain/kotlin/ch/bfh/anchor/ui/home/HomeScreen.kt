@@ -242,6 +242,7 @@ private fun StatTile(
     Surface(
         modifier = modifier,
         color = calmCardColor(),
+        contentColor = MaterialTheme.colorScheme.onSurface,
         shape = MaterialTheme.shapes.medium
     ) {
         Column(

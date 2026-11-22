@@ -31,7 +31,7 @@ fun MoodChoices(
                         else ch.bfh.anchor.ui.components.calmCardColor(),
                 shape = MaterialTheme.shapes.medium,
                 border = if (selected) null
-                         else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+                         else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.let { it.copy(alpha = it.alpha * 0.6f) })
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 14.dp),

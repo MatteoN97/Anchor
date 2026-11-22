@@ -135,6 +135,7 @@ private fun SuggestedToolCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = calmCardColor(),
+        contentColor = MaterialTheme.colorScheme.onSurface,
         shape = MaterialTheme.shapes.large
     ) {
         Column(

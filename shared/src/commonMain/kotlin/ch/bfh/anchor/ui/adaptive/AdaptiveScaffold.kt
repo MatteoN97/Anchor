@@ -174,7 +174,9 @@ fun AdaptiveTabBar(tabs: List<TabItem>, selectedIndex: Int, onSelect: (Int) -> U
 
     val colors = MaterialTheme.colorScheme
     // The bar floats just above the home indicator rather than below the full safe area.
-    val bottomInset = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
+    // Home indicator only: with safeDrawing (which includes the keyboard) the bar jumped up behind
+    // the sheet scrim whenever a keyboard opened.
+    val bottomInset = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
     Box(
         modifier = Modifier
             .fillMaxWidth()

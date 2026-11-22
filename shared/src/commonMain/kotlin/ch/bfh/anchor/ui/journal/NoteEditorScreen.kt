@@ -20,6 +20,14 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import ch.bfh.anchor.ui.components.countWords
+import ch.bfh.anchor.ui.components.keepVisibleAboveKeyboard
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -44,6 +52,7 @@ import ch.bfh.anchor.ui.adaptive.AnchorTextButton
 import ch.bfh.anchor.ui.components.CloseButton
 import ch.bfh.anchor.ui.components.IconBadge
 import ch.bfh.anchor.ui.components.calmCardColor
+import ch.bfh.anchor.ui.components.fade
 import ch.bfh.anchor.ui.icons.AnchorIcons
 import ch.bfh.anchor.viewmodel.AnchorViewModel
 import org.jetbrains.compose.resources.pluralStringResource
@@ -73,7 +82,10 @@ fun NoteEditorScreen(
     val existing: TherapyNote? = noteId?.let { id -> notes.firstOrNull { it.id == id } }
 
     var loaded by rememberSaveable { mutableStateOf(false) }
-    var body by rememberSaveable { mutableStateOf("") }
+    // Held as a State and read only where needed (the field, Save, the word count), so a
+    // keystroke recomposes the text field and the counter, not the whole editor.
+    val bodyState = rememberSaveable { mutableStateOf("") }
+    var body by bodyState
     var flagged by rememberSaveable { mutableStateOf(false) }
     var tagsPacked by rememberSaveable { mutableStateOf("") }
     var questionsPacked by rememberSaveable { mutableStateOf("") }
@@ -98,15 +110,24 @@ fun NoteEditorScreen(
 
     val tags = tagsPacked.unpack()
     val questions = questionsPacked.unpack()
-    val dirty = loaded && (
-        if (existing == null) body.isNotBlank() || questions.isNotEmpty() || tags.isNotEmpty() || flagged
-        else body != existing.body || flagged != existing.flaggedForNextSession ||
-            tags != existing.tags || questions.isNotEmpty()
-        )
+    val dirty by remember(existing) {
+        derivedStateOf {
+            val currentTags = tagsPacked.unpack()
+            loaded && (
+                if (existing == null) body.isNotBlank() || questionsPacked.isNotEmpty() ||
+                    currentTags.isNotEmpty() || flagged
+                else body != existing.body || flagged != existing.flaggedForNextSession ||
+                    currentTags != existing.tags || questionsPacked.isNotEmpty()
+                )
+        }
+    }
+    val canSave by remember { derivedStateOf { loaded && body.isNotBlank() } }
 
     fun save() {
         val text = body.trim()
         if (text.isEmpty()) return
+        val tags = tagsPacked.unpack()
+        val questions = questionsPacked.unpack()
         if (existing != null) {
             vm.updateNote(existing.copy(body = text, tags = tags, flaggedForNextSession = flagged))
         } else {
@@ -135,9 +156,15 @@ fun NoteEditorScreen(
     )
     val colors = MaterialTheme.colorScheme
     val bodyFocus = remember { FocusRequester() }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(loaded) {
-        // A new note opens ready to type; an existing one opens for reading first.
-        if (loaded && noteId == null) runCatching { bodyFocus.requestFocus() }
+        // A new note opens ready to type; an existing one opens for reading first. Wait until the
+        // destination is resumed, i.e. its enter transition is over: on iOS the keyboard otherwise
+        // slid up during the editor's own slide-up, two animations fighting for the same frames.
+        if (loaded && noteId == null) {
+            lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
+            runCatching { bodyFocus.requestFocus() }
+        }
     }
 
     Column(
@@ -157,7 +184,7 @@ fun NoteEditorScreen(
             Spacer(Modifier.weight(1f))
             AnchorButton(
                 onClick = ::save,
-                enabled = loaded && body.isNotBlank(),
+                enabled = canSave,
                 shape = CircleShape,
                 modifier = Modifier.height(40.dp)
             ) {
@@ -195,34 +222,7 @@ fun NoteEditorScreen(
             )
             Spacer(Modifier.height(16.dp))
 
-            val bodyStyle = MaterialTheme.typography.bodyLarge.copy(
-                fontSize = 18.sp,
-                lineHeight = 29.sp,
-                color = colors.onBackground
-            )
-            BasicTextField(
-                value = body,
-                onValueChange = { body = it },
-                textStyle = bodyStyle,
-                cursorBrush = SolidColor(colors.primary),
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 260.dp)
-                    .focusRequester(bodyFocus),
-                decorationBox = { inner ->
-                    Box {
-                        if (body.isEmpty()) {
-                            Text(
-                                text = stringResource(Res.string.journal_note_body_label),
-                                style = bodyStyle,
-                                color = colors.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
-                        }
-                        inner()
-                    }
-                }
-            )
+            BodyField(state = bodyState, focusRequester = bodyFocus)
 
             Spacer(Modifier.height(28.dp))
 
@@ -235,6 +235,9 @@ fun NoteEditorScreen(
             )
             Surface(
                 color = calmCardColor(),
+                // On iOS the card colour is the "cell" colour, whose default content colour is the
+                // secondary label; the headings here are primary text.
+                contentColor = colors.onSurface,
                 shape = MaterialTheme.shapes.large,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -255,7 +258,7 @@ fun NoteEditorScreen(
                         }
                     }
 
-                    HorizontalDivider(color = colors.outlineVariant.copy(alpha = 0.6f))
+                    HorizontalDivider(color = colors.outlineVariant.fade(0.6f))
 
                     DetailHeader(AnchorIcons.HelpOutline, stringResource(Res.string.journal_questions_title))
                     Text(
@@ -301,7 +304,7 @@ fun NoteEditorScreen(
                         }
                     )
 
-                    HorizontalDivider(color = colors.outlineVariant.copy(alpha = 0.6f))
+                    HorizontalDivider(color = colors.outlineVariant.fade(0.6f))
 
                     Row(
                         modifier = Modifier
@@ -338,7 +341,7 @@ fun NoteEditorScreen(
 
         // Writing bar: sits on the keyboard while typing, at the bottom otherwise.
         WritingBar(
-            words = remember(body) { body.split(Regex("\\s+")).count { it.isNotBlank() } },
+            words = { countWords(bodyState.value) },
             flagged = flagged,
             onToggleFlag = { flagged = !flagged }
         )
@@ -405,7 +408,10 @@ private fun QuestionInput(value: String, onValueChange: (String) -> Unit, onAdd:
                 imeAction = ImeAction.Done
             ),
             keyboardActions = KeyboardActions(onDone = { onAdd() }),
-            modifier = Modifier.weight(1f).padding(vertical = 12.dp),
+            modifier = Modifier
+                .weight(1f)
+                .keepVisibleAboveKeyboard()
+                .padding(vertical = 12.dp),
             decorationBox = { inner ->
                 Box {
                     if (value.isEmpty()) {
@@ -440,8 +446,11 @@ private fun QuestionInput(value: String, onValueChange: (String) -> Unit, onAdd:
 }
 
 @Composable
-private fun WritingBar(words: Int, flagged: Boolean, onToggleFlag: () -> Unit) {
+private fun WritingBar(words: () -> Int, flagged: Boolean, onToggleFlag: () -> Unit) {
     val colors = MaterialTheme.colorScheme
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val count = words()
     Surface(color = colors.surfaceContainerLow, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -451,7 +460,7 @@ private fun WritingBar(words: Int, flagged: Boolean, onToggleFlag: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = pluralStringResource(Res.plurals.journal_editor_words, words, words),
+                text = pluralStringResource(Res.plurals.journal_editor_words, count, count),
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.onSurfaceVariant,
                 modifier = Modifier.weight(1f)
@@ -461,6 +470,52 @@ private fun WritingBar(words: Int, flagged: Boolean, onToggleFlag: () -> Unit) {
                 onClick = onToggleFlag,
                 label = stringResource(Res.string.journal_flag_short)
             )
+            // iOS has no back key to put the keyboard away, and with it open the Details card is
+            // hard to reach. Tapping the text again brings it back.
+            if (WindowInsets.ime.getBottom(LocalDensity.current) > 0) {
+                AnchorTextButton(
+                    onClick = {
+                        focusManager.clearFocus()
+                        keyboard?.hide()
+                    },
+                    emphasized = true
+                ) { Text(stringResource(Res.string.common_done)) }
+            }
         }
     }
+}
+
+/** The note text. Its own composable, so typing recomposes only this and the word count. */
+@Composable
+private fun BodyField(state: MutableState<String>, focusRequester: FocusRequester) {
+    val colors = MaterialTheme.colorScheme
+    val bodyStyle = MaterialTheme.typography.bodyLarge.copy(
+        fontSize = 18.sp,
+        lineHeight = 29.sp,
+        color = colors.onBackground
+    )
+    val placeholder = stringResource(Res.string.journal_note_body_label)
+    BasicTextField(
+        value = state.value,
+        onValueChange = { state.value = it },
+        textStyle = bodyStyle,
+        cursorBrush = SolidColor(colors.primary),
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 260.dp)
+            .focusRequester(focusRequester),
+        decorationBox = { inner ->
+            Box {
+                if (state.value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = bodyStyle,
+                        color = colors.onSurfaceVariant.fade(0.6f)
+                    )
+                }
+                inner()
+            }
+        }
+    )
 }

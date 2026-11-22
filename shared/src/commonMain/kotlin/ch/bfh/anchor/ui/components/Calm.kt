@@ -147,3 +147,9 @@ fun calmCardColor(): Color {
         else -> colors.surfaceContainerLowest
     }
 }
+
+/**
+ * Fades a colour that may already be translucent. `copy(alpha = x)` replaces the alpha, which
+ * turned iOS's already-translucent separator colour into a dark line.
+ */
+fun Color.fade(fraction: Float): Color = copy(alpha = alpha * fraction)

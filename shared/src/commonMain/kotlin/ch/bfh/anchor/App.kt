@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -154,7 +156,10 @@ fun AnchorApp(
         },
         // Each screen draws its own top bar or status-bar padding, so its background can run up
         // behind the status bar. The bottom and sides are handled here.
-        contentWindowInsets = WindowInsets.safeDrawing.only(
+        // System bars and cutout only, not the keyboard: safeDrawing includes the IME, so every
+        // frame of the keyboard animation re-measured the whole page behind a text field. Screens
+        // that type (the note editor) pad for the keyboard themselves; sheets do it on their own.
+        contentWindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout).only(
             WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
         )
     ) { padding ->
