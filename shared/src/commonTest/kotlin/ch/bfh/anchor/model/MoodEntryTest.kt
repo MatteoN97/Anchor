@@ -2,7 +2,10 @@ package ch.bfh.anchor.model
 
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
+import ch.bfh.anchor.platform.localDayBounds
+import ch.bfh.anchor.platform.nowMillis
 import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -46,5 +49,45 @@ class MoodEntryTest {
         assertEquals(null, app.promptId)
         assertEquals(MoodEntry.SOURCE_APP, app.source)
         assertEquals("test-prompt", fromReminder.promptId)
+    }
+
+    @Test
+    fun onlyOneInAppCheckInPerInterval() {
+        val hour = MoodCheckIn.INTERVAL_MILLIS
+        val first = MoodEntry(recordedAt = 10 * hour, score = 3)
+        assertEquals(null, MoodCheckIn.blocking(emptyList(), 10 * hour))
+        assertEquals(first, MoodCheckIn.blocking(listOf(first), 10 * hour + hour - 1))
+        assertEquals(null, MoodCheckIn.blocking(listOf(first), 11 * hour))
+        assertEquals(11 * hour, MoodCheckIn.nextAllowedAt(first))
+    }
+
+    @Test
+    fun remindersAndCrisisCheckInsDoNotBlockTheTracker() {
+        val hour = MoodCheckIn.INTERVAL_MILLIS
+        val others = listOf(
+            MoodEntry(recordedAt = 10 * hour, score = 3, source = MoodEntry.SOURCE_NOTIFICATION, promptId = "p"),
+            MoodEntry(recordedAt = 10 * hour, score = 2, source = MoodEntry.SOURCE_CRISIS)
+        )
+        assertEquals(null, MoodCheckIn.blocking(others, 10 * hour + 1))
+    }
+
+    @Test
+    fun theLatestInAppCheckInIsTheOneThatCounts() {
+        val hour = MoodCheckIn.INTERVAL_MILLIS
+        val old = MoodEntry(recordedAt = 8 * hour, score = 1)
+        val recent = MoodEntry(recordedAt = 10 * hour, score = 5)
+        assertEquals(recent, MoodCheckIn.blocking(listOf(recent, old), 10 * hour + 5))
+    }
+
+    @Test
+    fun sampleMoodsCoverTwoWeeksAndNeverTheFuture() {
+        val now = nowMillis()
+        val samples = MoodSamples.generate(now)
+        val days = samples.map { localDayBounds(it.recordedAt).first }.toSet()
+        assertTrue(days.size >= 13, "expected about 14 days, got ${days.size}")
+        assertTrue(samples.all { it.recordedAt <= now && it.source == MoodEntry.SOURCE_SAMPLE })
+        assertTrue(samples.all { it.score in 1..5 })
+        // Sample check-ins never block a real one.
+        assertEquals(null, MoodCheckIn.blocking(samples, now))
     }
 }

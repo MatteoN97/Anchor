@@ -216,9 +216,24 @@
     <string name="mood_low">Gedrückt</string>
     <string name="mood_not_great">Nicht gut</string>
     <string name="mood_question">Wie fühlst du dich?</string>
-    <string name="mood_saved">Gespeichert. Mehr musst du nicht tun.</string>
+    <string name="mood_saved_at">Um %1$s gespeichert. Mehr musst du nicht tun.</string>
+    <string name="mood_checked_in_at">Eingetragen um %1$s.</string>
+    <string name="mood_already_saved">Schon um %1$s gespeichert.</string>
+    <string name="mood_updated">Geändert zu „%1$s“.</string>
+    <string name="mood_next_check_in">Nächster Eintrag ab %1$s. Bis dahin kannst du ein anderes Gesicht antippen, um ihn zu ändern.</string>
+    <string name="mood_check_in_rule">Ein Eintrag alle 5 Minuten, wann immer du willst.</string>
+    <string name="mood_source_sample">Beispiel</string>
+    <string name="settings_sample_title">Beispieldaten</string>
+    <string name="settings_sample_add">Beispiel-Stimmungsdaten hinzufügen</string>
+    <string name="settings_sample_remove">Beispieldaten entfernen</string>
+    <string name="settings_sample_footer">Zum Ausprobieren der Stimmungskurve: fügt zwei Wochen erfundener Einträge hinzu, markiert als „Beispiel“. Erneutes Hinzufügen ersetzt sie. Entferne sie, bevor du Anchor wirklich nutzt.</string>
+    <string name="mood_period_six_hours">6 Stunden</string>
+    <string name="mood_chart_empty_six_hours">Keine Einträge in den letzten 6 Stunden.</string>
+    <string name="mood_view_entries_six_hours">Einträge anzeigen · 6 Stunden</string>
+    <string name="mood_period_today">Heute</string>
+    <string name="mood_chart_empty_today">Heute noch keine Einträge.</string>
+    <string name="mood_view_entries_today">Einträge von heute anzeigen</string>
     <string name="mood_close_panel">Bereich schliessen</string>
-    <string name="mood_tab_history">Stimmungsverlauf</string>
     <string name="mood_tab_notifications">Mitteilungen</string>
     <string name="mood_hide_entries">Einträge ausblenden</string>
     <string name="mood_history_empty">Dein Verlauf erscheint nach deinem ersten Eintrag.</string>
@@ -242,9 +257,7 @@
     <string name="mood_source_crisis">Nach Unterstützung</string>
     <string name="mood_source_app">In der App</string>
     <string name="mood_chart_hint">Jeder Punkt ist ein Eintrag. Tippe auf einen Punkt, um zu sehen, wann er erfasst wurde.</string>
-    <string name="mood_chart_24h_ago">Vor 24 Stunden</string>
     <string name="mood_chart_now">Jetzt</string>
-    <string name="mood_chart_empty_24h">Keine Einträge in den letzten 24 Stunden.</string>
     <string name="mood_chart_count">%1$d in dieser Ansicht · %2$d insgesamt</string>
     <plurals name="mood_view_entries">
         <item quantity="one">Einträge anzeigen · %1$d Tag</item>
@@ -296,4 +309,15 @@
     <string name="settings_dynamic_color">Hintergrundfarben</string>
     <string name="settings_dynamic_color_subtitle">Material-You-Farben des Telefons statt der ruhigen Farbpalette von Anchor verwenden.</string>
     <string name="crisis_step_progress">Schritt %1$d von %2$d</string>
+
+    <!-- Mood tracker on iOS -->
+    <string name="mood_notification_title">Ein kurzer Check-in</string>
+    <string name="mood_notification_body_ios">Wie fühlst du dich? Lange drücken, um eine Stimmung zu wählen.</string>
+    <string name="mood_notifications_blocked_ios">Mitteilungen sind blockiert. Erlaube sie für Anchor in der App Einstellungen.</string>
+    <string name="mood_local_time_hint_ios">Verwendet die Ortszeit deines Telefons.</string>
+    <string name="mood_test_sent_ios">Test gesendet. Drücke lange auf die Mitteilung, um eine Stimmung zu wählen.</string>
+    <string name="mood_reminders_title">Erinnerungen</string>
+    <string name="mood_schedule_title">Zeitplan</string>
+    <string name="mood_start_label">Beginn</string>
+    <string name="mood_end_label">Ende</string>
 </resources>

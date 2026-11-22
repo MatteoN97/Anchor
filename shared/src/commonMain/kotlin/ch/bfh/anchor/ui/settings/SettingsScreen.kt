@@ -45,7 +45,9 @@ private enum class EditTarget { Name, CrisisLine, TrustedContact }
 @Composable
 fun SettingsScreen(
     settingsManager: SettingsManager,
-    onLanguageChange: (AppLanguage) -> Unit = settingsManager::setAppLanguage
+    onLanguageChange: (AppLanguage) -> Unit = settingsManager::setAppLanguage,
+    onAddSampleMoods: () -> Unit = {},
+    onRemoveSampleMoods: () -> Unit = {}
 ) {
     val language by settingsManager.appLanguage.collectAsState()
     val userName by settingsManager.userName.collectAsState()
@@ -95,6 +97,10 @@ fun SettingsScreen(
     val languageNames = AppLanguage.entries.associateWith {
         if (it == AppLanguage.System) stringResource(Res.string.settings_language_system) else it.nativeName
     }
+    val sampleTitle = stringResource(Res.string.settings_sample_title)
+    val sampleFooter = stringResource(Res.string.settings_sample_footer)
+    val sampleAdd = stringResource(Res.string.settings_sample_add)
+    val sampleRemove = stringResource(Res.string.settings_sample_remove)
     val patternNames = BreathingPattern.entries.associateWith { stringResource(it.nameRes) }
     val patternDescriptions = BreathingPattern.entries.associateWith { stringResource(it.descriptionRes) }
 
@@ -220,6 +226,16 @@ fun SettingsScreen(
                         }
                     }
                 }
+            )
+
+            // For demos and testing the mood chart; every sample is marked and removable.
+            adaptiveSection(
+                header = sampleTitle,
+                footer = sampleFooter,
+                rows = listOf<@Composable () -> Unit>(
+                    { AdaptiveActionRow(sampleAdd, onClick = onAddSampleMoods) },
+                    { AdaptiveActionRow(sampleRemove, color = MaterialTheme.colorScheme.error, onClick = onRemoveSampleMoods) }
+                )
             )
 
             item { Spacer(Modifier.height(if (isIos) 8.dp else 16.dp)) }

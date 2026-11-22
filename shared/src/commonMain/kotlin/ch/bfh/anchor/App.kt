@@ -223,7 +223,12 @@ fun AnchorApp(
                 )
             }
             composable(AnchorTab.Settings.route) {
-                SettingsScreen(settingsManager = settingsManager, onLanguageChange = onLanguageChange)
+                SettingsScreen(
+                    settingsManager = settingsManager,
+                    onLanguageChange = onLanguageChange,
+                    onAddSampleMoods = vm::addSampleMoods,
+                    onRemoveSampleMoods = vm::removeSampleMoods
+                )
             }
         }
     }

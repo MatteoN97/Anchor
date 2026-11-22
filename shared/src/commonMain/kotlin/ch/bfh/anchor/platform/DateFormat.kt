@@ -1,6 +1,9 @@
 package ch.bfh.anchor.platform
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.format.DayOfWeekNames
@@ -141,6 +144,25 @@ private fun noteDateTimeFormat(language: String) = LocalDateTime.Format {
 
 fun formatNoteDateTime(epochMillis: Long, language: String = "en"): String =
     noteDateTimeFormat(language).format(
+        Instant.fromEpochMilliseconds(epochMillis)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+    )
+
+/**
+ * The local calendar day containing [epochMillis], as start (inclusive) and end (exclusive)
+ * epoch millis. Not always 24 hours: a daylight-saving day is 23 or 25.
+ */
+fun localDayBounds(epochMillis: Long): Pair<Long, Long> {
+    val zone = TimeZone.currentSystemDefault()
+    val date = Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(zone).date
+    val start = date.atStartOfDayIn(zone).toEpochMilliseconds()
+    val end = date.plus(1, DateTimeUnit.DAY).atStartOfDayIn(zone).toEpochMilliseconds()
+    return start to end
+}
+
+/** "09:07": the local time of day, 24-hour clock in every language. */
+fun formatTimeOfDay(epochMillis: Long): String =
+    LocalDateTime.Format { hour(); char(':'); minute() }.format(
         Instant.fromEpochMilliseconds(epochMillis)
             .toLocalDateTime(TimeZone.currentSystemDefault())
     )

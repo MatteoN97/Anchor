@@ -216,9 +216,24 @@
     <string name="mood_low">Giù</string>
     <string name="mood_not_great">Non bene</string>
     <string name="mood_question">Come ti senti?</string>
-    <string name="mood_saved">Salvato. Non devi fare altro.</string>
+    <string name="mood_saved_at">Salvato alle %1$s. Non devi fare altro.</string>
+    <string name="mood_checked_in_at">Registrato alle %1$s.</string>
+    <string name="mood_already_saved">Già salvato alle %1$s.</string>
+    <string name="mood_updated">Cambiato in “%1$s”.</string>
+    <string name="mood_next_check_in">Prossima registrazione dalle %1$s. Fino ad allora puoi toccare un'altra faccina per cambiarla.</string>
+    <string name="mood_check_in_rule">Puoi registrare il tuo umore ogni 5 minuti, quando vuoi.</string>
+    <string name="mood_source_sample">Esempio</string>
+    <string name="settings_sample_title">Dati di esempio</string>
+    <string name="settings_sample_add">Aggiungi dati di esempio sull'umore</string>
+    <string name="settings_sample_remove">Rimuovi i dati di esempio</string>
+    <string name="settings_sample_footer">Per provare il grafico dell'umore: aggiunge due settimane di registrazioni inventate, segnate come “Esempio”. Aggiungerle di nuovo le sostituisce. Rimuovile prima di usare Anchor davvero.</string>
+    <string name="mood_period_six_hours">6 ore</string>
+    <string name="mood_chart_empty_six_hours">Nessuna registrazione nelle ultime 6 ore.</string>
+    <string name="mood_view_entries_six_hours">Mostra registrazioni · 6 ore</string>
+    <string name="mood_period_today">Oggi</string>
+    <string name="mood_chart_empty_today">Ancora nessuna registrazione oggi.</string>
+    <string name="mood_view_entries_today">Vedi le registrazioni di oggi</string>
     <string name="mood_close_panel">Chiudi pannello</string>
-    <string name="mood_tab_history">Umore nel tempo</string>
     <string name="mood_tab_notifications">Notifiche</string>
     <string name="mood_hide_entries">Nascondi registrazioni</string>
     <string name="mood_history_empty">La tua cronologia comparirà dopo la prima registrazione.</string>
@@ -242,9 +257,7 @@
     <string name="mood_source_crisis">Dopo il supporto</string>
     <string name="mood_source_app">Nell'app</string>
     <string name="mood_chart_hint">Ogni punto è una registrazione. Tocca un punto per vedere quando è stata fatta.</string>
-    <string name="mood_chart_24h_ago">24 ore fa</string>
     <string name="mood_chart_now">Ora</string>
-    <string name="mood_chart_empty_24h">Nessuna registrazione nelle ultime 24 ore.</string>
     <string name="mood_chart_count">%1$d in questa vista · %2$d in totale</string>
     <plurals name="mood_view_entries">
         <item quantity="one">Mostra registrazioni · %1$d giorno</item>
@@ -296,4 +309,15 @@
     <string name="settings_dynamic_color">Colori dello sfondo</string>
     <string name="settings_dynamic_color_subtitle">Usa i colori Material You del telefono al posto della palette calma di Anchor.</string>
     <string name="crisis_step_progress">Passo %1$d di %2$d</string>
+
+    <!-- Mood tracker on iOS -->
+    <string name="mood_notification_title">Un breve check-in</string>
+    <string name="mood_notification_body_ios">Come ti senti? Tieni premuto per scegliere un umore.</string>
+    <string name="mood_notifications_blocked_ios">Le notifiche sono bloccate. Consentile per Anchor nell'app Impostazioni.</string>
+    <string name="mood_local_time_hint_ios">Usa l'ora locale del telefono.</string>
+    <string name="mood_test_sent_ios">Prova inviata. Tieni premuta la notifica per scegliere un umore.</string>
+    <string name="mood_reminders_title">Promemoria</string>
+    <string name="mood_schedule_title">Orari</string>
+    <string name="mood_start_label">Inizio</string>
+    <string name="mood_end_label">Fine</string>
 </resources>
