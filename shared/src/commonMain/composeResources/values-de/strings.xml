@@ -50,7 +50,7 @@
     <string name="settings_edit_name">Name bearbeiten</string>
     <string name="settings_name_helper_updated">Dein Name wird für die Begrüssung auf dem Startbildschirm verwendet.</string>
     <string name="settings_crisis_breathing_label">Atemmuster</string>
-    <string name="settings_crisis_breathing_helper">Wird für den Atemschritt verwendet, wenn du auf «Ich brauche jetzt Hilfe» tippst. Wähle das, das du am meisten geübt hast.</string>
+    <string name="settings_crisis_breathing_helper">Wird für «Atme durch» verwendet und für den Atemschritt, wenn du auf «Ich brauche jetzt Hilfe» tippst. Wähle das, das du am meisten geübt hast.</string>
     <string name="settings_contacts_title">Wen anrufen</string>
     <string name="settings_contacts_helper">Wird angeboten, wenn du den Krisenmodus beendest und es dir noch nicht besser geht. Anchor öffnet die Telefon-App; es ruft nie selbst an.</string>
     <string name="settings_crisis_line_label">Krisentelefon</string>
@@ -70,8 +70,6 @@
     <string name="breath_phase_hold">Halten</string>
     <string name="breath_phase_exhale">Ausatmen</string>
     <string name="breathing_title">Atme durch</string>
-    <string name="breathing_choose_subtitle">Wähle einen Rhythmus. Wenn du übst, während du ruhig bist, fällt es dir leichter, in schwierigen Momenten darauf zurückzugreifen.</string>
-    <string name="breathing_start">Starten</string>
     <string name="breathing_pattern_calm_name">Beruhigende Atmung</string>
     <string name="breathing_pattern_calm_description">Ein für 4, aus für 6. Ein längeres Ausatmen hilft deinem Körper, zur Ruhe zu kommen.</string>
     <string name="breathing_pattern_box_name">Box-Atmung</string>

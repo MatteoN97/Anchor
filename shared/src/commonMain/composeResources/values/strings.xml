@@ -50,7 +50,7 @@
     <string name="settings_edit_name">Edit name</string>
     <string name="settings_name_helper_updated">Your name is used to personalise your home screen greeting.</string>
     <string name="settings_crisis_breathing_label">Breathing pattern</string>
-    <string name="settings_crisis_breathing_helper">Used for the breathing step when you tap "I need help now". Pick the one you've practised most.</string>
+    <string name="settings_crisis_breathing_helper">Used by "Take a breath" and by the breathing step when you tap "I need help now". Pick the one you\'ve practised most.</string>
     <string name="settings_contacts_title">Who to call</string>
     <string name="settings_contacts_helper">Offered when you finish crisis mode and still feel rough. Anchor opens the dialer; it never calls on its own.</string>
     <string name="settings_crisis_line_label">Crisis line</string>
@@ -70,8 +70,6 @@
     <string name="breath_phase_hold">Hold</string>
     <string name="breath_phase_exhale">Breathe out</string>
     <string name="breathing_title">Take a breath</string>
-    <string name="breathing_choose_subtitle">Pick a rhythm. Practising while you're calm makes it easier to reach for when things get hard.</string>
-    <string name="breathing_start">Start</string>
     <string name="breathing_pattern_calm_name">Calm breathing</string>
     <string name="breathing_pattern_calm_description">In for 4, out for 6. A longer exhale helps your body settle.</string>
     <string name="breathing_pattern_box_name">Box breathing</string>
