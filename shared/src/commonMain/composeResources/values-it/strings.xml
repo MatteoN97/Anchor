@@ -227,6 +227,9 @@
     <string name="settings_sample_add">Aggiungi dati di esempio sull'umore</string>
     <string name="settings_sample_remove">Rimuovi i dati di esempio</string>
     <string name="settings_sample_footer">Per provare il grafico dell'umore: aggiunge due settimane di registrazioni inventate, segnate come “Esempio”. Aggiungerle di nuovo le sostituisce. Rimuovile prima di usare Anchor davvero.</string>
+    <string name="mood_period_six_hours">6 ore</string>
+    <string name="mood_chart_empty_six_hours">Nessuna registrazione nelle ultime 6 ore.</string>
+    <string name="mood_view_entries_six_hours">Mostra registrazioni · 6 ore</string>
     <string name="mood_period_today">Oggi</string>
     <string name="mood_chart_empty_today">Ancora nessuna registrazione oggi.</string>
     <string name="mood_view_entries_today">Vedi le registrazioni di oggi</string>

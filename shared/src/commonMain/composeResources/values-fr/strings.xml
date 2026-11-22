@@ -227,6 +227,9 @@
     <string name="settings_sample_add">Ajouter des humeurs d'exemple</string>
     <string name="settings_sample_remove">Supprimer les données d'exemple</string>
     <string name="settings_sample_footer">Pour essayer le graphique de l'humeur : ajoute deux semaines de saisies inventées, marquées « Exemple ». Les ajouter à nouveau les remplace. Supprime-les avant d'utiliser Anchor pour de vrai.</string>
+    <string name="mood_period_six_hours">6 heures</string>
+    <string name="mood_chart_empty_six_hours">Aucune saisie ces 6 dernières heures.</string>
+    <string name="mood_view_entries_six_hours">Voir les entrées · 6 heures</string>
     <string name="mood_period_today">Aujourd'hui</string>
     <string name="mood_chart_empty_today">Aucune saisie aujourd'hui pour l'instant.</string>
     <string name="mood_view_entries_today">Voir les saisies du jour</string>

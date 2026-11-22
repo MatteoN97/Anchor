@@ -26,6 +26,9 @@ import ch.bfh.anchor.model.MoodEntry
 import ch.bfh.anchor.model.MoodScale
 import ch.bfh.anchor.platform.formatMoodDateTime
 import ch.bfh.anchor.platform.localDayBounds
+import ch.bfh.anchor.platform.formatTimeOfDay
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.drawText
@@ -46,21 +49,50 @@ internal fun moodSourceLabel(source: String): StringResource = when (source) {
     else -> Res.string.mood_source_app
 }
 
+private const val HOUR_MILLIS = 3_600_000L
+
+/** The ranges offered above the chart, shortest first. */
+internal enum class MoodPeriod(val days: Int) {
+    SixHours(0), Today(1), Week(7), Month(30);
+
+    /** Laid out by clock time, with hour labels, instead of "N days ago … Now". */
+    val clockAxis: Boolean get() = this == SixHours || this == Today
+}
+
 /**
- * The time span a period covers, as start and end epoch millis. One day is today's calendar day,
- * midnight to midnight, so the chart can lay check-ins out by time of day; longer periods roll
- * back from [now].
+ * The time span a period covers, as start (inclusive) and end (exclusive) epoch millis. Today is
+ * the calendar day, midnight to midnight, so the chart can lay check-ins out by time of day; the
+ * other periods roll back from [now].
  */
-internal fun moodPeriodBounds(periodDays: Int, now: Long): Pair<Long, Long> =
-    if (periodDays == 1) localDayBounds(now) else (now - periodDays.toLong() * DAY_MILLIS) to now
+internal fun moodPeriodBounds(period: MoodPeriod, now: Long): Pair<Long, Long> = when (period) {
+    MoodPeriod.Today -> localDayBounds(now)
+    MoodPeriod.SixHours -> (now - 6 * HOUR_MILLIS) to now + 1
+    else -> (now - period.days.toLong() * DAY_MILLIS) to now + 1
+}
 
 /** Use the same exact period for graph dots and the expanded history list. */
-internal fun moodEntriesInPeriod(entries: List<MoodEntry>, periodDays: Int, now: Long): List<MoodEntry> {
-    val (start, end) = moodPeriodBounds(periodDays, now)
+internal fun moodEntriesInPeriod(entries: List<MoodEntry>, period: MoodPeriod, now: Long): List<MoodEntry> {
+    val (start, end) = moodPeriodBounds(period, now)
     return entries.filter { it.recordedAt in start until end }.sortedBy { it.recordedAt }
 }
 
-private const val HOUR_MILLIS = 3_600_000L
+/**
+ * Vertical grid lines of a clock-time axis, as (time, label or null). Today: midnight to midnight
+ * every 6 hours. Six hours: every full hour, labelled every second one so the labels fit.
+ */
+private fun clockTicks(period: MoodPeriod, start: Long, end: Long): List<Pair<Long, String?>> =
+    if (period == MoodPeriod.Today) {
+        (0..24 step 6).map { hour ->
+            start + hour * HOUR_MILLIS to (if (hour < 10) "0$hour" else "$hour") + ":00"
+        }
+    } else {
+        // Full hours in local time: count from the start of the local day.
+        val dayStart = localDayBounds(start).first
+        val first = dayStart + ((start - dayStart + HOUR_MILLIS - 1) / HOUR_MILLIS) * HOUR_MILLIS
+        generateSequence(first) { it + HOUR_MILLIS }.takeWhile { it < end }
+            .mapIndexed { i, t -> t to (if (i % 2 == 0) formatTimeOfDay(t) else null) }
+            .toList()
+    }
 private val ChartHeight = 200.dp
 private val PlotMargin = 14.dp
 /** Room under the plot for the hour labels of the day view. */
@@ -80,40 +112,44 @@ private class ChartGeometry(width: Float, height: Float, margin: Float, bottomBa
 }
 
 /**
- * A true timestamped trend: each dot is an actual check-in, not a daily average. The one-day view
- * runs across today's hours, so the ups and downs of a day read left to right.
+ * A true timestamped trend: each dot is an actual check-in, not a daily average. The six-hour and
+ * today views run across clock hours, so the ups and downs of a day read left to right.
  */
 @Composable
 internal fun MoodHistoryChart(
     entries: List<MoodEntry>,
-    periodDays: Int,
+    period: MoodPeriod,
     now: Long,
-    onPeriodDaysChange: (Int) -> Unit
+    onPeriodChange: (MoodPeriod) -> Unit
 ) {
-    val visible = remember(entries, periodDays, now) {
-        moodEntriesInPeriod(entries, periodDays, now)
+    val visible = remember(entries, period, now) {
+        moodEntriesInPeriod(entries, period, now)
     }
     val isIos = LocalIsIos.current
 
-    val periods = listOf(1, 7, 30)
+    val periods = MoodPeriod.entries
     val periodLabels = periods.map {
-        if (it == 1) stringResource(Res.string.mood_period_today)
-        else pluralStringResource(Res.plurals.mood_period_days, it, it)
+        when (it) {
+            MoodPeriod.SixHours -> stringResource(Res.string.mood_period_six_hours)
+            MoodPeriod.Today -> stringResource(Res.string.mood_period_today)
+            else -> pluralStringResource(Res.plurals.mood_period_days, it.days, it.days)
+        }
     }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // iOS: a segmented control across the width, as Health and Screen Time use for ranges.
         if (isIos) AdaptiveSegmentedControl(
             options = periodLabels,
-            selectedIndex = periods.indexOf(periodDays).coerceAtLeast(0),
-            onSelect = { onPeriodDaysChange(periods[it]) }
+            selectedIndex = periods.indexOf(period),
+            onSelect = { onPeriodChange(periods[it]) }
         ) else Row(
-            modifier = Modifier.fillMaxWidth(),
+            // Scrolls sideways rather than wrapping if a translation makes the four chips too wide.
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End)
         ) {
-            periods.forEachIndexed { index, days ->
-                FilterChip(selected = periodDays == days, onClick = {
-                    onPeriodDaysChange(days)
+            periods.forEachIndexed { index, option ->
+                FilterChip(selected = period == option, onClick = {
+                    onPeriodChange(option)
                 }, label = { Text(periodLabels[index]) })
             }
         }
@@ -121,7 +157,7 @@ internal fun MoodHistoryChart(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-        MoodTimelineCard(visible = visible, periodDays = periodDays, now = now)
+        MoodTimelineCard(visible = visible, period = period, now = now)
         Text(stringResource(Res.string.mood_chart_count, visible.size, entries.size),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -129,22 +165,23 @@ internal fun MoodHistoryChart(
 }
 
 /**
- * The chart itself in its card: one dot per check-in over [periodDays] ending at [now] (today's
- * hours for one day), the tapped (or latest) check-in described underneath. [visible] must
+ * The chart itself in its card: one dot per check-in over [period] ending at [now] (clock hours
+ * for six hours and today), the tapped (or latest) check-in described underneath. [visible] must
  * already be limited to the period, see [moodEntriesInPeriod].
  */
 @Composable
 internal fun MoodTimelineCard(
     visible: List<MoodEntry>,
-    periodDays: Int,
+    period: MoodPeriod,
     now: Long,
     chartHeight: Dp = ChartHeight
 ) {
-    var selectedId by remember(periodDays) { mutableStateOf<String?>(null) }
-    val (start, end) = remember(periodDays, now) { moodPeriodBounds(periodDays, now) }
+    var selectedId by remember(period) { mutableStateOf<String?>(null) }
+    val (start, end) = remember(period, now) { moodPeriodBounds(period, now) }
     val selected = visible.firstOrNull { it.id == selectedId } ?: visible.lastOrNull()
     val isIos = LocalIsIos.current
-    val dayView = periodDays == 1
+    val dayView = period.clockAxis
+    val ticks = remember(period, start, end) { if (dayView) clockTicks(period, start, end) else emptyList() }
     val pointColor = MaterialTheme.colorScheme.primary
     // The ring around each dot matches the card it sits on.
     val backgroundColor = MaterialTheme.colorScheme.run { if (isIos) surfaceVariant else surface }
@@ -194,19 +231,21 @@ internal fun MoodTimelineCard(
                             strokeWidth = hairline)
                     }
                     if (dayView) {
-                        // Every six hours a faint vertical line, labelled underneath.
-                        for (hour in 0..24 step 6) {
-                            val x = g.x(start + hour * HOUR_MILLIS).coerceAtMost(g.right)
+                        // Faint vertical lines on the clock hours, labelled underneath.
+                        ticks.forEach { (time, text) ->
+                            val x = g.x(time).coerceAtMost(g.right)
                             drawLine(gridColor.copy(alpha = gridColor.alpha * 0.5f),
                                 Offset(x, g.top), Offset(x, g.bottom), strokeWidth = hairline)
-                            val label = textMeasurer.measure(
-                                (if (hour < 10) "0$hour" else "$hour") + ":00", axisLabelStyle)
-                            val labelX = (x - label.size.width / 2f)
-                                .coerceIn(0f, size.width - label.size.width)
-                            drawText(label, topLeft = Offset(labelX, g.bottom + PlotMargin.toPx() - 4.dp.toPx()))
+                            if (text != null) {
+                                val label = textMeasurer.measure(text, axisLabelStyle)
+                                val labelX = (x - label.size.width / 2f)
+                                    .coerceIn(0f, size.width - label.size.width)
+                                drawText(label, topLeft = Offset(labelX, g.bottom + PlotMargin.toPx() - 4.dp.toPx()))
+                            }
                         }
                         // Where the day is now: nothing to the right of it can have happened yet.
-                        if (now in start until end) {
+                        // (In the six-hour view "now" is the right edge.)
+                        if (period == MoodPeriod.Today && now in start until end) {
                             val nowX = g.x(now)
                             drawLine(selectedColor.copy(alpha = 0.55f), Offset(nowX, g.top), Offset(nowX, g.bottom),
                                 strokeWidth = 1.5.dp.toPx(),
@@ -252,15 +291,18 @@ internal fun MoodTimelineCard(
             if (!dayView) {
                 Row(modifier = Modifier.fillMaxWidth().padding(start = 78.dp),
                     horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(pluralStringResource(Res.plurals.mood_chart_days_ago, periodDays, periodDays),
+                    Text(pluralStringResource(Res.plurals.mood_chart_days_ago, period.days, period.days),
                         style = MaterialTheme.typography.labelSmall, color = axisLabelColor)
                     Text(stringResource(Res.string.mood_chart_now),
                         style = MaterialTheme.typography.labelSmall, color = axisLabelColor)
                 }
             }
             if (visible.isEmpty()) {
-                Text(if (dayView) stringResource(Res.string.mood_chart_empty_today)
-                     else pluralStringResource(Res.plurals.mood_chart_empty_days, periodDays, periodDays),
+                Text(when (period) {
+                        MoodPeriod.SixHours -> stringResource(Res.string.mood_chart_empty_six_hours)
+                        MoodPeriod.Today -> stringResource(Res.string.mood_chart_empty_today)
+                        else -> pluralStringResource(Res.plurals.mood_chart_empty_days, period.days, period.days)
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {

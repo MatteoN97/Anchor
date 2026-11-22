@@ -113,9 +113,9 @@ fun MoodTrackerScreen(
     var activePanel by remember { mutableStateOf<MoodPanel?>(null) }
     var showFullHistory by remember { mutableStateOf(false) }
     // The graph and expanded entry list share a single selected time range.
-    var historyPeriodDays by remember { mutableIntStateOf(1) }
-    val matchingHistory = remember(entries, historyPeriodDays, clock) {
-        moodEntriesInPeriod(entries, historyPeriodDays, clock).asReversed()
+    var historyPeriod by remember { mutableStateOf(MoodPeriod.Today) }
+    val matchingHistory = remember(entries, historyPeriod, clock) {
+        moodEntriesInPeriod(entries, historyPeriod, clock).asReversed()
     }
 
     var remindersEnabled by remember { mutableStateOf(settingsManager.moodRemindersEnabled) }
@@ -307,9 +307,9 @@ fun MoodTrackerScreen(
                     Box(itemInset) {
                         MoodHistoryChart(
                             entries = entries,
-                            periodDays = historyPeriodDays,
+                            period = historyPeriod,
                             now = clock,
-                            onPeriodDaysChange = { historyPeriodDays = it }
+                            onPeriodChange = { historyPeriod = it }
                         )
                     }
                 }
@@ -360,8 +360,11 @@ fun MoodTrackerScreen(
                             AnchorTextButton(onClick = { showFullHistory = !showFullHistory }) {
                                 Text(
                                     if (showFullHistory) stringResource(Res.string.mood_hide_entries)
-                                    else if (historyPeriodDays == 1) stringResource(Res.string.mood_view_entries_today)
-                                    else pluralStringResource(Res.plurals.mood_view_entries, historyPeriodDays, historyPeriodDays)
+                                    else when (historyPeriod) {
+                                        MoodPeriod.SixHours -> stringResource(Res.string.mood_view_entries_six_hours)
+                                        MoodPeriod.Today -> stringResource(Res.string.mood_view_entries_today)
+                                        else -> pluralStringResource(Res.plurals.mood_view_entries, historyPeriod.days, historyPeriod.days)
+                                    }
                                 )
                             }
                         }
