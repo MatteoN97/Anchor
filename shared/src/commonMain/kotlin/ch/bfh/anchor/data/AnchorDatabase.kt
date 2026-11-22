@@ -16,7 +16,7 @@ internal const val ANCHOR_DATABASE_NAME = "anchor_database"
 
 @Database(
     entities = [CopingTool::class, TherapyNote::class, CrisisCheckIn::class, SessionQuestion::class, MoodEntry::class],
-    version = 6
+    version = 7
 )
 @TypeConverters(TagListConverter::class)
 @ConstructedBy(AnchorDatabaseConstructor::class)

@@ -34,3 +34,16 @@ internal val MIGRATION_5_6 = object : Migration(5, 6) {
         )
     }
 }
+
+/**
+ * Keeps all existing coping strategies visible. Archiving only changes the active flag;
+ * notes, crisis check-ins, mood entries and every existing tool remain untouched.
+ * Used by both Android and iOS through the shared configured() database builder.
+ */
+internal val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "ALTER TABLE `coping_tools` ADD COLUMN `isActive` INTEGER NOT NULL DEFAULT 1"
+        )
+    }
+}
