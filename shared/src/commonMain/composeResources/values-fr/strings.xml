@@ -238,9 +238,9 @@
     <string name="mood_period_empty">Aucun point sur cette période.</string>
     <string name="mood_allow_notifications">Autoriser les notifications</string>
     <string name="mood_why_notifications">Pourquoi autoriser les notifications ?</string>
-    <string name="mood_notifications_info">Les rappels sont entièrement facultatifs. Ils peuvent t'inviter en douceur à faire le point aux heures que tu choisis. Tu peux les laisser désactivés et simplement ouvrir cette page quand tu veux noter comment tu te sens.</string>
+    <string name="mood_notifications_info">Les rappels sont entièrement facultatifs. Ils peuvent t'inviter en douceur à faire le point aux heures que tu choisis. Tu peux les laisser désactivés et simplement ouvrir le suivi de l\'humeur quand tu veux noter comment tu te sens.</string>
     <string name="mood_reminders_on">Rappels activés</string>
-    <string name="mood_reminders_off">Désactivés : fais le point ici quand tu veux</string>
+    <string name="mood_reminders_off">Désactivés : fais le point dans le suivi de l\'humeur quand tu veux</string>
     <string name="mood_send_test">Envoyer une notification test</string>
     <string name="mood_test_sent">Test envoyé. Touche une humeur dans la notification, puis ouvre Humeur dans le temps.</string>
     <string name="mood_notifications_blocked">Les notifications sont bloquées. Autorise les notifications d'Anchor dans les réglages Android.</string>
@@ -318,4 +318,5 @@
     <string name="mood_schedule_title">Horaires</string>
     <string name="mood_start_label">Début</string>
     <string name="mood_end_label">Fin</string>
+    <string name="settings_mood_reminders_title">Rappels d\'humeur</string>
 </resources>

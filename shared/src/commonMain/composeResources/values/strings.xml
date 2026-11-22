@@ -238,9 +238,9 @@
     <string name="mood_period_empty">No check-ins in this period.</string>
     <string name="mood_allow_notifications">Allow notifications</string>
     <string name="mood_why_notifications">Why allow notifications?</string>
-    <string name="mood_notifications_info">Reminders are completely optional. They can gently prompt you to check in during the hours you choose. You can leave them off and simply open this page whenever you want to record how you feel.</string>
+    <string name="mood_notifications_info">Reminders are completely optional. They can gently prompt you to check in during the hours you choose. You can leave them off and simply open the mood tracker whenever you want to record how you feel.</string>
     <string name="mood_reminders_on">Reminders are on</string>
-    <string name="mood_reminders_off">Off — check in here whenever you like</string>
+    <string name="mood_reminders_off">Off — check in from the mood tracker whenever you like</string>
     <string name="mood_send_test">Send test notification</string>
     <string name="mood_test_sent">Test sent. Tap a mood in the notification, then open Mood over time.</string>
     <string name="mood_notifications_blocked">Notifications are blocked. Allow Anchor notifications in Android settings.</string>
@@ -324,4 +324,5 @@
     <string name="mood_schedule_title">Schedule</string>
     <string name="mood_start_label">Start</string>
     <string name="mood_end_label">End</string>
+    <string name="settings_mood_reminders_title">Mood reminders</string>
 </resources>

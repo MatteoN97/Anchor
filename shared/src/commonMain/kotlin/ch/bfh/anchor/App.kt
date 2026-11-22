@@ -79,8 +79,8 @@ private const val ROUTE_NOTE = "note?id={id}"
 private fun noteRoute(id: String?) = if (id == null) "note" else "note?id=$id"
 
 /**
- * [reminderController] schedules mood reminders natively (Android only so far; iOS passes the
- * no-op default). [openMoodRequest] is bumped each time a reminder notification is tapped.
+ * [reminderController] schedules mood reminders natively on Android and iOS (each platform passes
+ * its own controller). [openMoodRequest] is bumped each time a reminder notification is tapped.
  */
 @Composable
 fun App(
@@ -187,8 +187,6 @@ fun AnchorApp(
             composable(ROUTE_MOOD) {
                 MoodTrackerScreen(
                     vm = vm,
-                    settingsManager = settingsManager,
-                    reminderController = reminderController,
                     onBack = dropUnlessResumed { navController.popBackStack() }
                 )
             }
@@ -225,6 +223,7 @@ fun AnchorApp(
             composable(AnchorTab.Settings.route) {
                 SettingsScreen(
                     settingsManager = settingsManager,
+                    reminderController = reminderController,
                     onLanguageChange = onLanguageChange,
                     onAddSampleMoods = vm::addSampleMoods,
                     onRemoveSampleMoods = vm::removeSampleMoods

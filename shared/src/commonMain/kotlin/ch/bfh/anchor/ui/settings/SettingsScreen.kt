@@ -23,6 +23,8 @@ import ch.bfh.anchor.model.BreathingPattern
 import ch.bfh.anchor.model.CrisisLines
 import ch.bfh.anchor.model.HelpContact
 import ch.bfh.anchor.model.effectiveCrisisLine
+import ch.bfh.anchor.notifications.MoodReminderController
+import ch.bfh.anchor.notifications.NoMoodReminderController
 import ch.bfh.anchor.platform.rememberDeviceRegion
 import ch.bfh.anchor.resources.Res
 import ch.bfh.anchor.resources.*
@@ -45,6 +47,7 @@ private enum class EditTarget { Name, CrisisLine, TrustedContact }
 @Composable
 fun SettingsScreen(
     settingsManager: SettingsManager,
+    reminderController: MoodReminderController = NoMoodReminderController,
     onLanguageChange: (AppLanguage) -> Unit = settingsManager::setAppLanguage,
     onAddSampleMoods: () -> Unit = {},
     onRemoveSampleMoods: () -> Unit = {}
@@ -103,6 +106,8 @@ fun SettingsScreen(
     val sampleRemove = stringResource(Res.string.settings_sample_remove)
     val patternNames = BreathingPattern.entries.associateWith { stringResource(it.nameRes) }
     val patternDescriptions = BreathingPattern.entries.associateWith { stringResource(it.descriptionRes) }
+    val moodReminders = rememberMoodReminderState(settingsManager, reminderController)
+    val moodReminderTexts = moodReminderTexts(moodReminders)
 
     AdaptivePageScaffold(title = title, listState = listState) { padding ->
         LazyColumn(
@@ -170,6 +175,8 @@ fun SettingsScreen(
                     }
                 }
             )
+
+            moodReminderSection(moodReminders, moodReminderTexts)
 
             adaptiveSection(
                 items = BreathingPattern.entries,

@@ -238,9 +238,9 @@
     <string name="mood_period_empty">Keine Einträge in diesem Zeitraum.</string>
     <string name="mood_allow_notifications">Mitteilungen erlauben</string>
     <string name="mood_why_notifications">Warum Mitteilungen erlauben?</string>
-    <string name="mood_notifications_info">Erinnerungen sind völlig freiwillig. Sie können dich zu den Zeiten, die du wählst, sanft an einen Eintrag erinnern. Du kannst sie auch ausgeschaltet lassen und diese Seite einfach öffnen, wann immer du festhalten möchtest, wie es dir geht.</string>
+    <string name="mood_notifications_info">Erinnerungen sind völlig freiwillig. Sie können dich zu den Zeiten, die du wählst, sanft an einen Eintrag erinnern. Du kannst sie auch ausgeschaltet lassen und den Stimmungstracker einfach öffnen, wann immer du festhalten möchtest, wie es dir geht.</string>
     <string name="mood_reminders_on">Erinnerungen sind an</string>
-    <string name="mood_reminders_off">Aus – trag hier ein, wann immer du willst</string>
+    <string name="mood_reminders_off">Aus – trag im Stimmungstracker ein, wann immer du willst</string>
     <string name="mood_send_test">Testmitteilung senden</string>
     <string name="mood_test_sent">Test gesendet. Tippe in der Mitteilung auf eine Stimmung und öffne dann den Stimmungsverlauf.</string>
     <string name="mood_notifications_blocked">Mitteilungen sind blockiert. Erlaube Mitteilungen für Anchor in den Android-Einstellungen.</string>
@@ -318,4 +318,5 @@
     <string name="mood_schedule_title">Zeitplan</string>
     <string name="mood_start_label">Beginn</string>
     <string name="mood_end_label">Ende</string>
+    <string name="settings_mood_reminders_title">Stimmungs-Erinnerungen</string>
 </resources>
